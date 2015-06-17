@@ -6,6 +6,9 @@
 *.user
 *.sln.docstates
 
+#Ignore changes in Web.Config
+
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
