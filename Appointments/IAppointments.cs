@@ -43,6 +43,12 @@ namespace Bnhp.Office365
     /// a list of Appointment instances.
     /// </returns>
     [OperationContract]
+    IEnumerable<Appointment> Get(string email,
+      DateTime start,
+      DateTime? end,
+      int? maxResults);
+
+    [OperationContract]
     long GetBegin(
       string email, 
       DateTime start, 

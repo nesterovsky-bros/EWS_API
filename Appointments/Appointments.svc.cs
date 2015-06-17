@@ -38,7 +38,7 @@ namespace Bnhp.Office365
     /// <exception cref="Exception">in case of error.</exception>
     public long CreateBegin(string email, Appointment appointment)
     {
-      var requestID = StoreInputParams("Create", email, appointment);
+      var requestID = StoreRequest("Create", email, appointment);
 
       Threading.Task.Factory.StartNew(
         () =>
@@ -153,6 +153,7 @@ namespace Bnhp.Office365
       return ReadResult<string>(requestID);
     }
 
+    #region Get method
     /// <summary>
     /// Retrieves all appointments in the specified range of dates.
     /// </summary>
@@ -165,63 +166,83 @@ namespace Bnhp.Office365
     /// <returns>
     /// a list of Appointment instances.
     /// </returns>
+    public IEnumerable<Appointment> Get(
+      string email,
+      DateTime start,
+      DateTime? end,
+      int? maxResults)
+    {
+      return Call(
+        "Get",
+        new GetRequest
+        {
+          email = email,
+          start = start,
+          end = end,
+          maxResults = maxResults
+        },
+        GetImpl);
+    }
+
     public long GetBegin(
       string email, 
       DateTime start, 
       DateTime? end,
       int? maxResults)
     {
-      var startDate = start;
-      var endDate = end.GetValueOrDefault(DateTime.Now);
-      var requestedResults = maxResults.GetValueOrDefault(int.MaxValue - 1);
-
-      var requestID = 
-        StoreInputParams("Get", email, startDate, endDate, requestedResults);
-
-      Threading.Task.Factory.StartNew(
-        () =>
+      return CallAsync(
+        "Get",
+        new GetRequest
         {
-          var result = new List<Appointment>();
-          var error = null as string;
-
-          try
-          {
-            MSOffice365.CalendarView view = new MSOffice365.CalendarView(
-              startDate,
-              endDate,
-              requestedResults);
-
-            // Item searches do not support Deep traversal.
-            view.Traversal = MSOffice365.ItemTraversal.Shallow;
-
-            var service = GetService(email);
-            var appointments = service.FindAppointments(
-              MSOffice365.WellKnownFolderName.Calendar,
-              view);
-
-            if (appointments != null)
-            {
-              foreach (var appointment in appointments)
-              {
-                result.Add(ConvertAppointment(appointment));
-              }
-            }
-          }
-          catch (Exception e)
-          {
-            error = e.ToString();
-          }
-
-          StoreResult(requestID, result, error);
-        });
-
-      return requestID;
+          email = email,
+          start = start,
+          end = end,
+          maxResults = maxResults
+        },
+        GetImpl);
     }
 
     public IEnumerable<Appointment> GetEnd(long requestID)
     {
-      return ReadResult<List<Appointment>>(requestID);
+      return ReadResult<IEnumerable<Appointment>>(requestID);
     }
+
+    private struct GetRequest
+    {
+      public string email;
+      public DateTime start;
+      public DateTime? end;
+      public int? maxResults;
+    }
+
+    private IEnumerable<Appointment> GetImpl(GetRequest request)
+    {
+      MSOffice365.CalendarView view = new MSOffice365.CalendarView(
+        request.start,
+        request.end.GetValueOrDefault(DateTime.Now),
+        request.maxResults.GetValueOrDefault(int.MaxValue - 1));
+
+      // Item searches do not support Deep traversal.
+      view.Traversal = MSOffice365.ItemTraversal.Shallow;
+
+      var service = GetService(request.email);
+      var appointments = service.FindAppointments(
+        MSOffice365.WellKnownFolderName.Calendar,
+        view);
+
+      var result = new List<Appointment>();
+
+      if (appointments != null)
+      {
+        foreach (var appointment in appointments)
+        {
+          result.Add(ConvertAppointment(appointment));
+        }
+      }
+
+      return result;
+    }
+    #endregion
 
     /// <summary>
     /// Finds an appointment by its ID in the calendar of the specified user.
@@ -235,7 +256,7 @@ namespace Bnhp.Office365
     /// </returns>
     public long FindBegin(string email, string UID)
     {
-      var requestID = StoreInputParams("Find", email, UID);
+      var requestID = StoreRequest("Find", email, UID);
 
       Threading.Task.Factory.StartNew(
         () =>
@@ -286,7 +307,7 @@ namespace Bnhp.Office365
     /// </remarks>
     public long UpdateBegin(string email, Appointment appointment)
     {
-      var requestID = StoreInputParams("Update", email, appointment);
+      var requestID = StoreRequest("Update", email, appointment);
 
       Threading.Task.Factory.StartNew(
         () =>
@@ -636,27 +657,57 @@ namespace Bnhp.Office365
 
       return proxy;
     }
-    
-    private static long StoreInputParams(
-      string actionName,
-      params object[] inputParams)
+
+    private O Call<I, O>(string actionName, I request, Func<I, O> action)
     {
-      var data = new StringBuilder();
-      var serializer = new NetDataContractSerializer();
-      var writer = XmlWriter.Create(data);
+      var requestID = StoreRequest(actionName, request);
 
-      serializer.WriteObject(writer, inputParams);
+      try
+      {
+        var result = action(request);
 
-      writer.Flush();
+        StoreResult(requestID, result);
 
+        return result;
+      }
+      catch (Exception e)
+      {
+        StoreError(requestID, e);
+
+        throw e;
+      }
+    }
+
+    private long CallAsync<I, O>(string actionName, I request, Func<I, O> action)
+    {
+      var requestID = StoreRequest(actionName, request);
+
+      Threading.Task.Factory.StartNew(
+        () =>
+        {
+          try
+          {
+            StoreResult(requestID, action(request));
+          }
+          catch (Exception e)
+          {
+            StoreError(requestID, e);
+          }
+        });
+
+      return requestID;
+    }
+
+    private static long StoreRequest<T>(string actionName, T request)
+    {
       using (EWSQueueEntities model = new EWSQueueEntities())
       {
         var item = new Queue
         {
           Operation = actionName,
-          Request = data.ToString(),
+          Request = ToXmlString(request),
           CreatedAt = DateTime.Now,
-          ExpiresAt = DateTime.Now.AddDays(1)
+          ExpiresAt = DateTime.Now.AddMinutes(10)
         };
 
         model.Queues.Add(item);
@@ -667,16 +718,8 @@ namespace Bnhp.Office365
       }
     }
 
-    private static void StoreResult(
-      long requestID,
-      object result,
-      string error)
+    private static void StoreResult(long requestID, object result)
     {
-      if (result == null)
-      {
-        return;
-      }
-
       using (var model = new EWSQueueEntities())
       {
         var item = model.Queues.
@@ -685,25 +728,37 @@ namespace Bnhp.Office365
 
         if (item != null)
         {
-          if (string.IsNullOrEmpty(error))
+          if (item.ExpiresAt.HasValue)
           {
-            var data = new StringBuilder();
-            var serializer = new NetDataContractSerializer();
-            var writer = XmlWriter.Create(data);
-            
-            serializer.WriteObject(writer, result);
-
-            writer.Flush();
-
-            item.Response = data.ToString();
+            if (item.ExpiresAt.Value < DateTime.Now)
+            {
+              item.Error = ToXmlString(
+                new TimeoutException(
+                  "Operation " + item.Operation + " is timed out."));
+            }
           }
-          else
-          {
-            //item.Error = error;
-          }
+
+          item.Response = ToXmlString(result);
 
           model.SaveChanges();
         }
+      }
+    }
+
+    private static void StoreError(long requestID, Exception error)
+    {
+      using (var model = new EWSQueueEntities())
+      {
+        var item = model.Queues.
+          Where(request => request.ID == requestID).
+          FirstOrDefault();
+
+        if (item != null)
+        {
+          //item.Error = ToXmlString(error);
+        }
+
+        model.SaveChanges();
       }
     }
 
@@ -715,16 +770,53 @@ namespace Bnhp.Office365
           Where(request => request.ID == requestID).
           FirstOrDefault();
 
-        if ((item == null) || string.IsNullOrEmpty(item.Response))
+        if (item == null)
         {
           return default(T);
         }
 
-        var serializer = new NetDataContractSerializer();
-        var reader = new StringReader(item.Response);
+        //if (item.Error != null)
+        //{
+        //  throw FromXmlString<Exception>(item.Error);
+        //}
 
-        return (T)serializer.ReadObject(XmlReader.Create(reader));
+        if ((item.Response == null) && item.ExpiresAt.HasValue)
+        {
+          if (item.ExpiresAt.Value < DateTime.Now)
+          {
+            throw new TimeoutException(
+              "Operation " + item.Operation + " is timed out.");
+          }
+        }
+
+        return FromXmlString<T>(item.Response);
       }
+    }
+
+    private static string ToXmlString(object result)
+    {
+      var data = new StringBuilder();
+      var serializer = new NetDataContractSerializer();
+
+      using (var writer = XmlWriter.Create(data))
+      {
+        serializer.WriteObject(writer, result);
+      }
+
+      return data.ToString();
+    }
+
+    private static T FromXmlString<T>(string xml)
+    {
+      if (string.IsNullOrEmpty(xml))
+      {
+        return default(T);
+      }
+
+      var serializer = new NetDataContractSerializer();
+      var reader = new StringReader(xml);
+
+      return (T)serializer.ReadObject(XmlReader.Create(reader));
     }
 
     #region private fields
