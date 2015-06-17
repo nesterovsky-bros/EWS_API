@@ -7,7 +7,7 @@
 *.sln.docstates
 
 #Ignore changes in Web.Config
- Appointments/Web.config 
+[Aa]ppointments/[Ww]eb.[Cc]onfig 
 
 # Build results
 [Dd]ebug/
