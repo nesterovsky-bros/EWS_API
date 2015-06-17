@@ -25,8 +25,28 @@ namespace Bnhp.Office365
     /// <returns>An unique ID of the new appointment.</returns>
     /// <exception cref="IOException">in case of error.</exception>
     [OperationContract]
+    string Create(string email, Appointment appointment);
+    
+    /// <summary>
+    /// Starts Create method asynchronously.
+    /// </summary>
+    /// <param name="email">An e-mail address of the organizer.</param>
+    /// <param name="appointment">
+    /// an Appointment instance with data for the appointment.
+    /// </param>
+    /// <returns>a request ID.</returns>
+    [OperationContract]
     long CreateBegin(string email, Appointment appointment);
 
+    /// <summary>
+    /// Finishes asynchronous Create method call.
+    /// </summary>
+    /// <param name="requestID">
+    /// a request ID obtained in result of CreateBegin call.
+    /// </param>
+    /// <returns>
+    /// An unique ID of the new appointment, or null when task not finished yet.
+    /// </returns>
     [OperationContract]
     string CreateEnd(long requestID);
 
@@ -39,15 +59,23 @@ namespace Bnhp.Office365
     /// <param name="maxResults">
     /// an optional parameter, determines maximum results in resonse.
     /// </param>
-    /// <returns>
-    /// a list of Appointment instances.
-    /// </returns>
+    /// <returns>a list of Appointment instances.</returns>
     [OperationContract]
     IEnumerable<Appointment> Get(string email,
       DateTime start,
       DateTime? end,
       int? maxResults);
 
+    /// <summary>
+    /// Starts Get method asynchronously.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="start">a start date.</param>
+    /// <param name="end">an optional parameter, determines an end date.</param>
+    /// <param name="maxResults">
+    /// an optional parameter, determines maximum results in resonse.
+    /// </param>
+    /// <returns>a request ID.</returns>
     [OperationContract]
     long GetBegin(
       string email, 
@@ -55,6 +83,15 @@ namespace Bnhp.Office365
       DateTime? end, 
       int? maxResults);
 
+    /// <summary>
+    /// Finishes asynchronous Get method call.
+    /// </summary>
+    /// <param name="requestID">
+    /// a request ID obtained in result of GetBegin call.
+    /// </param>
+    /// <returns>
+    /// a list of Appointment instances, or null when task not finished yet.
+    /// </returns>
     [OperationContract]
     IEnumerable<Appointment> GetEnd(long requestID);
 
@@ -69,8 +106,28 @@ namespace Bnhp.Office365
     /// an Appointment instance or null if the appointment was not found.
     /// </returns>
     [OperationContract]
+    Appointment Find(string email, string UID);
+    
+    /// <summary>
+    /// Starts Find method asynchronously.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="UID">
+    /// the appointment unique ID received on successful Create method call.
+    /// </param>
+    /// <returns>a request ID.</returns>
+    [OperationContract]
     long FindBegin(string email, string UID);
 
+    /// <summary>
+    /// Finishes asynchronous Find method call.
+    /// </summary>
+    /// <param name="requestID">
+    /// a request ID obtained in result of FindBegin call.
+    /// </param>
+    /// <returns>
+    /// a list of Appointment instances, or null when task not finished yet.
+    /// </returns>
     [OperationContract]
     Appointment FindEnd(long requestID);
 
@@ -94,10 +151,31 @@ namespace Bnhp.Office365
     /// Only organizer can update an appointment.
     /// </remarks>
     [OperationContract]
-    long UpdateBegin(string email, Appointment appointment);
-    
+    bool Update(string email, Appointment appointment);
+
+    /// <summary>
+    /// Starts Update method asynchronously.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="appointment">
+    /// an Appointment instance with new data for the appointment.
+    /// </param>
+    /// <returns>a request ID.</returns>
     [OperationContract]
-    bool UpdateEnd(long requestID);
+    long UpdateBegin(string email, Appointment appointment);
+
+    /// <summary>
+    /// Finishes asynchronous Update method call.
+    /// </summary>
+    /// <param name="requestID">
+    /// a request ID obtained in result of UpdateBegin call.
+    /// </param>
+    /// <returns>
+    /// true when the appointment was modified successfully, false when appointment 
+    /// wasn't modified, and null when task not finished yet.
+    /// </returns>
+    [OperationContract]
+    bool? UpdateEnd(long requestID);
 
     /// <summary>
     /// Cancels an appointment specified by unique ID.
@@ -114,6 +192,29 @@ namespace Bnhp.Office365
     bool Cancel(string email, string UID, string reason);
 
     /// <summary>
+    /// Starts Cancel method asynchronously.
+    /// </summary>
+    /// <param name="email">an e-mail of the organizer of the appointment.</param>
+    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="reason">a text message to be sent to all participants.</param>
+    /// <returns>a request ID.</returns>
+    [OperationContract]
+    long CancelBegin(string email, string UID, string reason);
+
+    /// <summary>
+    /// Finishes asynchronous Cancel method call.
+    /// </summary>
+    /// <param name="requestID">
+    /// a request ID obtained in result of CancelBegin call.
+    /// </param>
+    /// <returns>
+    /// true when the appointment was canceled successfully, false when appointment 
+    /// wasn't canceled, and null when task not finished yet.
+    /// </returns>
+    [OperationContract]
+    bool? CancelEnd(long requestID);
+
+    /// <summary>
     /// Delete an appointment specified by unique ID from organizer's e-mail box and
     /// sends cancel notifications to all participants.
     /// </summary>
@@ -127,6 +228,30 @@ namespace Bnhp.Office365
     bool Delete(string email, string UID);
 
     /// <summary>
+    /// Starts Delete method asynchronously.
+    /// </summary>
+    /// <param name="email">an e-mail of the organizer of the appointment.</param>
+    /// <param name="UID">the appointment unique ID.</param>
+    /// <returns>a request ID.</returns>
+    /// <remarks>Only the appointment organizer may delete it.</remarks>
+    [OperationContract]
+    long DeleteBegin(string email, string UID);
+
+    /// <summary>
+    /// Finishes asynchronous Delete method call.
+    /// </summary>
+    /// <param name="requestID">
+    /// a request ID obtained in result of DeleteBegin call.
+    /// </param>
+    /// <returns>
+    /// true when the operation succeeded, false when failed,
+    /// and null when task not finished yet.
+    /// </returns>
+    /// <remarks>Only the appointment organizer may delete it.</remarks>
+    [OperationContract]
+    bool? DeleteEnd(long requestID);
+
+    /// <summary>
     /// Accepts the specified appointment.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
@@ -138,6 +263,28 @@ namespace Bnhp.Office365
     bool Accept(string email, string UID);
 
     /// <summary>
+    /// Starts Accept method asynchronously.
+    /// </summary>
+    /// <param name="email">an e-mail of the organizer of the appointment.</param>
+    /// <param name="UID">the appointment unique ID.</param>
+    /// <returns>a request ID.</returns>
+    [OperationContract]
+    long AcceptBegin(string email, string UID);
+
+    /// <summary>
+    /// Finishes asynchronous Accept method call.
+    /// </summary>
+    /// <param name="requestID">
+    /// a request ID obtained in result of AcceptBegin call.
+    /// </param>
+    /// <returns>
+    /// true when the operation succeeded, false when operation failed,
+    /// and null when task not finished yet.
+    /// </returns>
+    [OperationContract]
+    bool? AcceptEnd(long requestID);
+
+    /// <summary>
     /// Declines the specified appointment.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
@@ -147,5 +294,27 @@ namespace Bnhp.Office365
     /// </returns>
     [OperationContract]
     bool Decline(string email, string UID);
+
+    /// <summary>
+    /// Starts Decline method asynchronously.
+    /// </summary>
+    /// <param name="email">an e-mail of the organizer of the appointment.</param>
+    /// <param name="UID">the appointment unique ID.</param>
+    /// <returns>a request ID.</returns>
+    [OperationContract]
+    long DeclineBegin(string email, string UID);
+
+    /// <summary>
+    /// Finishes asynchronous Decline method call.
+    /// </summary>
+    /// <param name="requestID">
+    /// a request ID obtained in result of DeclineBegin call.
+    /// </param>
+    /// <returns>
+    /// true when the operation succeeded, false when operation failed,
+    /// and null when task not finished yet.
+    /// </returns>
+    [OperationContract]
+    bool? DeclineEnd(long requestID);
   }
 }

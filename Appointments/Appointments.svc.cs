@@ -10,8 +10,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
-using Bnhp.Tracers;
+
 using Microsoft.Exchange.WebServices.Data;
+
 using Multiconn.Experanto.Serializer;
 
 using MSOffice365 = Microsoft.Exchange.WebServices.Data;
@@ -23,10 +24,9 @@ namespace Bnhp.Office365
   /// An implementation of IAppointments interface for CRUD operations with
   /// appointments for Office365.
   /// </summary>
-  [ServiceLoggingBehavior]
   public class Appointments : IAppointments
   {
-    #region IAppointments Members
+    #region Create method
     /// <summary>
     /// Creates a new appointment/meeting and sends notifications to attendees.
     /// </summary>
@@ -36,122 +36,139 @@ namespace Bnhp.Office365
     /// </param>
     /// <returns>An unique ID of the new appointment.</returns>
     /// <exception cref="Exception">in case of error.</exception>
+    public string Create(string email, Appointment appointment)
+    {
+      return Call(
+        "Create",
+        new CreateRequest
+        {
+          email = email,
+          appointment = appointment
+        },
+        CreateImpl);
+    }
+
     public long CreateBegin(string email, Appointment appointment)
     {
-      var requestID = StoreRequest("Create", email, appointment);
-
-      Threading.Task.Factory.StartNew(
-        () =>
+      return CallAsync(
+        "Create",
+        new CreateRequest
         {
-          var result = null as string;
-          var error = null as string;
-
-          try
-          {
-            var service = GetService(email);
-            var meeting = new MSOffice365.Appointment(service);
-
-            // Set the properties on the meeting object to create the meeting.
-            meeting.Subject = appointment.Subject;
-
-            if (!string.IsNullOrEmpty(appointment.Message))
-            {
-              meeting.Body = new MSOffice365.MessageBody(
-                IsHtml.IsMatch(appointment.Message) ?
-                  MSOffice365.BodyType.HTML : MSOffice365.BodyType.Text,
-                appointment.Message);
-            }
-
-            meeting.Start = appointment.Start.GetValueOrDefault(DateTime.Now);
-            meeting.End = appointment.End.GetValueOrDefault(DateTime.Now.AddHours(1));
-            meeting.Location = appointment.Location;
-            meeting.AllowNewTimeProposal = true;
-            meeting.Importance = MSOffice365.Importance.Normal;
-            meeting.ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart;
-
-            var IsRecurring = (appointment.RecurrenceType != RecurrenceType.Once);
-
-            if (IsRecurring)
-            {
-              var start =
-                appointment.StartRecurrence.GetValueOrDefault(DateTime.Now);
-
-              // TODO: 
-              switch (appointment.RecurrenceType)
-              {
-                case RecurrenceType.Dayly:
-                {
-                  meeting.Recurrence = new MSOffice365.Recurrence.DailyPattern(
-                    start,
-                    appointment.RecurrenceInterval);
-
-                  break;
-                }
-                case RecurrenceType.Weekly:
-                {
-                  meeting.Recurrence = new MSOffice365.Recurrence.WeeklyPattern(
-                    start,
-                    appointment.RecurrenceInterval,
-                    (MSOffice365.DayOfTheWeek)start.DayOfWeek);
-
-                  break;
-                }
-                case RecurrenceType.Monthly:
-                {
-                  meeting.Recurrence = new MSOffice365.Recurrence.MonthlyPattern(
-                    start,
-                    appointment.RecurrenceInterval,
-                    start.Day);
-
-                  break;
-                }
-                case RecurrenceType.Yearly:
-                {
-                  meeting.Recurrence =
-                    new MSOffice365.Recurrence.YearlyPattern(
-                      start,
-                      (MSOffice365.Month)start.Month,
-                      start.Day);
-
-                  break;
-                }
-              }
-
-              if (appointment.EndRecurrence.HasValue)
-              {
-                meeting.Recurrence.EndDate = appointment.EndRecurrence.Value;
-              }
-            }
-
-            // Note: currently only required attendees are supported.
-            // TODO: support of optional attendees.
-            foreach (var attendee in appointment.Attendees)
-            {
-              meeting.RequiredAttendees.Add(attendee);
-            }
-
-            //meeting.OptionalAttendees.Add("Magdalena.Kemp@contoso.com");
-
-            // Send the meeting request
-            meeting.Save(MSOffice365.SendInvitationsMode.SendToAllAndSaveCopy);
-
-            result = meeting.ICalUid;
-          }
-          catch (Exception e)
-          {
-            error = e.ToString();
-          }
-
-          StoreResult(requestID, result, error);
-        });
-
-      return requestID;
+          email = email,
+          appointment = appointment
+        },
+        CreateImpl);
     }
 
     public string CreateEnd(long requestID)
     {
       return ReadResult<string>(requestID);
     }
+
+    private struct CreateRequest
+    {
+      public string email;
+      public Appointment appointment;
+    }
+
+    private string CreateImpl(CreateRequest request)
+    {
+      if (request.appointment == null)
+      {
+        throw new ArgumentNullException("request.appointment");
+      }
+      
+      var service = GetService(request.email);
+      var meeting = new MSOffice365.Appointment(service);
+      var appointment = request.appointment;
+
+      // Set the properties on the meeting object to create the meeting.
+      meeting.Subject = appointment.Subject;
+
+      if (!string.IsNullOrEmpty(appointment.Message))
+      {
+        meeting.Body = new MSOffice365.MessageBody(
+          IsHtml.IsMatch(appointment.Message) ?
+            MSOffice365.BodyType.HTML : MSOffice365.BodyType.Text,
+          appointment.Message);
+      }
+
+      meeting.Start = appointment.Start.GetValueOrDefault(DateTime.Now);
+      meeting.End = appointment.End.GetValueOrDefault(DateTime.Now.AddHours(1));
+      meeting.Location = appointment.Location;
+      meeting.AllowNewTimeProposal = true;
+      meeting.Importance = MSOffice365.Importance.Normal;
+      meeting.ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart;
+
+      var IsRecurring = (appointment.RecurrenceType != RecurrenceType.Once);
+
+      if (IsRecurring)
+      {
+        var start =
+          appointment.StartRecurrence.GetValueOrDefault(DateTime.Now);
+
+        // TODO: 
+        switch (appointment.RecurrenceType)
+        {
+          case RecurrenceType.Dayly:
+          {
+            meeting.Recurrence = new MSOffice365.Recurrence.DailyPattern(
+              start,
+              appointment.RecurrenceInterval);
+
+            break;
+          }
+          case RecurrenceType.Weekly:
+          {
+            meeting.Recurrence = new MSOffice365.Recurrence.WeeklyPattern(
+              start,
+              appointment.RecurrenceInterval,
+              (MSOffice365.DayOfTheWeek)start.DayOfWeek);
+
+            break;
+          }
+          case RecurrenceType.Monthly:
+          {
+            meeting.Recurrence = new MSOffice365.Recurrence.MonthlyPattern(
+              start,
+              appointment.RecurrenceInterval,
+              start.Day);
+
+            break;
+          }
+          case RecurrenceType.Yearly:
+          {
+            meeting.Recurrence =
+              new MSOffice365.Recurrence.YearlyPattern(
+                start,
+                (MSOffice365.Month)start.Month,
+                start.Day);
+
+            break;
+          }
+        }
+
+        if (appointment.EndRecurrence.HasValue)
+        {
+          meeting.Recurrence.EndDate = appointment.EndRecurrence.Value;
+        }
+      }
+
+      // Note: currently only required attendees are supported.
+      // TODO: support of optional attendees.
+      foreach (var attendee in appointment.Attendees)
+      {
+        meeting.RequiredAttendees.Add(attendee);
+      }
+
+      //meeting.OptionalAttendees.Add("Magdalena.Kemp@contoso.com");
+
+      // Send the meeting request
+      meeting.Save(MSOffice365.SendInvitationsMode.SendToAllAndSaveCopy);
+
+      return meeting.ICalUid;
+    }
+    #endregion
 
     #region Get method
     /// <summary>
@@ -244,6 +261,7 @@ namespace Bnhp.Office365
     }
     #endregion
 
+    #region Find method
     /// <summary>
     /// Finds an appointment by its ID in the calendar of the specified user.
     /// </summary>
@@ -254,38 +272,67 @@ namespace Bnhp.Office365
     /// <returns>
     /// an AppointmentProxy instance or null if the appointment was not found.
     /// </returns>
-    public long FindBegin(string email, string UID)
+    public Appointment Find(string email, string UID)
     {
-      var requestID = StoreRequest("Find", email, UID);
-
-      Threading.Task.Factory.StartNew(
-        () =>
+      return Call(
+        "Find",
+        new FindRequest
         {
-          var result = null as Appointment;
-          var error = null as string;
-
-          try
-          {
-            var appointment = GetAppointment(email, UID);
-
-            result = ConvertAppointment(appointment);
-          }
-          catch (Exception e)
-          {
-            error = e.ToString();
-          }
-
-          StoreResult(requestID, result, error);
-        });
-
-      return requestID;
+          email = email,
+          UID = UID
+        },
+        FindImpl);
     }
 
+    /// <summary>
+    /// Starts Find method asynchronously.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="UID">
+    /// the appointment unique ID received on successful Create method call.
+    /// </param>
+    /// <returns>a request ID.</returns>
+    public long FindBegin(string email, string UID)
+    {
+      return CallAsync(
+        "Find",
+        new FindRequest
+        {
+          email = email,
+          UID = UID
+        },
+        FindImpl);
+    }
+
+    /// <summary>
+    /// Finishes asynchronous Find method call.
+    /// </summary>
+    /// <param name="requestID">
+    /// a request ID obtained in result of FindBegin call.
+    /// </param>
+    /// <returns>
+    /// a list of Appointment instances, or null when task not finished yet.
+    /// </returns>
     public Appointment FindEnd(long requestID)
     { 
       return ReadResult<Appointment>(requestID);
     }
 
+    private struct FindRequest
+    {
+      public string email;
+      public string UID;
+    }
+
+    private Appointment FindImpl(FindRequest request)
+    {
+      var appointment = GetAppointment(request.email, request.UID);
+
+      return ConvertAppointment(appointment);
+    }
+    #endregion
+
+    #region Update method
     /// <summary>
     /// Updates the specified appointment.
     /// Note: 
@@ -305,96 +352,135 @@ namespace Bnhp.Office365
     /// <remarks>
     /// Only organizer can update an appointment.
     /// </remarks>
+    public bool Update(string email, Appointment appointment)
+    {
+      return Call(
+        "Update",
+        new UpdateRequest
+        {
+          email = email,
+          appointment = appointment
+        },
+        UpdateImpl).GetValueOrDefault(false);
+    }
+
+    /// <summary>
+    /// Starts Update method asynchronously.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="appointment">
+    /// an Appointment instance with new data for the appointment.
+    /// </param>
+    /// <returns>a request ID.</returns>
     public long UpdateBegin(string email, Appointment appointment)
     {
-      var requestID = StoreRequest("Update", email, appointment);
-
-      Threading.Task.Factory.StartNew(
-        () =>
+      return CallAsync(
+        "Update",
+        new UpdateRequest
         {
-          var result = false;
-          var error = null as string;
-
-          try
-          {
-            var item = GetAppointment(email, appointment.UID);
-
-            // Note: only organizer may update the appointment.
-            if ((item != null) &&
-              (item.MyResponseType == MSOffice365.MeetingResponseType.Organizer))
-            {
-              var duration = item.End - item.Start;
-
-              if (appointment.Start.HasValue)
-              {
-                item.Start = appointment.Start.Value;
-              }
-
-              if (appointment.End.HasValue)
-              {
-                item.End = appointment.End.Value;
-              }
-              else
-              {
-                item.End = item.Start + duration;
-              }
-
-              if (!string.IsNullOrEmpty(appointment.Location))
-              {
-                item.Location = appointment.Location;
-              }
-
-              if (!string.IsNullOrEmpty(appointment.Subject))
-              {
-                item.Subject = appointment.Subject;
-              }
-
-              if (item.ReminderMinutesBeforeStart != appointment.ReminderMinutesBeforeStart)
-              {
-                item.ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart;
-              }
-
-              if (item.IsRecurring)
-              {
-                if (appointment.StartRecurrence.HasValue)
-                {
-                  item.Recurrence.StartDate = appointment.StartRecurrence.Value;
-                }
-
-                if (appointment.EndRecurrence.HasValue)
-                {
-                  item.Recurrence.EndDate = appointment.EndRecurrence.Value;
-                }
-              }
-
-              // Unless explicitly specified, the default is to use SendToAllAndSaveCopy.
-              // This can convert an appointment into a meeting. To avoid this,
-              // explicitly set SendToNone on non-meetings.
-              var mode = item.IsMeeting ?
-                MSOffice365.SendInvitationsOrCancellationsMode.SendToAllAndSaveCopy :
-                MSOffice365.SendInvitationsOrCancellationsMode.SendToNone;
-
-              item.Update(MSOffice365.ConflictResolutionMode.AlwaysOverwrite, mode);
-
-              result = true;
-            }
-          }
-          catch (Exception e)
-          {
-            error = e.ToString();
-          }
-
-          StoreResult(requestID, result, error);
-        });
-
-      return requestID;
+          email = email,
+          appointment = appointment
+        },
+        UpdateImpl);
     }
 
-    public bool UpdateEnd(long requestID)
+    /// <summary>
+    /// Finishes asynchronous Update method call.
+    /// </summary>
+    /// <param name="requestID">
+    /// a request ID obtained in result of UpdateBegin call.
+    /// </param>
+    /// <returns>
+    /// true when the appointment was modified successfully, false when appointment 
+    /// wasn't modified, and null when task not finished yet.
+    /// </returns>
+    public bool? UpdateEnd(long requestID)
     {
-      return ReadResult<bool>(requestID);
+      return ReadResult<bool?>(requestID);
     }
 
+    private struct UpdateRequest
+    {
+      public string email;
+      public Appointment appointment;
+    }
+
+    private bool? UpdateImpl(UpdateRequest request)
+    { 
+      var appointment = request.appointment;
+
+      if (appointment == null)
+      {
+        throw new ArgumentNullException("request.appointment");
+      }
+
+      var item = GetAppointment(request.email, appointment.UID);
+
+      // Note: only organizer may update the appointment.
+      if ((item != null) &&
+        (item.MyResponseType == MSOffice365.MeetingResponseType.Organizer))
+      {
+        var duration = item.End - item.Start;
+
+        if (appointment.Start.HasValue)
+        {
+          item.Start = appointment.Start.Value;
+        }
+
+        if (appointment.End.HasValue)
+        {
+          item.End = appointment.End.Value;
+        }
+        else
+        {
+          item.End = item.Start + duration;
+        }
+
+        if (!string.IsNullOrEmpty(appointment.Location))
+        {
+          item.Location = appointment.Location;
+        }
+
+        if (!string.IsNullOrEmpty(appointment.Subject))
+        {
+          item.Subject = appointment.Subject;
+        }
+
+        if (item.ReminderMinutesBeforeStart != appointment.ReminderMinutesBeforeStart)
+        {
+          item.ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart;
+        }
+
+        if (item.IsRecurring)
+        {
+          if (appointment.StartRecurrence.HasValue)
+          {
+            item.Recurrence.StartDate = appointment.StartRecurrence.Value;
+          }
+
+          if (appointment.EndRecurrence.HasValue)
+          {
+            item.Recurrence.EndDate = appointment.EndRecurrence.Value;
+          }
+        }
+
+        // Unless explicitly specified, the default is to use SendToAllAndSaveCopy.
+        // This can convert an appointment into a meeting. To avoid this,
+        // explicitly set SendToNone on non-meetings.
+        var mode = item.IsMeeting ?
+          MSOffice365.SendInvitationsOrCancellationsMode.SendToAllAndSaveCopy :
+          MSOffice365.SendInvitationsOrCancellationsMode.SendToNone;
+
+        item.Update(MSOffice365.ConflictResolutionMode.AlwaysOverwrite, mode);
+
+        return true;
+      }
+
+      return false;
+    } 
+    #endregion
+
+    #region Cancel method
     /// <summary>
     /// Cancels an appointment specified by unique ID.
     /// Sends corresponding notifications to all participants.
@@ -408,18 +494,75 @@ namespace Bnhp.Office365
     /// <remarks>Only the appointment organizer may cancel it.</remarks>
     public bool Cancel(string email, string UID, string reason)
     {
-      var appointment = GetAppointment(email, UID);
+      return Call(
+        "Cancel",
+        new CancelRequest
+        {
+          email = email,
+          UID = UID,
+          reason = reason
+        },
+        CancelImpl).GetValueOrDefault(false);
+    }
+
+    /// <summary>
+    /// Starts Cancel method asynchronously.
+    /// </summary>
+    /// <param name="email">an e-mail of the organizer of the appointment.</param>
+    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="reason">a text message to be sent to all participants.</param>
+    /// <returns>a request ID.</returns>
+    public long CancelBegin(string email, string UID, string reason)
+    {
+      return CallAsync(
+        "Cancel",
+        new CancelRequest
+        {
+          email = email,
+          UID = UID,
+          reason = reason
+        },
+        CancelImpl);
+    }
+
+    /// <summary>
+    /// Finishes asynchronous Cancel method call.
+    /// </summary>
+    /// <param name="requestID">
+    /// a request ID obtained in result of CancelBegin call.
+    /// </param>
+    /// <returns>
+    /// true when the appointment was canceled successfully, false when appointment 
+    /// wasn't canceled, and null when task not finished yet.
+    /// </returns>
+    public bool? CancelEnd(long requestID)
+    {
+      return ReadResult<bool?>(requestID);
+    }
+
+    private struct CancelRequest
+    {
+      public string email;
+      public string UID;
+      public string reason;
+    }
+
+    private bool? CancelImpl(CancelRequest request)
+    {
+      var appointment = GetAppointment(request.email, request.UID);
 
       if (appointment != null)
       {
-        appointment.CancelMeeting(reason);
+        appointment.CancelMeeting(request.reason);
 
         return true;
       }
 
       return false;
     }
+    #endregion
 
+    #region Delete method
     /// <summary>
     /// Delete an appointment specified by unique ID from organizer's e-mail box and
     /// sends cancel notifications to all participants.
@@ -432,7 +575,60 @@ namespace Bnhp.Office365
     /// <remarks>Only the appointment organizer may delete it.</remarks>
     public bool Delete(string email, string UID)
     {
-      var appointment = GetAppointment(email, UID);
+      return Call(
+        "Delete",
+        new DeleteRequest
+        {
+          email = email,
+          UID = UID
+        },
+        DeleteImpl).GetValueOrDefault(false);
+    }
+
+    /// <summary>
+    /// Starts Delete method asynchronously.
+    /// </summary>
+    /// <param name="email">an e-mail of the organizer of the appointment.</param>
+    /// <param name="UID">the appointment unique ID.</param>
+    /// <returns>a request ID.</returns>
+    /// <remarks>Only the appointment organizer may delete it.</remarks>
+    public long DeleteBegin(string email, string UID)
+    {
+      return CallAsync(
+        "Delete",
+        new DeleteRequest
+        {
+          email = email,
+          UID = UID
+        },
+        DeleteImpl);
+    }
+
+    /// <summary>
+    /// Finishes asynchronous Delete method call.
+    /// </summary>
+    /// <param name="requestID">
+    /// a request ID obtained in result of DeleteBegin call.
+    /// </param>
+    /// <returns>
+    /// true when the operation succeeded, false when failed,
+    /// and null when task not finished yet.
+    /// </returns>
+    /// <remarks>Only the appointment organizer may delete it.</remarks>
+    public bool? DeleteEnd(long requestID)
+    {
+      return ReadResult<bool?>(requestID);
+    }
+
+    private struct DeleteRequest
+    {
+      public string email;
+      public string UID;
+    }
+
+    private bool? DeleteImpl(DeleteRequest request)
+    {
+      var appointment = GetAppointment(request.email, request.UID);
 
       if (appointment != null)
       {
@@ -443,7 +639,9 @@ namespace Bnhp.Office365
 
       return false;
     }
+    #endregion
 
+    #region Accept method
     /// <summary>
     /// Accepts the specified appointment.
     /// </summary>
@@ -454,7 +652,58 @@ namespace Bnhp.Office365
     /// </returns>
     public bool Accept(string email, string UID)
     {
-      var appointment = GetAppointment(email, UID);
+      return Call(
+        "Accept",
+        new AcceptRequest
+        {
+          email = email,
+          UID = UID
+        },
+        AcceptImpl).GetValueOrDefault(false);
+    }
+
+    /// <summary>
+    /// Starts Accept method asynchronously.
+    /// </summary>
+    /// <param name="email">an e-mail of the organizer of the appointment.</param>
+    /// <param name="UID">the appointment unique ID.</param>
+    /// <returns>a request ID.</returns>
+    public long AcceptBegin(string email, string UID)
+    {
+      return CallAsync(
+        "Accept",
+        new AcceptRequest
+        {
+          email = email,
+          UID = UID
+        },
+        AcceptImpl);
+    }
+
+    /// <summary>
+    /// Finishes asynchronous Accept method call.
+    /// </summary>
+    /// <param name="requestID">
+    /// a request ID obtained in result of AcceptBegin call.
+    /// </param>
+    /// <returns>
+    /// true when the operation succeeded, false when operation failed,
+    /// and null when task not finished yet.
+    /// </returns>
+    public bool? AcceptEnd(long requestID)
+    {
+      return ReadResult<bool?>(requestID);
+    }
+
+    private struct AcceptRequest
+    {
+      public string email;
+      public string UID;
+    }
+
+    private bool? AcceptImpl(AcceptRequest request)
+    {
+      var appointment = GetAppointment(request.email, request.UID);
 
       if (appointment != null)
       {
@@ -465,7 +714,9 @@ namespace Bnhp.Office365
 
       return false;
     }
+    #endregion
 
+    #region Decline method
     /// <summary>
     /// Declines the specified appointment.
     /// </summary>
@@ -476,7 +727,58 @@ namespace Bnhp.Office365
     /// </returns>
     public bool Decline(string email, string UID)
     {
-      var appointment = GetAppointment(email, UID);
+      return Call(
+        "Decline",
+        new DeclineRequest
+        {
+          email = email,
+          UID = UID
+        },
+        DeclineImpl).GetValueOrDefault(false);
+    }
+
+    /// <summary>
+    /// Starts Decline method asynchronously.
+    /// </summary>
+    /// <param name="email">an e-mail of the organizer of the appointment.</param>
+    /// <param name="UID">the appointment unique ID.</param>
+    /// <returns>a request ID.</returns>
+    public long DeclineBegin(string email, string UID)
+    {
+      return CallAsync(
+        "Decline",
+        new DeclineRequest
+        {
+          email = email,
+          UID = UID
+        },
+        DeclineImpl);
+    }
+
+    /// <summary>
+    /// Finishes asynchronous Decline method call.
+    /// </summary>
+    /// <param name="requestID">
+    /// a request ID obtained in result of DeclineBegin call.
+    /// </param>
+    /// <returns>
+    /// true when the operation succeeded, false when operation failed,
+    /// and null when task not finished yet.
+    /// </returns>
+    public bool? DeclineEnd(long requestID)
+    {
+      return ReadResult<bool?>(requestID);
+    }
+
+    private struct DeclineRequest
+    {
+      public string email;
+      public string UID;
+    }
+
+    private bool? DeclineImpl(DeclineRequest request)
+    {
+      var appointment = GetAppointment(request.email, request.UID);
 
       if (appointment != null)
       {
@@ -489,12 +791,18 @@ namespace Bnhp.Office365
     }
     #endregion
 
+    #region Private methods
     /// <summary>
     /// Gets a service instance.
     /// </summary>
     /// <returns>a ExchangeService instance.</returns>
     private ExchangeService GetService(string impersonatedUserId)
     {
+      if (impersonatedUserId == null)
+      {
+        throw new ArgumentNullException("impersonatedUserId");
+      }
+
       var service =
         new ExchangeService(ExchangeVersion.Exchange2013);
 
@@ -512,8 +820,7 @@ namespace Bnhp.Office365
       service.UseDefaultCredentials = false;
       service.PreAuthenticate = true;
 
-      if (!string.IsNullOrEmpty(impersonatedUserId) &&
-        (ExchangeUserName != impersonatedUserId))
+      if (ExchangeUserName != impersonatedUserId)
       {
         service.ImpersonatedUserId = new MSOffice365.ImpersonatedUserId(
           MSOffice365.ConnectingIdType.SmtpAddress,
@@ -700,14 +1007,26 @@ namespace Bnhp.Office365
 
     private static long StoreRequest<T>(string actionName, T request)
     {
-      using (EWSQueueEntities model = new EWSQueueEntities())
+      using (var model = new EWSQueueEntities())
       {
+        var timeout = 2.0;
+        
+        try
+        {
+          timeout = 
+            double.Parse(ConfigurationManager.AppSettings["RequestTimeout"]);
+        }
+        catch
+        {
+          // use the default value, 2 mins.
+        }
+        
         var item = new Queue
         {
           Operation = actionName,
           Request = ToXmlString(request),
           CreatedAt = DateTime.Now,
-          ExpiresAt = DateTime.Now.AddMinutes(10)
+          ExpiresAt = DateTime.Now.AddMinutes(timeout)
         };
 
         model.Queues.Add(item);
@@ -755,7 +1074,7 @@ namespace Bnhp.Office365
 
         if (item != null)
         {
-          //item.Error = ToXmlString(error);
+          item.Error = ToXmlString(error);
         }
 
         model.SaveChanges();
@@ -775,10 +1094,10 @@ namespace Bnhp.Office365
           return default(T);
         }
 
-        //if (item.Error != null)
-        //{
-        //  throw FromXmlString<Exception>(item.Error);
-        //}
+        if (item.Error != null)
+        {
+          throw FromXmlString<Exception>(item.Error);
+        }
 
         if ((item.Response == null) && item.ExpiresAt.HasValue)
         {
@@ -818,6 +1137,7 @@ namespace Bnhp.Office365
 
       return (T)serializer.ReadObject(XmlReader.Create(reader));
     }
+    #endregion
 
     #region private fields
     private static string ExchangeUserName;

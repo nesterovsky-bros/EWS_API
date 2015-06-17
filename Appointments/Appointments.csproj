@@ -113,13 +113,6 @@
     <Compile Include="Queue.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
-    <Compile Include="Tracers\DatabaseTraceListener.cs" />
-    <Compile Include="Tracers\EventLogTraceListener.cs" />
-    <Compile Include="Tracers\JsonErrorHandler.cs" />
-    <Compile Include="Tracers\JsonWebHttpBehaviour.cs" />
-    <Compile Include="Tracers\LoggingOperationBehavior.cs" />
-    <Compile Include="Tracers\LoggingOperationInvoker.cs" />
-    <Compile Include="Tracers\ServiceLoggingBehavior.cs" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
