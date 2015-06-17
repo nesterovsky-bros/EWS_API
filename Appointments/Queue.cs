@@ -26,9 +26,7 @@ public partial class Queue
 
     public string Response { get; set; }
 
-    public string ErrorMessage { get; set; }
-
-    public string ErrorDescription { get; set; }
+    public string Error { get; set; }
 
     public System.DateTime CreatedAt { get; set; }
 
