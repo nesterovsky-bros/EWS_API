@@ -13,6 +13,7 @@
           <Property Name="Operation" Type="nvarchar" MaxLength="256" Nullable="false" />
           <Property Name="Request" Type="xml" />
           <Property Name="Response" Type="xml" />
+          <Property Name="Error" Type="xml" />
           <Property Name="CreatedAt" Type="datetime2" Precision="7" Nullable="false" />
           <Property Name="ExpiresAt" Type="datetime2" Precision="7" />
         </EntityType>
@@ -34,6 +35,7 @@
           <Property Name="Operation" Type="String" Nullable="false" MaxLength="256" FixedLength="false" Unicode="true" />
           <Property Name="Request" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="Response" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Error" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="7" />
           <Property Name="ExpiresAt" Type="DateTime" Precision="7" />
         </EntityType>
@@ -48,6 +50,7 @@
               <MappingFragment StoreEntitySet="Queue">
                 <ScalarProperty Name="ExpiresAt" ColumnName="ExpiresAt" />
                 <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="Error" ColumnName="Error" />
                 <ScalarProperty Name="Response" ColumnName="Response" />
                 <ScalarProperty Name="Request" ColumnName="Request" />
                 <ScalarProperty Name="Operation" ColumnName="Operation" />
