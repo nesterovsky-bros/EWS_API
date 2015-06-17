@@ -6,6 +6,9 @@
 *.user
 *.sln.docstates
 
+# Ignore changes in Web.Config
+Appointments/Web.config 
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

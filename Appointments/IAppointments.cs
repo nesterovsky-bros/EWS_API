@@ -88,7 +88,10 @@ namespace Bnhp.Office365
     /// Only organizer can update an appointment.
     /// </remarks>
     [OperationContract]
-    bool Update(string email, Appointment appointment);
+    long UpdateBegin(string email, Appointment appointment);
+    
+    [OperationContract]
+    bool UpdateEnd(long requestID);
 
     /// <summary>
     /// Cancels an appointment specified by unique ID.

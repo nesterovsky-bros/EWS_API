@@ -284,71 +284,94 @@ namespace Bnhp.Office365
     /// <remarks>
     /// Only organizer can update an appointment.
     /// </remarks>
-    public bool Update(string email, Appointment appointment)
+    public long UpdateBegin(string email, Appointment appointment)
     {
-      var item = GetAppointment(email, appointment.UID);
+      var requestID = StoreInputParams("Update", email, appointment);
 
-      if ((item == null) ||
-        (item.MyResponseType != MSOffice365.MeetingResponseType.Organizer))
-      {
-        // Note: only organizer may update the appointment.
-        return false;
-      }
-
-      var duration = item.End - item.Start;
-
-      if (appointment.Start.HasValue)
-      {
-        item.Start = appointment.Start.Value;
-      }
-
-      if (appointment.End.HasValue)
-      {
-        item.End = appointment.End.Value;
-      }
-      else
-      {
-        item.End = item.Start + duration;
-      }
-
-      if (!string.IsNullOrEmpty(appointment.Location))
-      {
-        item.Location = appointment.Location;
-      }
-
-      if (!string.IsNullOrEmpty(appointment.Subject))
-      {
-        item.Subject = appointment.Subject;
-      }
-
-      if (item.ReminderMinutesBeforeStart != appointment.ReminderMinutesBeforeStart)
-      {
-        item.ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart;
-      }
-
-      if (item.IsRecurring)
-      {
-        if (appointment.StartRecurrence.HasValue)
+      Threading.Task.Factory.StartNew(
+        () =>
         {
-          item.Recurrence.StartDate = appointment.StartRecurrence.Value;
-        }
+          var result = false;
+          var error = null as string;
 
-        if (appointment.EndRecurrence.HasValue)
-        {
-          item.Recurrence.EndDate = appointment.EndRecurrence.Value;
-        }
-      }
+          try
+          {
+            var item = GetAppointment(email, appointment.UID);
 
-      // Unless explicitly specified, the default is to use SendToAllAndSaveCopy.
-      // This can convert an appointment into a meeting. To avoid this,
-      // explicitly set SendToNone on non-meetings.
-      var mode = item.IsMeeting ?
-        MSOffice365.SendInvitationsOrCancellationsMode.SendToAllAndSaveCopy :
-        MSOffice365.SendInvitationsOrCancellationsMode.SendToNone;
+            // Note: only organizer may update the appointment.
+            if ((item != null) &&
+              (item.MyResponseType == MSOffice365.MeetingResponseType.Organizer))
+            {
+              var duration = item.End - item.Start;
 
-      item.Update(MSOffice365.ConflictResolutionMode.AlwaysOverwrite, mode);
+              if (appointment.Start.HasValue)
+              {
+                item.Start = appointment.Start.Value;
+              }
 
-      return true;
+              if (appointment.End.HasValue)
+              {
+                item.End = appointment.End.Value;
+              }
+              else
+              {
+                item.End = item.Start + duration;
+              }
+
+              if (!string.IsNullOrEmpty(appointment.Location))
+              {
+                item.Location = appointment.Location;
+              }
+
+              if (!string.IsNullOrEmpty(appointment.Subject))
+              {
+                item.Subject = appointment.Subject;
+              }
+
+              if (item.ReminderMinutesBeforeStart != appointment.ReminderMinutesBeforeStart)
+              {
+                item.ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart;
+              }
+
+              if (item.IsRecurring)
+              {
+                if (appointment.StartRecurrence.HasValue)
+                {
+                  item.Recurrence.StartDate = appointment.StartRecurrence.Value;
+                }
+
+                if (appointment.EndRecurrence.HasValue)
+                {
+                  item.Recurrence.EndDate = appointment.EndRecurrence.Value;
+                }
+              }
+
+              // Unless explicitly specified, the default is to use SendToAllAndSaveCopy.
+              // This can convert an appointment into a meeting. To avoid this,
+              // explicitly set SendToNone on non-meetings.
+              var mode = item.IsMeeting ?
+                MSOffice365.SendInvitationsOrCancellationsMode.SendToAllAndSaveCopy :
+                MSOffice365.SendInvitationsOrCancellationsMode.SendToNone;
+
+              item.Update(MSOffice365.ConflictResolutionMode.AlwaysOverwrite, mode);
+
+              result = true;
+            }
+          }
+          catch (Exception e)
+          {
+            error = e.ToString();
+          }
+
+          StoreResult(requestID, result, error);
+        });
+
+      return requestID;
+    }
+
+    public bool UpdateEnd(long requestID)
+    {
+      return ReadResult<bool>(requestID);
     }
 
     /// <summary>
