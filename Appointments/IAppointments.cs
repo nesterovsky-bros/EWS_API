@@ -63,7 +63,10 @@ namespace Bnhp.Office365
     /// an Appointment instance or null if the appointment was not found.
     /// </returns>
     [OperationContract]
-    Appointment Find(string email, string UID);
+    long FindBegin(string email, string UID);
+
+    [OperationContract]
+    Appointment FindEnd(long requestID);
 
     /// <summary>
     /// Updates the specified appointment.

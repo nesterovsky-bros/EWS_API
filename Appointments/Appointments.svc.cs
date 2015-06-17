@@ -233,11 +233,36 @@ namespace Bnhp.Office365
     /// <returns>
     /// an AppointmentProxy instance or null if the appointment was not found.
     /// </returns>
-    public Appointment Find(string email, string UID)
+    public long FindBegin(string email, string UID)
     {
-      var appointment = GetAppointment(email, UID);
+      var requestID = StoreInputParams("Find", email, UID);
 
-      return ConvertAppointment(appointment);
+      Threading.Task.Factory.StartNew(
+        () =>
+        {
+          var result = null as Appointment;
+          var error = null as string;
+
+          try
+          {
+            var appointment = GetAppointment(email, UID);
+
+            result = ConvertAppointment(appointment);
+          }
+          catch (Exception e)
+          {
+            error = e.ToString();
+          }
+
+          StoreResult(requestID, result, error);
+        });
+
+      return requestID;
+    }
+
+    public Appointment FindEnd(long requestID)
+    { 
+      return ReadResult<Appointment>(requestID);
     }
 
     /// <summary>
