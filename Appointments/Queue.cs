@@ -26,11 +26,13 @@ public partial class Queue
 
     public string Response { get; set; }
 
+    public string ErrorMessage { get; set; }
+
+    public string ErrorDescription { get; set; }
+
     public System.DateTime CreatedAt { get; set; }
 
     public Nullable<System.DateTime> ExpiresAt { get; set; }
-
-    public string Exception { get; set; }
 
 }
 

@@ -13,7 +13,8 @@
           <Property Name="Operation" Type="nvarchar" MaxLength="256" Nullable="false" />
           <Property Name="Request" Type="xml" />
           <Property Name="Response" Type="xml" />
-          <Property Name="Exception" Type="xml" />
+          <Property Name="ErrorMessage" Type="nvarchar(max)" />
+          <Property Name="ErrorDescription" Type="nvarchar(max)" />
           <Property Name="CreatedAt" Type="datetime2" Precision="7" Nullable="false" />
           <Property Name="ExpiresAt" Type="datetime2" Precision="7" />
         </EntityType>
@@ -35,9 +36,10 @@
           <Property Name="Operation" Type="String" Nullable="false" MaxLength="256" FixedLength="false" Unicode="true" />
           <Property Name="Request" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="Response" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="ErrorMessage" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="ErrorDescription" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="7" />
           <Property Name="ExpiresAt" Type="DateTime" Precision="7" />
-          <Property Name="Exception" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
         </EntityType>
       </Schema>
     </edmx:ConceptualModels>
@@ -48,9 +50,10 @@
           <EntitySetMapping Name="Queues">
             <EntityTypeMapping TypeName="EWSQueueModel.Queue">
               <MappingFragment StoreEntitySet="Queue">
-                <ScalarProperty Name="Exception" ColumnName="Exception" />
                 <ScalarProperty Name="ExpiresAt" ColumnName="ExpiresAt" />
                 <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="ErrorDescription" ColumnName="ErrorDescription" />
+                <ScalarProperty Name="ErrorMessage" ColumnName="ErrorMessage" />
                 <ScalarProperty Name="Response" ColumnName="Response" />
                 <ScalarProperty Name="Request" ColumnName="Request" />
                 <ScalarProperty Name="Operation" ColumnName="Operation" />
