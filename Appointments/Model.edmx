@@ -5,6 +5,14 @@
     <!-- SSDL content -->
     <edmx:StorageModels>
     <Schema Namespace="EWSQueueModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="MailboxAffinity">
+          <Key>
+            <PropertyRef Name="Mailbox" />
+          </Key>
+          <Property Name="Mailbox" Type="nvarchar" MaxLength="258" Nullable="false" />
+          <Property Name="GroupingInformation" Type="nvarchar(max)" />
+          <Property Name="ExternalEwsUrl" Type="nvarchar(max)" />
+        </EntityType>
         <EntityType Name="Queue">
           <Key>
             <PropertyRef Name="ID" />
@@ -18,6 +26,7 @@
           <Property Name="ExpiresAt" Type="datetime2" Precision="7" />
         </EntityType>
         <EntityContainer Name="EWSQueueModelStoreContainer">
+          <EntitySet Name="MailboxAffinity" EntityType="Self.MailboxAffinity" Schema="Data" store:Type="Tables" />
           <EntitySet Name="Queue" EntityType="Self.Queue" Schema="Data" store:Type="Tables" />
         </EntityContainer>
       </Schema></edmx:StorageModels>
@@ -26,6 +35,7 @@
       <Schema Namespace="EWSQueueModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
         <EntityContainer Name="EWSQueueEntities" annotation:LazyLoadingEnabled="true">
           <EntitySet Name="Queues" EntityType="EWSQueueModel.Queue" />
+          <EntitySet Name="MailboxAffinities" EntityType="EWSQueueModel.MailboxAffinity" />
         </EntityContainer>
         <EntityType Name="Queue">
           <Key>
@@ -38,6 +48,14 @@
           <Property Name="Error" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="7" />
           <Property Name="ExpiresAt" Type="DateTime" Precision="7" />
+        </EntityType>
+        <EntityType Name="MailboxAffinity">
+          <Key>
+            <PropertyRef Name="Mailbox" />
+          </Key>
+          <Property Name="Mailbox" Type="String" Nullable="false" MaxLength="258" FixedLength="false" Unicode="true" />
+          <Property Name="GroupingInformation" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="ExternalEwsUrl" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
         </EntityType>
       </Schema>
     </edmx:ConceptualModels>
@@ -55,6 +73,15 @@
                 <ScalarProperty Name="Request" ColumnName="Request" />
                 <ScalarProperty Name="Operation" ColumnName="Operation" />
                 <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="MailboxAffinities">
+            <EntityTypeMapping TypeName="EWSQueueModel.MailboxAffinity">
+              <MappingFragment StoreEntitySet="MailboxAffinity">
+                <ScalarProperty Name="ExternalEwsUrl" ColumnName="ExternalEwsUrl" />
+                <ScalarProperty Name="GroupingInformation" ColumnName="GroupingInformation" />
+                <ScalarProperty Name="Mailbox" ColumnName="Mailbox" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

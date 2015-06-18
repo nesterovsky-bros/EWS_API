@@ -6,6 +6,7 @@
     <edmx:Diagrams>
       <Diagram DiagramId="7138d730a49840dfb26d8b8ee93844b2" Name="Diagram1">
         <EntityTypeShape EntityType="EWSQueueModel.Queue" Width="1.5" PointX="0.75" PointY="0.625" />
+        <EntityTypeShape EntityType="EWSQueueModel.MailboxAffinity" Width="1.5" PointX="3.375" PointY="0.75" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

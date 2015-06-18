@@ -15,22 +15,14 @@ namespace Bnhp.Office365
 using System;
     using System.Collections.Generic;
     
-public partial class Queue
+public partial class MailboxAffinity
 {
 
-    public long ID { get; set; }
+    public string Mailbox { get; set; }
 
-    public string Operation { get; set; }
+    public string GroupingInformation { get; set; }
 
-    public string Request { get; set; }
-
-    public string Response { get; set; }
-
-    public string Error { get; set; }
-
-    public System.DateTime CreatedAt { get; set; }
-
-    public Nullable<System.DateTime> ExpiresAt { get; set; }
+    public string ExternalEwsUrl { get; set; }
 
 }
 
