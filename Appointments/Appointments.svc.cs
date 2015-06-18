@@ -10,11 +10,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
-
 using Microsoft.Exchange.WebServices.Data;
-
 using Multiconn.Experanto.Serializer;
-
 using MSOffice365 = Microsoft.Exchange.WebServices.Data;
 using Threading = System.Threading.Tasks;
 
@@ -65,7 +62,7 @@ namespace Bnhp.Office365
       return ReadResult<string>(requestID);
     }
 
-    private struct CreateRequest
+    public struct CreateRequest
     {
       public string email;
       public Appointment appointment;
@@ -224,7 +221,7 @@ namespace Bnhp.Office365
       return ReadResult<IEnumerable<Appointment>>(requestID);
     }
 
-    private struct GetRequest
+    public struct GetRequest
     {
       public string email;
       public DateTime start;
@@ -318,7 +315,7 @@ namespace Bnhp.Office365
       return ReadResult<Appointment>(requestID);
     }
 
-    private struct FindRequest
+    public struct FindRequest
     {
       public string email;
       public string UID;
@@ -399,7 +396,7 @@ namespace Bnhp.Office365
       return ReadResult<bool?>(requestID);
     }
 
-    private struct UpdateRequest
+    public struct UpdateRequest
     {
       public string email;
       public Appointment appointment;
@@ -540,7 +537,7 @@ namespace Bnhp.Office365
       return ReadResult<bool?>(requestID);
     }
 
-    private struct CancelRequest
+    public struct CancelRequest
     {
       public string email;
       public string UID;
@@ -620,7 +617,7 @@ namespace Bnhp.Office365
       return ReadResult<bool?>(requestID);
     }
 
-    private struct DeleteRequest
+    public struct DeleteRequest
     {
       public string email;
       public string UID;
@@ -695,7 +692,7 @@ namespace Bnhp.Office365
       return ReadResult<bool?>(requestID);
     }
 
-    private struct AcceptRequest
+    public struct AcceptRequest
     {
       public string email;
       public string UID;
@@ -770,7 +767,7 @@ namespace Bnhp.Office365
       return ReadResult<bool?>(requestID);
     }
 
-    private struct DeclineRequest
+    public struct DeclineRequest
     {
       public string email;
       public string UID;
