@@ -826,7 +826,9 @@ namespace Bnhp.Office365
 
       if (string.IsNullOrEmpty(ExchangeUrl))
       {
-        service.AutodiscoverUrl(ExchangeUserName, RedirectionUrlValidationCallback);
+        service.AutodiscoverUrl(
+          impersonatedUserId, 
+          RedirectionUrlValidationCallback);
 
         ExchangeUrl = service.Url.ToString();
       }
