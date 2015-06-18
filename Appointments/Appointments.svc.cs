@@ -808,8 +808,6 @@ namespace Bnhp.Office365
         ExchangeUserName ?? ConfigurationManager.AppSettings["ExchangeUserName"];
       ExchangePassword =
         ExchangePassword ?? ConfigurationManager.AppSettings["ExchangePassword"];
-      ExchangeUrl =
-        ExchangeUrl ?? ConfigurationManager.AppSettings["ExchangeUrl"];
       //-------------------------------------------------------------------
 
       service.Credentials =
@@ -824,17 +822,19 @@ namespace Bnhp.Office365
           impersonatedUserId);
       }
 
-      if (string.IsNullOrEmpty(ExchangeUrl))
+      var url = GetServiceUrl(impersonatedUserId);
+
+      if (url == null)
       {
         service.AutodiscoverUrl(
           impersonatedUserId, 
           RedirectionUrlValidationCallback);
 
-        ExchangeUrl = service.Url.ToString();
+        SaveServiceUrl(impersonatedUserId, service.Url.ToString());
       }
       else
       {
-        service.Url = new Uri(ExchangeUrl);
+        service.Url = new Uri(url);
       }
 
       return service;
@@ -1108,6 +1108,43 @@ namespace Bnhp.Office365
         }
 
         return FromXmlString<T>(item.Response);
+      }
+    }
+
+    private static string GetServiceUrl(string email)
+    {
+      using (var model = new EWSQueueEntities())
+      {
+        return model.MailboxAffinities.
+          Where(item => item.Mailbox == email).
+          Select(item => item.ExternalEwsUrl).
+          FirstOrDefault();
+      }
+    }
+
+    private static void SaveServiceUrl(string email, string url)
+    {
+      using (var model = new EWSQueueEntities())
+      {
+        var affinity = model.MailboxAffinities.
+          Where(item => item.Mailbox == email).
+          FirstOrDefault();
+
+        if (affinity == null)
+        {
+          model.MailboxAffinities.Add(
+            new MailboxAffinity
+            {
+              Mailbox = email,
+              ExternalEwsUrl = url
+            });
+        }
+        else
+        {
+          affinity.ExternalEwsUrl = url;
+        }
+
+        model.SaveChanges();
       }
     }
 
