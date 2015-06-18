@@ -135,6 +135,9 @@
     <Compile Include="Queue.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
+    <Compile Include="IResponseNotifier.cs" />
+    <Compile Include="ResponseNotifier.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="WcfServiceFactory.cs" />
   </ItemGroup>
   <ItemGroup>

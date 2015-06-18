@@ -1,28 +1,40 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.IO;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.ServiceModel;
-using System.ServiceModel.Web;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Xml;
-using Microsoft.Exchange.WebServices.Data;
-using Multiconn.Experanto.Serializer;
-using MSOffice365 = Microsoft.Exchange.WebServices.Data;
-using Threading = System.Threading.Tasks;
-
-namespace Bnhp.Office365
+﻿namespace Bnhp.Office365
 {
+  using System;
+  using System.Collections.Generic;
+  using System.Configuration;
+  using System.IO;
+  using System.Linq;
+  using System.Runtime.Serialization;
+  using System.ServiceModel;
+  using System.ServiceModel.Web;
+  using System.Text;
+  using System.Text.RegularExpressions;
+  using System.Threading.Tasks;
+  using System.Xml;
+  using Multiconn.Experanto.Serializer;
+  using Microsoft.Practices.Unity;
+
+  using Office365 = Microsoft.Exchange.WebServices.Data;
+  
   /// <summary>
   /// An implementation of IAppointments interface for CRUD operations with
   /// appointments for Office365.
   /// </summary>
   public class Appointments : IAppointments
   {
+    /// <summary>
+    /// A settings instance.
+    /// </summary>
+    [Dependency]
+    public Settings Settings { get; set; }
+
+    /// <summary>
+    /// A response notifier.
+    /// </summary>
+    [Dependency]
+    public IResponseNotifier ResponseNotifier { get; set; }
+
     #region Create method
     /// <summary>
     /// Creates a new appointment/meeting and sends notifications to attendees.
@@ -76,7 +88,7 @@ namespace Bnhp.Office365
       }
       
       var service = GetService(request.email);
-      var meeting = new MSOffice365.Appointment(service);
+      var meeting = new Office365.Appointment(service);
       var appointment = request.appointment;
 
       // Set the properties on the meeting object to create the meeting.
@@ -84,9 +96,9 @@ namespace Bnhp.Office365
 
       if (!string.IsNullOrEmpty(appointment.Message))
       {
-        meeting.Body = new MSOffice365.MessageBody(
+        meeting.Body = new Office365.MessageBody(
           IsHtml.IsMatch(appointment.Message) ?
-            MSOffice365.BodyType.HTML : MSOffice365.BodyType.Text,
+            Office365.BodyType.HTML : Office365.BodyType.Text,
           appointment.Message);
       }
 
@@ -94,7 +106,7 @@ namespace Bnhp.Office365
       meeting.End = appointment.End.GetValueOrDefault(DateTime.Now.AddHours(1));
       meeting.Location = appointment.Location;
       meeting.AllowNewTimeProposal = true;
-      meeting.Importance = MSOffice365.Importance.Normal;
+      meeting.Importance = Office365.Importance.Normal;
       meeting.ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart;
 
       var IsRecurring = (appointment.RecurrenceType != RecurrenceType.Once);
@@ -109,7 +121,7 @@ namespace Bnhp.Office365
         {
           case RecurrenceType.Dayly:
           {
-            meeting.Recurrence = new MSOffice365.Recurrence.DailyPattern(
+            meeting.Recurrence = new Office365.Recurrence.DailyPattern(
               start,
               appointment.RecurrenceInterval);
 
@@ -117,16 +129,16 @@ namespace Bnhp.Office365
           }
           case RecurrenceType.Weekly:
           {
-            meeting.Recurrence = new MSOffice365.Recurrence.WeeklyPattern(
+            meeting.Recurrence = new Office365.Recurrence.WeeklyPattern(
               start,
               appointment.RecurrenceInterval,
-              (MSOffice365.DayOfTheWeek)start.DayOfWeek);
+              (Office365.DayOfTheWeek)start.DayOfWeek);
 
             break;
           }
           case RecurrenceType.Monthly:
           {
-            meeting.Recurrence = new MSOffice365.Recurrence.MonthlyPattern(
+            meeting.Recurrence = new Office365.Recurrence.MonthlyPattern(
               start,
               appointment.RecurrenceInterval,
               start.Day);
@@ -136,9 +148,9 @@ namespace Bnhp.Office365
           case RecurrenceType.Yearly:
           {
             meeting.Recurrence =
-              new MSOffice365.Recurrence.YearlyPattern(
+              new Office365.Recurrence.YearlyPattern(
                 start,
-                (MSOffice365.Month)start.Month,
+                (Office365.Month)start.Month,
                 start.Day);
 
             break;
@@ -161,7 +173,7 @@ namespace Bnhp.Office365
       //meeting.OptionalAttendees.Add("Magdalena.Kemp@contoso.com");
 
       // Send the meeting request
-      meeting.Save(MSOffice365.SendInvitationsMode.SendToAllAndSaveCopy);
+      meeting.Save(Office365.SendInvitationsMode.SendToAllAndSaveCopy);
 
       return meeting.ICalUid;
     }
@@ -231,17 +243,17 @@ namespace Bnhp.Office365
 
     private IEnumerable<Appointment> GetImpl(GetRequest request)
     {
-      MSOffice365.CalendarView view = new MSOffice365.CalendarView(
+      Office365.CalendarView view = new Office365.CalendarView(
         request.start,
         request.end.GetValueOrDefault(DateTime.Now),
         request.maxResults.GetValueOrDefault(int.MaxValue - 1));
 
       // Item searches do not support Deep traversal.
-      view.Traversal = MSOffice365.ItemTraversal.Shallow;
+      view.Traversal = Office365.ItemTraversal.Shallow;
 
       var service = GetService(request.email);
       var appointments = service.FindAppointments(
-        MSOffice365.WellKnownFolderName.Calendar,
+        Office365.WellKnownFolderName.Calendar,
         view);
 
       var result = new List<Appointment>();
@@ -415,7 +427,7 @@ namespace Bnhp.Office365
 
       // Note: only organizer may update the appointment.
       if ((item != null) &&
-        (item.MyResponseType == MSOffice365.MeetingResponseType.Organizer))
+        (item.MyResponseType == Office365.MeetingResponseType.Organizer))
       {
         var duration = item.End - item.Start;
 
@@ -465,10 +477,10 @@ namespace Bnhp.Office365
         // This can convert an appointment into a meeting. To avoid this,
         // explicitly set SendToNone on non-meetings.
         var mode = item.IsMeeting ?
-          MSOffice365.SendInvitationsOrCancellationsMode.SendToAllAndSaveCopy :
-          MSOffice365.SendInvitationsOrCancellationsMode.SendToNone;
+          Office365.SendInvitationsOrCancellationsMode.SendToAllAndSaveCopy :
+          Office365.SendInvitationsOrCancellationsMode.SendToNone;
 
-        item.Update(MSOffice365.ConflictResolutionMode.AlwaysOverwrite, mode);
+        item.Update(Office365.ConflictResolutionMode.AlwaysOverwrite, mode);
 
         return true;
       }
@@ -629,7 +641,7 @@ namespace Bnhp.Office365
 
       if (appointment != null)
       {
-        appointment.Delete(MSOffice365.DeleteMode.MoveToDeletedItems, true);
+        appointment.Delete(Office365.DeleteMode.MoveToDeletedItems, true);
 
         return true;
       }
@@ -793,32 +805,26 @@ namespace Bnhp.Office365
     /// Gets a service instance.
     /// </summary>
     /// <returns>a ExchangeService instance.</returns>
-    private ExchangeService GetService(string impersonatedUserId)
+    private Office365.ExchangeService GetService(string impersonatedUserId)
     {
       if (impersonatedUserId == null)
       {
         throw new ArgumentNullException("impersonatedUserId");
       }
 
-      var service =
-        new ExchangeService(ExchangeVersion.Exchange2013);
+      var service = new Office365.ExchangeService(
+        Office365.ExchangeVersion.Exchange2013);
 
-      //---------------- TODO: replace with service account ----------------------------
-      ExchangeUserName =
-        ExchangeUserName ?? ConfigurationManager.AppSettings["ExchangeUserName"];
-      ExchangePassword =
-        ExchangePassword ?? ConfigurationManager.AppSettings["ExchangePassword"];
-      //-------------------------------------------------------------------
-
-      service.Credentials =
-        new MSOffice365.WebCredentials(ExchangeUserName, ExchangePassword);
+      service.Credentials = new Office365.WebCredentials(
+        Settings.ExchangeUserName, 
+        Settings.ExchangePassword);
       service.UseDefaultCredentials = false;
       service.PreAuthenticate = true;
 
-      if (ExchangeUserName != impersonatedUserId)
+      if (Settings.ExchangeUserName != impersonatedUserId)
       {
-        service.ImpersonatedUserId = new MSOffice365.ImpersonatedUserId(
-          MSOffice365.ConnectingIdType.SmtpAddress,
+        service.ImpersonatedUserId = new Office365.ImpersonatedUserId(
+          Office365.ConnectingIdType.SmtpAddress,
           impersonatedUserId);
       }
 
@@ -855,35 +861,35 @@ namespace Bnhp.Office365
     /// <returns>
     /// an Appointment instance or null when the appointment was not found.
     /// </returns>
-    private MSOffice365.Appointment GetAppointment(string email, string UID)
+    private Office365.Appointment GetAppointment(string email, string UID)
     {
-      var property = new MSOffice365.ExtendedPropertyDefinition(
-        MSOffice365.DefaultExtendedPropertySet.Meeting,
+      var property = new Office365.ExtendedPropertyDefinition(
+        Office365.DefaultExtendedPropertySet.Meeting,
         0x23,
-        MSOffice365.MapiPropertyType.Binary);
+        Office365.MapiPropertyType.Binary);
       var value =
         Convert.ToBase64String(HexEncoder.HexStringToArray(UID));
-      var filter = new MSOffice365.SearchFilter.IsEqualTo(property, value);
+      var filter = new Office365.SearchFilter.IsEqualTo(property, value);
 
-      MSOffice365.ItemView view = new MSOffice365.ItemView(1);
+      Office365.ItemView view = new Office365.ItemView(1);
 
-      view.Traversal = MSOffice365.ItemTraversal.Shallow;
+      view.Traversal = Office365.ItemTraversal.Shallow;
 
       var service = GetService(email);
       var appointments = service.FindItems(
-        MSOffice365.WellKnownFolderName.Calendar,
+        Office365.WellKnownFolderName.Calendar,
         filter,
         view);
 
       if (appointments != null)
       {
-        return appointments.FirstOrDefault() as MSOffice365.Appointment;
+        return appointments.FirstOrDefault() as Office365.Appointment;
       }
 
       return null;
     }
 
-    private Appointment ConvertAppointment(MSOffice365.Appointment appointment)
+    private Appointment ConvertAppointment(Office365.Appointment appointment)
     {
       if (appointment == null)
       {
@@ -896,8 +902,8 @@ namespace Bnhp.Office365
           End = appointment.End,
           ID = appointment.Id.ToString(),
           IsMeeting = appointment.IsMeeting,
-          IsOrganizer = 
-            appointment.MyResponseType == MSOffice365.MeetingResponseType.Organizer,
+          IsOrganizer =
+            appointment.MyResponseType == Office365.MeetingResponseType.Organizer,
           IsRecurring = appointment.IsRecurring,
           Location = appointment.Location,
           ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart,
@@ -907,10 +913,10 @@ namespace Bnhp.Office365
           RecurrenceType = RecurrenceType.Once
         };
 
-      var message = null as TextBody;
+      var message = null as Office365.TextBody;
 
       if (appointment.TryGetProperty(
-        MSOffice365.AppointmentSchema.TextBody,
+        Office365.AppointmentSchema.TextBody,
         out message))
       {
         proxy.Message = message.ToString();
@@ -918,10 +924,10 @@ namespace Bnhp.Office365
 
       proxy.Attendees = new List<string>();
 
-      var attendees = null as AttendeeCollection;
+      var attendees = null as Office365.AttendeeCollection;
 
       if (appointment.TryGetProperty(
-        MSOffice365.AppointmentSchema.RequiredAttendees,
+        Office365.AppointmentSchema.RequiredAttendees,
         out attendees))
       {
         foreach (var attendee in attendees)
@@ -932,29 +938,29 @@ namespace Bnhp.Office365
 
       if (proxy.IsRecurring)
       {
-        if (appointment.Recurrence is MSOffice365.Recurrence.DailyPattern)
+        if (appointment.Recurrence is Office365.Recurrence.DailyPattern)
         {
           proxy.RecurrenceType = RecurrenceType.Dayly;
           proxy.RecurrenceInterval =
-            ((MSOffice365.Recurrence.DailyPattern)appointment.Recurrence).Interval;
+            ((Office365.Recurrence.DailyPattern)appointment.Recurrence).Interval;
         }
-        else if (appointment.Recurrence is MSOffice365.Recurrence.WeeklyPattern)
+        else if (appointment.Recurrence is Office365.Recurrence.WeeklyPattern)
         {
           proxy.RecurrenceType = RecurrenceType.Weekly;
           proxy.RecurrenceInterval =
-            ((MSOffice365.Recurrence.WeeklyPattern)appointment.Recurrence).Interval;
+            ((Office365.Recurrence.WeeklyPattern)appointment.Recurrence).Interval;
         }
-        else if (appointment.Recurrence is MSOffice365.Recurrence.MonthlyPattern)
+        else if (appointment.Recurrence is Office365.Recurrence.MonthlyPattern)
         {
           proxy.RecurrenceType = RecurrenceType.Monthly;
           proxy.RecurrenceInterval =
-            ((MSOffice365.Recurrence.MonthlyPattern)appointment.Recurrence).Interval;
+            ((Office365.Recurrence.MonthlyPattern)appointment.Recurrence).Interval;
         }
-        else if (appointment.Recurrence is MSOffice365.Recurrence.YearlyPattern)
+        else if (appointment.Recurrence is Office365.Recurrence.YearlyPattern)
         {
           proxy.RecurrenceType = RecurrenceType.Yearly;
           proxy.RecurrenceInterval =
-            (int)((MSOffice365.Recurrence.YearlyPattern)appointment.Recurrence).Month;
+            (int)((Office365.Recurrence.YearlyPattern)appointment.Recurrence).Month;
         }
 
         proxy.StartRecurrence = appointment.Recurrence.StartDate;
@@ -967,65 +973,68 @@ namespace Bnhp.Office365
     private O Call<I, O>(string actionName, I request, Func<I, O> action)
     {
       var requestID = StoreRequest(actionName, request);
+      var response = default(O);
+      var error = null as Exception;
 
       try
       {
-        var result = action(request);
-
-        StoreResult(requestID, result);
-
-        return result;
+        response = action(request);
+        error = StoreResult(requestID, response);
       }
-      catch (Exception e)
+      catch(Exception e)
       {
+        error = e;
         StoreError(requestID, e);
 
         throw e;
       }
+      finally
+      {
+        Notify(requestID, request, response, error);
+      }
+
+      return response;
     }
 
     private long CallAsync<I, O>(string actionName, I request, Func<I, O> action)
     {
       var requestID = StoreRequest(actionName, request);
 
-      Threading.Task.Factory.StartNew(
+      Task.Factory.StartNew(
         () =>
         {
+          var response = default(O);
+          var error = null as Exception;
+
           try
           {
-            StoreResult(requestID, action(request));
+            response = action(request);
+            error = StoreResult(requestID, response);
           }
-          catch (Exception e)
+          catch(Exception e)
           {
+            error = e;
             StoreError(requestID, e);
+          }
+          finally
+          {
+            Notify(requestID, request, response, error);
           }
         });
 
       return requestID;
     }
 
-    private static long StoreRequest<T>(string actionName, T request)
+    private long StoreRequest<T>(string actionName, T request)
     {
-      using (var model = new EWSQueueEntities())
+      using(var model = new EWSQueueEntities())
       {
-        var timeout = 2.0;
-        
-        try
-        {
-          timeout = 
-            double.Parse(ConfigurationManager.AppSettings["RequestTimeout"]);
-        }
-        catch
-        {
-          // use the default value, 2 mins.
-        }
-        
         var item = new Queue
         {
           Operation = actionName,
           Request = ToXmlString(request),
           CreatedAt = DateTime.Now,
-          ExpiresAt = DateTime.Now.AddMinutes(timeout)
+          ExpiresAt = DateTime.Now.AddMinutes(Settings.RequestTimeout)
         };
 
         model.Queues.Add(item);
@@ -1036,9 +1045,11 @@ namespace Bnhp.Office365
       }
     }
 
-    private static void StoreResult(long requestID, object result)
+    private Exception StoreResult<O>(long requestID, O result)
     {
-      using (var model = new EWSQueueEntities())
+      Exception error = null;
+
+      using(var model = new EWSQueueEntities())
       {
         var item = model.Queues.
           Where(request => request.ID == requestID).
@@ -1050,9 +1061,10 @@ namespace Bnhp.Office365
           {
             if (item.ExpiresAt.Value < DateTime.Now)
             {
-              item.Error = ToXmlString(
-                new TimeoutException(
-                  "Operation " + item.Operation + " is timed out."));
+              error = new TimeoutException(
+                  "Operation " + item.Operation + " is timed out.");
+
+              item.Error = ToXmlString(error);
             }
           }
 
@@ -1061,11 +1073,13 @@ namespace Bnhp.Office365
           model.SaveChanges();
         }
       }
+
+      return error;
     }
 
-    private static void StoreError(long requestID, Exception error)
+    private void StoreError(long requestID, Exception error)
     {
-      using (var model = new EWSQueueEntities())
+      using(var model = new EWSQueueEntities())
       {
         var item = model.Queues.
           Where(request => request.ID == requestID).
@@ -1077,6 +1091,25 @@ namespace Bnhp.Office365
         }
 
         model.SaveChanges();
+      }
+    }
+
+    private void Notify<I, O>(
+      long requestID, 
+      I request, 
+      O response, 
+      Exception e)
+    {
+      if (ResponseNotifier != null)
+      {
+        try
+        {
+          ResponseNotifier.Notify(requestID, request, response, e);
+        }
+        catch
+        { 
+          // Notifier should not interrupt us.
+        }
       }
     }
 
@@ -1176,9 +1209,6 @@ namespace Bnhp.Office365
     #endregion
 
     #region private fields
-    private static string ExchangeUserName;
-    private static string ExchangePassword;
-    private static string ExchangeUrl;
     private static Regex IsHtml = new Regex(@"\<html\>.*\</html\>", 
       RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
     #endregion
