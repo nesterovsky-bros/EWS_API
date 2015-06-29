@@ -12,7 +12,7 @@ namespace Bnhp.Office365
   /// <summary>
   /// The interface-wrapper for CRUD operations for Office365 appointments.
   /// </summary>
-  [ServiceContract]
+  [ServiceContract(Namespace = "https://www.bankhapoalim.co.il/")]
   public interface IAppointments
   {
     /// <summary>

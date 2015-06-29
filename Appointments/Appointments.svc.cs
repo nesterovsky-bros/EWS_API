@@ -21,6 +21,7 @@
   /// An implementation of IAppointments interface for CRUD operations with
   /// appointments for Office365.
   /// </summary>
+  [ServiceBehavior(Namespace = "https://www.bankhapoalim.co.il/")]
   public class Appointments : IAppointments
   {
     /// <summary>
