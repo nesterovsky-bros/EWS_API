@@ -1,11 +1,18 @@
 namespace Bnhp.Office365
 {
-  using Microsoft.Practices.Unity;
+  using System;
   using System.Configuration;
+  using System.ServiceModel;
+  using Microsoft.Practices.Unity;
   using Unity.Wcf;
 
   public class WcfServiceFactory : UnityServiceHostFactory
   {
+    public ServiceHost Create<T>(params Uri[] baseAddresses)
+    {
+      return CreateServiceHost(typeof(T), baseAddresses);
+    }
+
     protected override void ConfigureContainer(IUnityContainer container)
     {
       // register all your components with the container here
