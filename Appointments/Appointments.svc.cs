@@ -801,6 +801,36 @@
     }
     #endregion
 
+    #region Notify method
+
+    public struct NotifyRequest
+    {
+      public string email;
+      public string UID;
+      public string changeType;
+    }
+
+    /// <summary>
+    /// Notifies about a change in a specified mail box.
+    /// </summary>
+    /// <param name="email">A mail box where change has occured.</param>
+    /// <param name="UID">An ID of item changed.</param>
+    /// <param name="changeType">A change type: delete, create, modify.</param>
+    [OperationContract]
+    public bool Notification(string email, string UID, string changeType)
+    {
+      return Call(
+        "Notify",
+        new NotifyRequest
+        {
+          email = email,
+          UID = UID,
+          changeType = changeType
+        },
+        request => true);
+    }
+    #endregion
+
     #region Private methods
     /// <summary>
     /// Gets a service instance.

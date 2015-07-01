@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?><Database Name="Database" Class="DatabaseDataContext" xmlns="http://schemas.microsoft.com/linqtosql/dbml/2007">
+  <Connection Mode="AppSettings" ConnectionString="Data Source=NADPC;Initial Catalog=Database;Integrated Security=True" SettingsObjectName="ConsoleApplication1.Properties.Settings" SettingsPropertyName="DatabaseConnectionString1" Provider="System.Data.SqlClient" />
+  <Table Name="dbo.BankSystems" Member="BankSystems">
+    <Type Name="BankSystem">
+      <Column Name="systemID" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="name" Type="System.String" DbType="NVarChar(50) NOT NULL" CanBeNull="false" />
+      <Column Name="userName" Type="System.String" DbType="NVarChar(20) NOT NULL" CanBeNull="false" />
+      <Column Name="description" Type="System.String" DbType="NVarChar(200)" CanBeNull="true" />
+      <Column Name="systemManagerId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Association Name="BankSystem_WorkTable" Member="WorkTables" ThisKey="systemID" OtherKey="systemId" Type="WorkTable" />
+      <Association Name="BankSystem_BankNotification" Member="BankNotifications" ThisKey="systemID" OtherKey="systemId" Type="BankNotification" />
+      <Association Name="SystemManager_BankSystem" Member="SystemManager" ThisKey="systemManagerId" OtherKey="systemManagerId" Type="SystemManager" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.WorkTable" Member="WorkTables">
+    <Type Name="WorkTable">
+      <Column Name="mailAddress" Type="System.String" DbType="NVarChar(100) NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="systemId" Type="System.Int32" DbType="Int NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="notifyOnNewMails" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="notifyOnNewAppointments" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Association Name="BankSystem_WorkTable" Member="BankSystem" ThisKey="systemId" OtherKey="systemID" Type="BankSystem" IsForeignKey="true" />
+      <Association Name="BankMailbox_WorkTable" Member="BankMailbox" ThisKey="mailAddress" OtherKey="mailAddress" Type="BankMailbox" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.SystemManagers" Member="SystemManagers">
+    <Type Name="SystemManager">
+      <Column Name="systemManagerId" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="name" Type="System.String" DbType="NVarChar(200) NOT NULL" CanBeNull="false" />
+      <Column Name="phone" Type="System.String" DbType="NVarChar(12)" CanBeNull="true" />
+      <Column Name="mail" Type="System.String" DbType="NVarChar(50)" CanBeNull="true" />
+      <Association Name="SystemManager_BankSystem" Member="BankSystems" ThisKey="systemManagerId" OtherKey="systemManagerId" Type="BankSystem" />
+    </Type>
+  </Table>
+  <Table Name="dbo.BankMailboxes" Member="BankMailboxes">
+    <Type Name="BankMailbox">
+      <Column Name="mailAddress" Type="System.String" DbType="NVarChar(100) NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="userName" Type="System.String" DbType="NVarChar(20) NOT NULL" CanBeNull="false" />
+      <Column Name="groupingInformation" Type="System.String" DbType="NVarChar(MAX)" CanBeNull="true" />
+      <Column Name="notifyOnNewMails" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="notifyOnNewAppointments" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="ewsUrl" Type="System.String" DbType="NVarChar(MAX)" CanBeNull="true" />
+      <Column Name="calendarSyncStatus" Type="System.String" DbType="NVarChar(MAX)" CanBeNull="true" />
+      <Column Name="inboxSyncStatus" Type="System.String" DbType="NVarChar(MAX)" CanBeNull="true" />
+      <Column Name="managingServer" Type="System.String" DbType="NVarChar(100)" CanBeNull="true" />
+      <Association Name="BankMailbox_WorkTable" Member="WorkTables" ThisKey="mailAddress" OtherKey="mailAddress" Type="WorkTable" />
+      <Association Name="BankMailbox_BankNotification" Member="BankNotifications" ThisKey="mailAddress" OtherKey="mailAddress" Type="BankNotification" />
+    </Type>
+  </Table>
+  <Table Name="dbo.BankNotifications" Member="BankNotifications">
+    <Type Name="BankNotification">
+      <Column Name="itemId" Type="System.Int32" DbType="Int NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="systemId" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="mailAddress" Type="System.String" DbType="NVarChar(100) NOT NULL" CanBeNull="false" />
+      <Association Name="BankMailbox_BankNotification" Member="BankMailbox" ThisKey="mailAddress" OtherKey="mailAddress" Type="BankMailbox" IsForeignKey="true" />
+      <Association Name="BankSystem_BankNotification" Member="BankSystem" ThisKey="systemId" OtherKey="systemID" Type="BankSystem" IsForeignKey="true" />
+    </Type>
+  </Table>
+</Database>

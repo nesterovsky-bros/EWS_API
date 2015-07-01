@@ -14,6 +14,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Appointments", "Appointment
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bnhp.RunitChanel", "Bnhp.RunitChannel\Bnhp.RunitChanel.csproj", "{FF1FD4DD-3347-422C-9A82-4710403C7CAA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EWSSubscription", "EWSSubscription\EWSSubscription.csproj", "{B625B345-2EEA-49F0-907A-A27A753185DD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,6 +30,10 @@ Global
 		{FF1FD4DD-3347-422C-9A82-4710403C7CAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF1FD4DD-3347-422C-9A82-4710403C7CAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FF1FD4DD-3347-422C-9A82-4710403C7CAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B625B345-2EEA-49F0-907A-A27A753185DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B625B345-2EEA-49F0-907A-A27A753185DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B625B345-2EEA-49F0-907A-A27A753185DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B625B345-2EEA-49F0-907A-A27A753185DD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

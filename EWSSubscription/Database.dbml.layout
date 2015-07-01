@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ordesignerObjectsDiagram dslVersion="1.0.0.0" absoluteBounds="0, 0, 11, 8.5" name="Database">
+  <DataContextMoniker Name="/DatabaseDataContext" />
+  <nestedChildShapes>
+    <classShape Id="72842488-fced-4ace-87b0-08374e618e39" absoluteBounds="0.875, 1.625, 2, 1.7708968098958331">
+      <DataClassMoniker Name="/DatabaseDataContext/BankSystem" />
+      <nestedChildShapes>
+        <elementListCompartment Id="fa2eafbe-dc06-4271-8a2e-edae5d0b1c3f" absoluteBounds="0.89, 2.085, 1.9700000000000002, 1.2108968098958333" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <classShape Id="04b300d7-b4d2-44d3-99a3-039bc107dbfa" absoluteBounds="3.25, 1.875, 2, 1.5785953776041666">
+      <DataClassMoniker Name="/DatabaseDataContext/WorkTable" />
+      <nestedChildShapes>
+        <elementListCompartment Id="e9881f06-31ec-41e0-8192-c89fcb70ca1e" absoluteBounds="3.265, 2.335, 1.9700000000000002, 1.0185953776041665" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <associationConnector edgePoints="[(2.875 : 2.63544840494792); (3.25 : 2.63544840494792)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <AssociationMoniker Name="/DatabaseDataContext/BankSystem/BankSystem_WorkTable" />
+      <nodes>
+        <classShapeMoniker Id="72842488-fced-4ace-87b0-08374e618e39" />
+        <classShapeMoniker Id="04b300d7-b4d2-44d3-99a3-039bc107dbfa" />
+      </nodes>
+    </associationConnector>
+    <classShape Id="8a1887d5-62d9-4afc-b2c9-0f88c4c83c5c" absoluteBounds="0.75, 4.75, 2, 1.5785953776041666">
+      <DataClassMoniker Name="/DatabaseDataContext/SystemManager" />
+      <nestedChildShapes>
+        <elementListCompartment Id="fcf17c31-a157-4ce3-909a-c208fc78849e" absoluteBounds="0.76500000000000012, 5.21, 1.9700000000000002, 1.0185953776041665" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <associationConnector edgePoints="[(1.8125 : 4.75); (1.8125 : 3.39589680989583)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <AssociationMoniker Name="/DatabaseDataContext/SystemManager/SystemManager_BankSystem" />
+      <nodes>
+        <classShapeMoniker Id="8a1887d5-62d9-4afc-b2c9-0f88c4c83c5c" />
+        <classShapeMoniker Id="72842488-fced-4ace-87b0-08374e618e39" />
+      </nodes>
+    </associationConnector>
+    <classShape Id="8d34a0ad-6370-4736-a34e-ec24dc45aeeb" absoluteBounds="5.75, 1.625, 2, 2.5401025390625">
+      <DataClassMoniker Name="/DatabaseDataContext/BankMailbox" />
+      <nestedChildShapes>
+        <elementListCompartment Id="e4503f72-84ba-4f87-aae9-b048ea8b3c03" absoluteBounds="5.765, 2.085, 1.9700000000000002, 1.9801025390625" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <associationConnector edgePoints="[(5.75 : 2.66429768880208); (5.25 : 2.66429768880208)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <AssociationMoniker Name="/DatabaseDataContext/BankMailbox/BankMailbox_WorkTable" />
+      <nodes>
+        <classShapeMoniker Id="8d34a0ad-6370-4736-a34e-ec24dc45aeeb" />
+        <classShapeMoniker Id="04b300d7-b4d2-44d3-99a3-039bc107dbfa" />
+      </nodes>
+    </associationConnector>
+    <classShape Id="99680eca-7910-49be-868d-c80975892fea" absoluteBounds="5.125, 4.75, 2, 1.3862939453125">
+      <DataClassMoniker Name="/DatabaseDataContext/BankNotification" />
+      <nestedChildShapes>
+        <elementListCompartment Id="e34b2af0-49c0-4462-861a-1b808b8c4a49" absoluteBounds="5.14, 5.21, 1.9700000000000002, 0.8262939453125" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <associationConnector edgePoints="[(6.4375 : 4.1651025390625); (6.4375 : 4.75)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <AssociationMoniker Name="/DatabaseDataContext/BankMailbox/BankMailbox_BankNotification" />
+      <nodes>
+        <classShapeMoniker Id="8d34a0ad-6370-4736-a34e-ec24dc45aeeb" />
+        <classShapeMoniker Id="99680eca-7910-49be-868d-c80975892fea" />
+      </nodes>
+    </associationConnector>
+    <associationConnector edgePoints="[(2.875 : 3.39589680989583); (3.25 : 3.77089680989583); (3.25 : 5.44314697265625); (5.125 : 5.44314697265625)]" fixedFrom="NotFixed" fixedTo="Algorithm">
+      <AssociationMoniker Name="/DatabaseDataContext/BankSystem/BankSystem_BankNotification" />
+      <nodes>
+        <classShapeMoniker Id="72842488-fced-4ace-87b0-08374e618e39" />
+        <classShapeMoniker Id="99680eca-7910-49be-868d-c80975892fea" />
+      </nodes>
+    </associationConnector>
+  </nestedChildShapes>
+</ordesignerObjectsDiagram>

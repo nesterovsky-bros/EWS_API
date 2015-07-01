@@ -316,5 +316,14 @@ namespace Bnhp.Office365
     /// </returns>
     [OperationContract]
     bool? DeclineEnd(long requestID);
+
+    /// <summary>
+    /// Notifies about a change in a specified mail box.
+    /// </summary>
+    /// <param name="email">A mail box where change has occured.</param>
+    /// <param name="UID">An ID of item changed.</param>
+    /// <param name="changeType">A change type: delete, create, modify.</param>
+    [OperationContract]
+    bool Notification(string email, string UID, string changeType);
   }
 }
