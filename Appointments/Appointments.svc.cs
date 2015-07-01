@@ -898,21 +898,21 @@
       }
 
       var proxy = new Appointment
-        {
-          DisplayTo = appointment.DisplayTo,
-          End = appointment.End,
-          ID = appointment.Id.ToString(),
-          IsMeeting = appointment.IsMeeting,
-          IsOrganizer =
-            appointment.MyResponseType == Office365.MeetingResponseType.Organizer,
-          IsRecurring = appointment.IsRecurring,
-          Location = appointment.Location,
-          ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart,
-          Start = appointment.Start,
-          Subject = appointment.Subject,
-          UID = appointment.ICalUid,
-          RecurrenceType = RecurrenceType.Once
-        };
+      {
+        DisplayTo = appointment.DisplayTo,
+        End = appointment.End,
+        ID = appointment.Id.ToString(),
+        IsMeeting = appointment.IsMeeting,
+        IsOrganizer =
+          appointment.MyResponseType == Office365.MeetingResponseType.Organizer,
+        IsRecurring = appointment.IsRecurring,
+        Location = appointment.Location,
+        ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart,
+        Start = appointment.Start,
+        Subject = appointment.Subject,
+        UID = appointment.ICalUid,
+        RecurrenceType = RecurrenceType.Once
+      };
 
       var message = null as Office365.TextBody;
 

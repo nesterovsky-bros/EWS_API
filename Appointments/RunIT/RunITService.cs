@@ -13,6 +13,7 @@
   using BNHP.HT.RunIT.Interfaces;
   
   using Bnhp.Office365.RunIT.Operations;
+  using Microsoft.Practices.Unity;
 
   /// <summary>
   /// An entry point for RunIT API.
@@ -20,6 +21,14 @@
   /// <seealso cref="https://msdn.microsoft.com/en-us/library/microsoft.exchange.webservices.data.appointment_properties(v=exchg.80).aspx"/>
   public class RunITService : RequestReplyBeanBase
   {
+    /// <summary>
+    /// Creates RunIT service.
+    /// </summary>
+    public RunITService() 
+    {
+      WcfServiceFactory.Configure(container);
+    }
+
     /* 
      * A request example:
      
@@ -170,10 +179,11 @@
       return (T)serializer.ReadObject(XmlReader.Create(reader));
     }
 
-    private static Appointments GetService()
+    private IAppointments GetService()
     {
-      // TODO:
-      return new Appointments();
+      return container.Resolve<IAppointments>();
     }
+
+    private UnityContainer container = new UnityContainer();
   }
 }

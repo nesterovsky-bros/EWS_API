@@ -15,18 +15,18 @@ namespace Bnhp.Office365
 
     protected override void ConfigureContainer(IUnityContainer container)
     {
-      // register all your components with the container here
-      // container
-      //    .RegisterType<IService1, Service1>()
-      //    .RegisterType<DataContext>(new HierarchicalLifetimeManager());
+      Configure(container);
+    }
 
+    public static void Configure(IUnityContainer container)
+    {
       var settings = new Settings
       {
-        ExchangeUserName = 
+        ExchangeUserName =
           ConfigurationManager.AppSettings["ExchangeUserName"],
-        ExchangePassword = 
+        ExchangePassword =
           ConfigurationManager.AppSettings["ExchangePassword"],
-        RequestTimeout = 
+        RequestTimeout =
           double.Parse(ConfigurationManager.AppSettings["RequestTimeout"])
       };
 
