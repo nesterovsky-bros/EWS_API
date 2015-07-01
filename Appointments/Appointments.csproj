@@ -141,6 +141,7 @@
     </Compile>
     <Compile Include="IResponseNotifier.cs" />
     <Compile Include="ResponseNotifier.cs" />
+    <Compile Include="RunitService.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="WcfServiceFactory.cs" />
   </ItemGroup>
@@ -172,6 +173,12 @@
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Bnhp.RunitChannel\Bnhp.RunitChanel.csproj">
+      <Project>{ff1fd4dd-3347-422c-9a82-4710403c7caa}</Project>
+      <Name>Bnhp.RunitChanel</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
