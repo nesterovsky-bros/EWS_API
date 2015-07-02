@@ -816,7 +816,6 @@
     /// <param name="email">A mail box where change has occured.</param>
     /// <param name="UID">An ID of item changed.</param>
     /// <param name="changeType">A change type: delete, create, modify.</param>
-    [OperationContract]
     public bool Notification(string email, string UID, string changeType)
     {
       return Call(
