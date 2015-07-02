@@ -1,3 +1,4 @@
-﻿<%@ ServiceHost Language="C#" Debug="true" Service="Bnhp.Office365.Appointments" 
+﻿<%@ ServiceHost Language="C#" Debug="true" 
+  Service="Bnhp.Office365.Appointments" 
   CodeBehind="Appointments.svc.cs" 
   Factory="Bnhp.Office365.WcfServiceFactory"%>

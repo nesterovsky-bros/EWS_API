@@ -27,7 +27,11 @@ namespace Bnhp.Office365
         ExchangePassword =
           ConfigurationManager.AppSettings["ExchangePassword"],
         RequestTimeout =
-          double.Parse(ConfigurationManager.AppSettings["RequestTimeout"])
+          double.Parse(ConfigurationManager.AppSettings["RequestTimeout"]),
+        AutoDiscoveryUrl =
+          ConfigurationManager.AppSettings["AutoDiscoveryUrl"],
+        AttemptsToDiscoverUrl =
+          int.Parse(ConfigurationManager.AppSettings["AttemptsToDiscoverUrl"])
       };
 
       container.

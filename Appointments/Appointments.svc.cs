@@ -16,6 +16,8 @@
   using Microsoft.Practices.Unity;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
+  using Microsoft.Exchange.WebServices.Autodiscover;
+  using System.Threading;
   
   /// <summary>
   /// An implementation of IAppointments interface for CRUD operations with
@@ -863,18 +865,84 @@
 
       if (url == null)
       {
-        service.AutodiscoverUrl(
-          impersonatedUserId, 
-          RedirectionUrlValidationCallback);
+        var autodiscoverService = new AutodiscoverService();
+        autodiscoverService.Credentials = service.Credentials;
+        autodiscoverService.Url = new Uri(Settings.AutoDiscoveryUrl);
 
-        SaveServiceUrl(impersonatedUserId, service.Url.ToString());
+        var userInfo = GetUserSettings(
+          autodiscoverService, 
+          impersonatedUserId, 
+          Settings.AttemptsToDiscoverUrl, 
+          UserSettingName.GroupingInformation, 
+          UserSettingName.ExternalEwsUrl);
+
+        if (userInfo.ErrorCode == AutodiscoverErrorCode.InvalidUser)
+        {
+          throw new ArgumentException(
+            "The user " + impersonatedUserId + 
+            "was not found in Office 365.");
+        }
+        else
+        {
+          var groupInfo =
+            userInfo.Settings[UserSettingName.GroupingInformation] as string;
+          
+          url = userInfo.Settings[UserSettingName.ExternalEwsUrl] as string;
+
+          SaveServiceUrl(impersonatedUserId, url, groupInfo);
+        }
       }
-      else
-      {
-        service.Url = new Uri(url);
-      }
+
+      service.Url = new Uri(url);
 
       return service;
+    }
+
+    private GetUserSettingsResponse GetUserSettings(
+      AutodiscoverService service, 
+      string emailAddress, 
+      int maxHops, 
+      params UserSettingName[] settings)
+    {
+      Uri url = null;
+      GetUserSettingsResponse response = null;
+      
+      for (int attempt = 0; attempt < maxHops; attempt++)
+      {
+        service.Url = url;
+        service.EnableScpLookup = (attempt < 2);
+      
+        try
+        {
+          response = service.GetUserSettings(emailAddress, settings);
+        
+          if (response.ErrorCode == AutodiscoverErrorCode.RedirectAddress)
+          {
+            url = new Uri(response.RedirectTarget);
+          }
+          else if (response.ErrorCode == AutodiscoverErrorCode.RedirectUrl)
+          {
+            url = new Uri(response.RedirectTarget);
+          }
+          else
+          {
+            return response;
+          }
+        }
+        catch (Exception ex)
+        {
+          if (ex.Message == "The server is too busy to process the request.")
+          {
+            // The server is too busy to process the request waiting 30sec.
+            Thread.Sleep(30000);
+          
+            //try again until we get an answer!!!
+            return GetUserSettings(service, emailAddress, maxHops, settings);
+          }
+        }
+      }
+      
+      throw new Exception("No suitable Autodiscover endpoint was found.");
     }
 
     private bool RedirectionUrlValidationCallback(string url)
@@ -1186,7 +1254,7 @@
       }
     }
 
-    private static void SaveServiceUrl(string email, string url)
+    private static void SaveServiceUrl(string email, string url, string groupInfo = null)
     {
       using (var model = new EWSQueueEntities())
       {
@@ -1200,7 +1268,8 @@
             new MailboxAffinity
             {
               Mailbox = email,
-              ExternalEwsUrl = url
+              ExternalEwsUrl = url,
+              GroupingInformation = groupInfo
             });
         }
         else

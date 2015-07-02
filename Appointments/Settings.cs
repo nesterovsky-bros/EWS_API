@@ -5,5 +5,7 @@ namespace Bnhp.Office365
     public string ExchangeUserName { get; set; }
     public string ExchangePassword { get; set; }
     public double RequestTimeout { get; set; }
+    public string AutoDiscoveryUrl { get; set; }
+    public int AttemptsToDiscoverUrl { get; set; }
   }
 }
