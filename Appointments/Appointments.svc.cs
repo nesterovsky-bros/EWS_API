@@ -431,7 +431,7 @@
         throw new ArgumentNullException("request.appointment");
       }
 
-      var item = GetAppointment(request.email, appointment.UID);
+      var item = GetAppointment(request.email, appointment.ID);
 
       // Note: only organizer may update the appointment.
       if ((item != null) &&
@@ -1014,7 +1014,6 @@
         ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart,
         Start = appointment.Start,
         Subject = appointment.Subject,
-        UID = appointment.ICalUid,
         RecurrenceType = RecurrenceType.Once
       };
 
@@ -1027,6 +1026,13 @@
         proxy.Message = message.ToString();
       }
 
+      var UID = null as string;
+
+      if (appointment.TryGetProperty(AppointmentSchema.ICalUid, out UID))
+      {
+        proxy.UID = UID;
+      }
+      
       proxy.Attendees = new List<string>();
 
       var attendees = null as Office365.AttendeeCollection;
