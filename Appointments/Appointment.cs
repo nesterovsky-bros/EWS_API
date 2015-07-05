@@ -10,7 +10,7 @@ namespace Bnhp.Office365
   /// A proxy class for Office 365 appointment.
   /// </summary>
   /// <seealso cref="https://msdn.microsoft.com/en-us/library/microsoft.exchange.webservices.data.appointment_properties(v=exchg.80).aspx"/>
-  [DataContract(Namespace = "https://www.bankhapoalim.co.il/data")]
+  [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
   public class Appointment
   {
     /// <summary>
@@ -121,6 +121,7 @@ namespace Bnhp.Office365
   /// <summary>
   /// Defines recurrence pattern for the appointment.
   /// </summary>
+  [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
   public enum RecurrenceType
   {
     Once,
