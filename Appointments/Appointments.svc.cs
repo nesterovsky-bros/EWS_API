@@ -10,15 +10,16 @@
   using System.ServiceModel.Web;
   using System.Text;
   using System.Text.RegularExpressions;
-  using System.Threading.Tasks;
   using System.Xml;
+  using System.Threading;
   using Multiconn.Experanto.Serializer;
   using Microsoft.Practices.Unity;
+  using Microsoft.Exchange.WebServices.Autodiscover;
+  using Microsoft.Exchange.WebServices.Data;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
-  using Microsoft.Exchange.WebServices.Autodiscover;
-  using System.Threading;
-  
+  using Threading = System.Threading.Tasks;
+
   /// <summary>
   /// An implementation of IAppointments interface for CRUD operations with
   /// appointments for Office365.
@@ -89,8 +90,9 @@
       {
         throw new ArgumentNullException("request.appointment");
       }
-      
-      var service = GetService(request.email);
+
+      var email = request.email;
+      var service = GetService(email);
       var meeting = new Office365.Appointment(service);
       var appointment = request.appointment;
 
@@ -175,10 +177,13 @@
 
       //meeting.OptionalAttendees.Add("Magdalena.Kemp@contoso.com");
 
+      meeting.ICalUid = 
+        Guid.NewGuid().ToString() + email.Substring(email.IndexOf('@'));
+
       // Send the meeting request
       meeting.Save(Office365.SendInvitationsMode.SendToAllAndSaveCopy);
 
-      return meeting.ICalUid;
+      return meeting.Id.ToString();
     }
     #endregion
 
@@ -961,13 +966,15 @@
     /// </returns>
     private Office365.Appointment GetAppointment(string email, string UID)
     {
-      var property = new Office365.ExtendedPropertyDefinition(
-        Office365.DefaultExtendedPropertySet.Meeting,
-        0x23,
-        Office365.MapiPropertyType.Binary);
-      var value =
-        Convert.ToBase64String(HexEncoder.HexStringToArray(UID));
-      var filter = new Office365.SearchFilter.IsEqualTo(property, value);
+      //var property = new Office365.ExtendedPropertyDefinition(
+      //  Office365.DefaultExtendedPropertySet.Meeting,
+      //  0x23,
+      //  Office365.MapiPropertyType.Binary);
+      //var value =
+      //  Convert.ToBase64String(HexEncoder.HexStringToArray(UID));
+      //var filter = new Office365.SearchFilter.IsEqualTo(property, value);
+
+      var filter = new Office365.SearchFilter.IsEqualTo(ItemSchema.Id, UID);
 
       Office365.ItemView view = new Office365.ItemView(1);
 
@@ -1098,7 +1105,7 @@
     {
       var requestID = StoreRequest(actionName, request);
 
-      Task.Factory.StartNew(
+      Threading.Task.Factory.StartNew(
         () =>
         {
           var response = default(O);
