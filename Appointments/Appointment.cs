@@ -124,10 +124,15 @@ namespace Bnhp.Office365
   [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
   public enum RecurrenceType
   {
+    [EnumMember]
     Once,
+    [EnumMember]
     Dayly,
+    [EnumMember]
     Weekly,
+    [EnumMember]
     Monthly,
+    [EnumMember]
     Yearly
   }
 }
