@@ -5,6 +5,7 @@
   using System.Configuration;
   using System.IO;
   using System.Linq;
+  using System.Threading;
   using System.Runtime.Serialization;
   using System.ServiceModel;
   using System.ServiceModel.Web;
@@ -17,7 +18,6 @@
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
   using Microsoft.Exchange.WebServices.Autodiscover;
-  using System.Threading;
   
   /// <summary>
   /// An implementation of IAppointments interface for CRUD operations with
@@ -864,32 +864,17 @@
 
       if (url == null)
       {
-        var autodiscoverService = new AutodiscoverService();
-        autodiscoverService.Credentials = service.Credentials;
-        autodiscoverService.Url = new Uri(Settings.AutoDiscoveryUrl);
+        var userInfo = AutoDiscovery.GetUserSettings(
+          Settings.AutoDiscoveryUrl,
+          Settings.ExchangeUserName,
+          Settings.ExchangePassword,
+          Settings.AttemptsToDiscoverUrl,
+          impersonatedUserId).Result;
 
-        var userInfo = GetUserSettings(
-          autodiscoverService, 
+        SaveServiceUrl(
           impersonatedUserId, 
-          Settings.AttemptsToDiscoverUrl, 
-          UserSettingName.GroupingInformation, 
-          UserSettingName.ExternalEwsUrl);
-
-        if (userInfo.ErrorCode == AutodiscoverErrorCode.InvalidUser)
-        {
-          throw new ArgumentException(
-            "The user " + impersonatedUserId + 
-            "was not found in Office 365.");
-        }
-        else
-        {
-          var groupInfo =
-            userInfo.Settings[UserSettingName.GroupingInformation] as string;
-          
-          url = userInfo.Settings[UserSettingName.ExternalEwsUrl] as string;
-
-          SaveServiceUrl(impersonatedUserId, url, groupInfo);
-        }
+          userInfo.Settings[UserSettingName.ExternalEwsUrl] as string, 
+          userInfo.Settings[UserSettingName.GroupingInformation] as string);
       }
 
       service.Url = new Uri(url);

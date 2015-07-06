@@ -111,9 +111,20 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AutoDiscovery.cs" />
+    <Compile Include="EwsListener.cs" />
     <Compile Include="Appointment.cs" />
     <Compile Include="Appointments.svc.cs">
       <DependentUpon>Appointments.svc</DependentUpon>
+    </Compile>
+    <Compile Include="BankMailbox.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
+    <Compile Include="BankNotification.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
+    <Compile Include="BankSystem.cs">
+      <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="Cache.cs" />
     <Compile Include="HexEncoder.cs" />
@@ -155,7 +166,13 @@
     <Compile Include="RunIT\Operations\Create.cs" />
     <Compile Include="RunIT\RunITService.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="SystemManager.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
     <Compile Include="WcfServiceFactory.cs" />
+    <Compile Include="WorkTable.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />

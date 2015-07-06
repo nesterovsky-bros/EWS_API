@@ -36,6 +36,16 @@ public partial class EWSQueueEntities : DbContext
 
     public virtual DbSet<MailboxAffinity> MailboxAffinities { get; set; }
 
+    public virtual DbSet<BankMailbox> BankMailboxes { get; set; }
+
+    public virtual DbSet<BankNotification> BankNotifications { get; set; }
+
+    public virtual DbSet<BankSystem> BankSystems { get; set; }
+
+    public virtual DbSet<SystemManager> SystemManagers { get; set; }
+
+    public virtual DbSet<WorkTable> WorkTables { get; set; }
+
 }
 
 }

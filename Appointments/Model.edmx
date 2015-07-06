@@ -25,9 +25,145 @@
           <Property Name="CreatedAt" Type="datetime2" Precision="7" Nullable="false" />
           <Property Name="ExpiresAt" Type="datetime2" Precision="7" />
         </EntityType>
+        <EntityType Name="BankMailboxes">
+          <Key>
+            <PropertyRef Name="mailAddress" />
+          </Key>
+          <Property Name="mailAddress" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="userName" Type="nvarchar" MaxLength="20" Nullable="false" />
+          <Property Name="groupingInformation" Type="nvarchar(max)" />
+          <Property Name="notifyOnNewMails" Type="bit" Nullable="false" />
+          <Property Name="notifyOnNewAppointments" Type="bit" Nullable="false" />
+          <Property Name="ewsUrl" Type="nvarchar(max)" />
+          <Property Name="calendarSyncStatus" Type="nvarchar(max)" />
+          <Property Name="inboxSyncStatus" Type="nvarchar(max)" />
+          <Property Name="managingServer" Type="nvarchar" MaxLength="100" />
+        </EntityType>
+        <EntityType Name="BankNotifications">
+          <Key>
+            <PropertyRef Name="itemId" />
+          </Key>
+          <Property Name="itemId" Type="int" Nullable="false" />
+          <Property Name="systemId" Type="int" Nullable="false" />
+          <Property Name="mailAddress" Type="nvarchar" MaxLength="100" Nullable="false" />
+        </EntityType>
+        <EntityType Name="BankSystems">
+          <Key>
+            <PropertyRef Name="systemID" />
+          </Key>
+          <Property Name="systemID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="name" Type="nvarchar" MaxLength="50" Nullable="false" />
+          <Property Name="userName" Type="nvarchar" MaxLength="20" Nullable="false" />
+          <Property Name="description" Type="nvarchar" MaxLength="200" />
+          <Property Name="systemManagerId" Type="int" Nullable="false" />
+        </EntityType>
+        <EntityType Name="SystemManagers">
+          <Key>
+            <PropertyRef Name="systemManagerId" />
+          </Key>
+          <Property Name="systemManagerId" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="name" Type="nvarchar" MaxLength="200" Nullable="false" />
+          <Property Name="phone" Type="nvarchar" MaxLength="12" />
+          <Property Name="mail" Type="nvarchar" MaxLength="50" />
+        </EntityType>
+        <EntityType Name="WorkTable">
+          <Key>
+            <PropertyRef Name="mailAddress" />
+            <PropertyRef Name="systemId" />
+          </Key>
+          <Property Name="mailAddress" Type="nvarchar" MaxLength="100" Nullable="false" />
+          <Property Name="systemId" Type="int" Nullable="false" />
+          <Property Name="notifyOnNewMails" Type="bit" Nullable="false" />
+          <Property Name="notifyOnNewAppointments" Type="bit" Nullable="false" />
+        </EntityType>
+        <Association Name="FK_Notifications_Mailboxes">
+          <End Role="BankMailboxes" Type="Self.BankMailboxes" Multiplicity="1" />
+          <End Role="BankNotifications" Type="Self.BankNotifications" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="BankMailboxes">
+              <PropertyRef Name="mailAddress" />
+            </Principal>
+            <Dependent Role="BankNotifications">
+              <PropertyRef Name="mailAddress" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Notifications_Systems">
+          <End Role="BankSystems" Type="Self.BankSystems" Multiplicity="1" />
+          <End Role="BankNotifications" Type="Self.BankNotifications" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="BankSystems">
+              <PropertyRef Name="systemID" />
+            </Principal>
+            <Dependent Role="BankNotifications">
+              <PropertyRef Name="systemId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Systems_SystemManagers">
+          <End Role="SystemManagers" Type="Self.SystemManagers" Multiplicity="1" />
+          <End Role="BankSystems" Type="Self.BankSystems" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="SystemManagers">
+              <PropertyRef Name="systemManagerId" />
+            </Principal>
+            <Dependent Role="BankSystems">
+              <PropertyRef Name="systemManagerId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_WorkTable_Mailboxes">
+          <End Role="BankMailboxes" Type="Self.BankMailboxes" Multiplicity="1" />
+          <End Role="WorkTable" Type="Self.WorkTable" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="BankMailboxes">
+              <PropertyRef Name="mailAddress" />
+            </Principal>
+            <Dependent Role="WorkTable">
+              <PropertyRef Name="mailAddress" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_WorkTable_Systems">
+          <End Role="BankSystems" Type="Self.BankSystems" Multiplicity="1" />
+          <End Role="WorkTable" Type="Self.WorkTable" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="BankSystems">
+              <PropertyRef Name="systemID" />
+            </Principal>
+            <Dependent Role="WorkTable">
+              <PropertyRef Name="systemId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <EntityContainer Name="EWSQueueModelStoreContainer">
           <EntitySet Name="MailboxAffinity" EntityType="Self.MailboxAffinity" Schema="Data" store:Type="Tables" />
           <EntitySet Name="Queue" EntityType="Self.Queue" Schema="Data" store:Type="Tables" />
+          <EntitySet Name="BankMailboxes" EntityType="Self.BankMailboxes" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="BankNotifications" EntityType="Self.BankNotifications" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="BankSystems" EntityType="Self.BankSystems" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="SystemManagers" EntityType="Self.SystemManagers" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="WorkTable" EntityType="Self.WorkTable" Schema="dbo" store:Type="Tables" />
+          <AssociationSet Name="FK_Notifications_Mailboxes" Association="Self.FK_Notifications_Mailboxes">
+            <End Role="BankMailboxes" EntitySet="BankMailboxes" />
+            <End Role="BankNotifications" EntitySet="BankNotifications" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Notifications_Systems" Association="Self.FK_Notifications_Systems">
+            <End Role="BankSystems" EntitySet="BankSystems" />
+            <End Role="BankNotifications" EntitySet="BankNotifications" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Systems_SystemManagers" Association="Self.FK_Systems_SystemManagers">
+            <End Role="SystemManagers" EntitySet="SystemManagers" />
+            <End Role="BankSystems" EntitySet="BankSystems" />
+          </AssociationSet>
+          <AssociationSet Name="FK_WorkTable_Mailboxes" Association="Self.FK_WorkTable_Mailboxes">
+            <End Role="BankMailboxes" EntitySet="BankMailboxes" />
+            <End Role="WorkTable" EntitySet="WorkTable" />
+          </AssociationSet>
+          <AssociationSet Name="FK_WorkTable_Systems" Association="Self.FK_WorkTable_Systems">
+            <End Role="BankSystems" EntitySet="BankSystems" />
+            <End Role="WorkTable" EntitySet="WorkTable" />
+          </AssociationSet>
         </EntityContainer>
       </Schema></edmx:StorageModels>
     <!-- CSDL content -->
@@ -36,6 +172,31 @@
         <EntityContainer Name="EWSQueueEntities" annotation:LazyLoadingEnabled="true">
           <EntitySet Name="Queues" EntityType="EWSQueueModel.Queue" />
           <EntitySet Name="MailboxAffinities" EntityType="EWSQueueModel.MailboxAffinity" />
+          <EntitySet Name="BankMailboxes" EntityType="EWSQueueModel.BankMailbox" />
+          <EntitySet Name="BankNotifications" EntityType="EWSQueueModel.BankNotification" />
+          <EntitySet Name="BankSystems" EntityType="EWSQueueModel.BankSystem" />
+          <EntitySet Name="SystemManagers" EntityType="EWSQueueModel.SystemManager" />
+          <EntitySet Name="WorkTables" EntityType="EWSQueueModel.WorkTable" />
+          <AssociationSet Name="FK_Notifications_Mailboxes" Association="EWSQueueModel.FK_Notifications_Mailboxes">
+            <End Role="BankMailbox" EntitySet="BankMailboxes" />
+            <End Role="BankNotification" EntitySet="BankNotifications" />
+          </AssociationSet>
+          <AssociationSet Name="FK_WorkTable_Mailboxes" Association="EWSQueueModel.FK_WorkTable_Mailboxes">
+            <End Role="BankMailbox" EntitySet="BankMailboxes" />
+            <End Role="WorkTable" EntitySet="WorkTables" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Notifications_Systems" Association="EWSQueueModel.FK_Notifications_Systems">
+            <End Role="BankSystem" EntitySet="BankSystems" />
+            <End Role="BankNotification" EntitySet="BankNotifications" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Systems_SystemManagers" Association="EWSQueueModel.FK_Systems_SystemManagers">
+            <End Role="SystemManager" EntitySet="SystemManagers" />
+            <End Role="BankSystem" EntitySet="BankSystems" />
+          </AssociationSet>
+          <AssociationSet Name="FK_WorkTable_Systems" Association="EWSQueueModel.FK_WorkTable_Systems">
+            <End Role="BankSystem" EntitySet="BankSystems" />
+            <End Role="WorkTable" EntitySet="WorkTables" />
+          </AssociationSet>
         </EntityContainer>
         <EntityType Name="Queue">
           <Key>
@@ -57,6 +218,127 @@
           <Property Name="GroupingInformation" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="ExternalEwsUrl" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
         </EntityType>
+        <EntityType Name="BankMailbox">
+          <Key>
+            <PropertyRef Name="mailAddress" />
+          </Key>
+          <Property Name="mailAddress" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="userName" Type="String" Nullable="false" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="groupingInformation" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="notifyOnNewMails" Type="Boolean" Nullable="false" />
+          <Property Name="notifyOnNewAppointments" Type="Boolean" Nullable="false" />
+          <Property Name="ewsUrl" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="calendarSyncStatus" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="inboxSyncStatus" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="managingServer" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="BankNotifications" Relationship="EWSQueueModel.FK_Notifications_Mailboxes" FromRole="BankMailbox" ToRole="BankNotification" />
+          <NavigationProperty Name="WorkTables" Relationship="EWSQueueModel.FK_WorkTable_Mailboxes" FromRole="BankMailbox" ToRole="WorkTable" />
+        </EntityType>
+        <EntityType Name="BankNotification">
+          <Key>
+            <PropertyRef Name="itemId" />
+          </Key>
+          <Property Name="itemId" Type="Int32" Nullable="false" />
+          <Property Name="systemId" Type="Int32" Nullable="false" />
+          <Property Name="mailAddress" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="BankMailbox" Relationship="EWSQueueModel.FK_Notifications_Mailboxes" FromRole="BankNotification" ToRole="BankMailbox" />
+          <NavigationProperty Name="BankSystem" Relationship="EWSQueueModel.FK_Notifications_Systems" FromRole="BankNotification" ToRole="BankSystem" />
+        </EntityType>
+        <EntityType Name="BankSystem">
+          <Key>
+            <PropertyRef Name="systemID" />
+          </Key>
+          <Property Name="systemID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="name" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="userName" Type="String" Nullable="false" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="description" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Name="systemManagerId" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="BankNotifications" Relationship="EWSQueueModel.FK_Notifications_Systems" FromRole="BankSystem" ToRole="BankNotification" />
+          <NavigationProperty Name="SystemManager" Relationship="EWSQueueModel.FK_Systems_SystemManagers" FromRole="BankSystem" ToRole="SystemManager" />
+          <NavigationProperty Name="WorkTables" Relationship="EWSQueueModel.FK_WorkTable_Systems" FromRole="BankSystem" ToRole="WorkTable" />
+        </EntityType>
+        <EntityType Name="SystemManager">
+          <Key>
+            <PropertyRef Name="systemManagerId" />
+          </Key>
+          <Property Name="systemManagerId" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="name" Type="String" Nullable="false" MaxLength="200" FixedLength="false" Unicode="true" />
+          <Property Name="phone" Type="String" MaxLength="12" FixedLength="false" Unicode="true" />
+          <Property Name="mail" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="BankSystems" Relationship="EWSQueueModel.FK_Systems_SystemManagers" FromRole="SystemManager" ToRole="BankSystem" />
+        </EntityType>
+        <EntityType Name="WorkTable">
+          <Key>
+            <PropertyRef Name="mailAddress" />
+            <PropertyRef Name="systemId" />
+          </Key>
+          <Property Name="mailAddress" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
+          <Property Name="systemId" Type="Int32" Nullable="false" />
+          <Property Name="notifyOnNewMails" Type="Boolean" Nullable="false" />
+          <Property Name="notifyOnNewAppointments" Type="Boolean" Nullable="false" />
+          <NavigationProperty Name="BankMailbox" Relationship="EWSQueueModel.FK_WorkTable_Mailboxes" FromRole="WorkTable" ToRole="BankMailbox" />
+          <NavigationProperty Name="BankSystem" Relationship="EWSQueueModel.FK_WorkTable_Systems" FromRole="WorkTable" ToRole="BankSystem" />
+        </EntityType>
+        <Association Name="FK_Notifications_Mailboxes">
+          <End Type="EWSQueueModel.BankMailbox" Role="BankMailbox" Multiplicity="1" />
+          <End Type="EWSQueueModel.BankNotification" Role="BankNotification" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="BankMailbox">
+              <PropertyRef Name="mailAddress" />
+            </Principal>
+            <Dependent Role="BankNotification">
+              <PropertyRef Name="mailAddress" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_WorkTable_Mailboxes">
+          <End Type="EWSQueueModel.BankMailbox" Role="BankMailbox" Multiplicity="1" />
+          <End Type="EWSQueueModel.WorkTable" Role="WorkTable" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="BankMailbox">
+              <PropertyRef Name="mailAddress" />
+            </Principal>
+            <Dependent Role="WorkTable">
+              <PropertyRef Name="mailAddress" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Notifications_Systems">
+          <End Type="EWSQueueModel.BankSystem" Role="BankSystem" Multiplicity="1" />
+          <End Type="EWSQueueModel.BankNotification" Role="BankNotification" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="BankSystem">
+              <PropertyRef Name="systemID" />
+            </Principal>
+            <Dependent Role="BankNotification">
+              <PropertyRef Name="systemId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_Systems_SystemManagers">
+          <End Type="EWSQueueModel.SystemManager" Role="SystemManager" Multiplicity="1" />
+          <End Type="EWSQueueModel.BankSystem" Role="BankSystem" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="SystemManager">
+              <PropertyRef Name="systemManagerId" />
+            </Principal>
+            <Dependent Role="BankSystem">
+              <PropertyRef Name="systemManagerId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_WorkTable_Systems">
+          <End Type="EWSQueueModel.BankSystem" Role="BankSystem" Multiplicity="1" />
+          <End Type="EWSQueueModel.WorkTable" Role="WorkTable" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="BankSystem">
+              <PropertyRef Name="systemID" />
+            </Principal>
+            <Dependent Role="WorkTable">
+              <PropertyRef Name="systemId" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -82,6 +364,61 @@
                 <ScalarProperty Name="ExternalEwsUrl" ColumnName="ExternalEwsUrl" />
                 <ScalarProperty Name="GroupingInformation" ColumnName="GroupingInformation" />
                 <ScalarProperty Name="Mailbox" ColumnName="Mailbox" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="BankMailboxes">
+            <EntityTypeMapping TypeName="EWSQueueModel.BankMailbox">
+              <MappingFragment StoreEntitySet="BankMailboxes">
+                <ScalarProperty Name="managingServer" ColumnName="managingServer" />
+                <ScalarProperty Name="inboxSyncStatus" ColumnName="inboxSyncStatus" />
+                <ScalarProperty Name="calendarSyncStatus" ColumnName="calendarSyncStatus" />
+                <ScalarProperty Name="ewsUrl" ColumnName="ewsUrl" />
+                <ScalarProperty Name="notifyOnNewAppointments" ColumnName="notifyOnNewAppointments" />
+                <ScalarProperty Name="notifyOnNewMails" ColumnName="notifyOnNewMails" />
+                <ScalarProperty Name="groupingInformation" ColumnName="groupingInformation" />
+                <ScalarProperty Name="userName" ColumnName="userName" />
+                <ScalarProperty Name="mailAddress" ColumnName="mailAddress" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="BankNotifications">
+            <EntityTypeMapping TypeName="EWSQueueModel.BankNotification">
+              <MappingFragment StoreEntitySet="BankNotifications">
+                <ScalarProperty Name="mailAddress" ColumnName="mailAddress" />
+                <ScalarProperty Name="systemId" ColumnName="systemId" />
+                <ScalarProperty Name="itemId" ColumnName="itemId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="BankSystems">
+            <EntityTypeMapping TypeName="EWSQueueModel.BankSystem">
+              <MappingFragment StoreEntitySet="BankSystems">
+                <ScalarProperty Name="systemManagerId" ColumnName="systemManagerId" />
+                <ScalarProperty Name="description" ColumnName="description" />
+                <ScalarProperty Name="userName" ColumnName="userName" />
+                <ScalarProperty Name="name" ColumnName="name" />
+                <ScalarProperty Name="systemID" ColumnName="systemID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="SystemManagers">
+            <EntityTypeMapping TypeName="EWSQueueModel.SystemManager">
+              <MappingFragment StoreEntitySet="SystemManagers">
+                <ScalarProperty Name="mail" ColumnName="mail" />
+                <ScalarProperty Name="phone" ColumnName="phone" />
+                <ScalarProperty Name="name" ColumnName="name" />
+                <ScalarProperty Name="systemManagerId" ColumnName="systemManagerId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="WorkTables">
+            <EntityTypeMapping TypeName="EWSQueueModel.WorkTable">
+              <MappingFragment StoreEntitySet="WorkTable">
+                <ScalarProperty Name="notifyOnNewAppointments" ColumnName="notifyOnNewAppointments" />
+                <ScalarProperty Name="notifyOnNewMails" ColumnName="notifyOnNewMails" />
+                <ScalarProperty Name="systemId" ColumnName="systemId" />
+                <ScalarProperty Name="mailAddress" ColumnName="mailAddress" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
