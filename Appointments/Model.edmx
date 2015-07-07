@@ -30,7 +30,7 @@
             <PropertyRef Name="mailAddress" />
           </Key>
           <Property Name="mailAddress" Type="nvarchar" MaxLength="100" Nullable="false" />
-          <Property Name="userName" Type="nvarchar" MaxLength="20" Nullable="false" />
+          <Property Name="userName" Type="nvarchar" MaxLength="20" />
           <Property Name="groupingInformation" Type="nvarchar(max)" />
           <Property Name="notifyOnNewMails" Type="bit" Nullable="false" />
           <Property Name="notifyOnNewAppointments" Type="bit" Nullable="false" />
@@ -38,6 +38,7 @@
           <Property Name="calendarSyncStatus" Type="nvarchar(max)" />
           <Property Name="inboxSyncStatus" Type="nvarchar(max)" />
           <Property Name="managingServer" Type="nvarchar" MaxLength="100" />
+          <Property Name="Invalid" Type="bit" Nullable="false" />
         </EntityType>
         <EntityType Name="BankNotifications">
           <Key>
@@ -223,7 +224,7 @@
             <PropertyRef Name="mailAddress" />
           </Key>
           <Property Name="mailAddress" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="true" />
-          <Property Name="userName" Type="String" Nullable="false" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="userName" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
           <Property Name="groupingInformation" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="notifyOnNewMails" Type="Boolean" Nullable="false" />
           <Property Name="notifyOnNewAppointments" Type="Boolean" Nullable="false" />
@@ -233,6 +234,7 @@
           <Property Name="managingServer" Type="String" MaxLength="100" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="BankNotifications" Relationship="EWSQueueModel.FK_Notifications_Mailboxes" FromRole="BankMailbox" ToRole="BankNotification" />
           <NavigationProperty Name="WorkTables" Relationship="EWSQueueModel.FK_WorkTable_Mailboxes" FromRole="BankMailbox" ToRole="WorkTable" />
+          <Property Name="Invalid" Type="Boolean" Nullable="false" />
         </EntityType>
         <EntityType Name="BankNotification">
           <Key>
@@ -370,6 +372,7 @@
           <EntitySetMapping Name="BankMailboxes">
             <EntityTypeMapping TypeName="EWSQueueModel.BankMailbox">
               <MappingFragment StoreEntitySet="BankMailboxes">
+                <ScalarProperty Name="Invalid" ColumnName="Invalid" />
                 <ScalarProperty Name="managingServer" ColumnName="managingServer" />
                 <ScalarProperty Name="inboxSyncStatus" ColumnName="inboxSyncStatus" />
                 <ScalarProperty Name="calendarSyncStatus" ColumnName="calendarSyncStatus" />

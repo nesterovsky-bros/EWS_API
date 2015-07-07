@@ -9,6 +9,7 @@
   using Microsoft.Practices.Unity;
   using Microsoft.Exchange.WebServices.Autodiscover;
   using System.Net;
+  using System.Threading;
 
   /// <summary>
   /// A EWS listener.
@@ -28,66 +29,92 @@
     public IAppointments Service { get; set; }
 
     /// <summary>
+    /// Starts the listener.
+    /// </summary>
+    public async Task Start()
+    {
+      var cancellationSource = new CancellationTokenSource(
+        TimeSpan.FromMinutes(Settings.ExchangeListenerRecyclePeriod));
+
+      cancellationToken = cancellationSource.Token;
+    
+      //using(var model = new EWSQueueEntities())
+      //{
+      //  await model.BankMailboxes.
+      //    Where(mailbox => !mailbox.Invalid).
+      //    ToDictionaryAsync(mailbox => mailbox.mailAddress, cancellationToken);
+      //}
+
+      //await Task.WhenAll(
+      //  mailboxes.Values.Select(mailbox => SetupMailbox(mailbox)));
+    }
+
+    /// <summary>
+    /// Stops the listener.
+    /// </summary>
+    public void Stop()
+    {
+      // TODO: implement this.
+    }
+
+    /// <summary>
     /// Disposes the listener.
     /// </summary>
     public void Dispose()
     {
-      // TODO: dispose the listener.
+      Stop();
     }
 
     /// <summary>
-    /// Gets BankMailbox for the email adress.
+    /// Setups a BankMailbox instance.
     /// </summary>
-    /// <param name="emailAddress">An email address.</param>
+    /// <param name="mailbox">A mailbox instance.</param>
     /// <returns>A BankMailbox instance.</returns>
-    public async Task<BankMailbox> GetBankMailbox(string emailAddress)
+    public async Task<BankMailbox> SetupMailbox(BankMailbox mailbox)
     {
-      var mailbox = null as BankMailbox;
-
-      using(var model = new EWSQueueEntities())
+      if ((mailbox.ewsUrl == null) || (mailbox.groupingInformation == null))
       {
-        mailbox = await model.BankMailboxes.
-          Where(item => item.mailAddress == emailAddress).
-          FirstOrDefaultAsync();
-      }
+        GetUserSettingsResponse userInfo = null;
 
-      if ((mailbox == null) || 
-        (mailbox.ewsUrl == null) || 
-        (mailbox.groupingInformation == null))
-      {
-        var userInfo = await AutoDiscovery.GetUserSettings(
-          Settings.AutoDiscoveryUrl,
-          Settings.ExchangeUserName,
-          Settings.ExchangePassword,
-          Settings.AttemptsToDiscoverUrl,
-          emailAddress);
+
+        try
+        {
+          userInfo = await AutoDiscovery.GetUserSettings(
+            Settings.AutoDiscoveryUrl,
+            Settings.ExchangeUserName,
+            Settings.ExchangePassword,
+            Settings.AttemptsToDiscoverUrl,
+            mailbox.mailAddress,
+            cancellationToken);
+        }
+        catch
+        { 
+          // Consider the user invalid.
+          mailbox.Invalid = true;
+        }
 
         using(var model = new EWSQueueEntities())
         {
-          if (mailbox == null)
-          {
-            mailbox = model.BankMailboxes.Create();
-            mailbox.mailAddress = emailAddress;
-            mailbox.notifyOnNewAppointments = true;
-            mailbox.notifyOnNewMails = true;
+          model.BankMailboxes.Attach(mailbox);
 
-            model.BankMailboxes.Add(mailbox);
-          }
-          else
+          if (userInfo != null)
           {
-            model.BankMailboxes.Attach(mailbox);
+            mailbox.ewsUrl =
+              userInfo.Settings[UserSettingName.ExternalEwsUrl] as string;
+            mailbox.groupingInformation =
+              userInfo.Settings[UserSettingName.GroupingInformation] as string;
           }
 
-          mailbox.ewsUrl =
-            userInfo.Settings[UserSettingName.ExternalEwsUrl] as string;
-          mailbox.groupingInformation =
-            userInfo.Settings[UserSettingName.GroupingInformation] as string;
-
-          await model.SaveChangesAsync();
+          await model.SaveChangesAsync(cancellationToken);
         }
       }
 
       return mailbox;
     }
+ 
+    /// <summary>
+    /// Cancellation source.
+    /// </summary>
+    private CancellationToken cancellationToken;
   }
 }

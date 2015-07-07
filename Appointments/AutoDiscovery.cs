@@ -9,6 +9,7 @@
   using Microsoft.Exchange.WebServices.Autodiscover;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
+  using System.Threading;
   
   /// <summary>
   /// Auto discovery API
@@ -31,13 +32,15 @@
     /// Number of attempts to perform auto discovery.
     /// </param>
     /// <param name="emailAddress">Email to get user settings for.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>User settings for an email.</returns>
     public static Task<GetUserSettingsResponse> GetUserSettings(
       string autoDiscoveryUrl,
       string serviceUserName,
       string servicePassword,
       int maxHops,
-      string emailAddress)
+      string emailAddress,
+      CancellationToken cancellationToken = default(CancellationToken))
     {
       var autodiscoverService = new AutodiscoverService();
       autodiscoverService.Url = new Uri(autoDiscoveryUrl);
@@ -48,8 +51,12 @@
         autodiscoverService,
         emailAddress,
         maxHops,
-        UserSettingName.GroupingInformation,
-        UserSettingName.ExternalEwsUrl);
+        new []
+        {
+          UserSettingName.GroupingInformation,
+          UserSettingName.ExternalEwsUrl
+        },
+        cancellationToken);
     }
 
     /// <summary>
@@ -61,12 +68,14 @@
     /// Number of attempts to perform auto discovery.
     /// </param>
     /// <param name="settings">Settings to request.</param>
+    /// <param name="cancellationToken">Optional cancellation token.</param>
     /// <returns>User settings for an email.</returns>
     public static async Task<GetUserSettingsResponse> GetUserSettings(
       AutodiscoverService service,
       string emailAddress,
       int maxHops,
-      params UserSettingName[] settings)
+      UserSettingName[] settings,
+      CancellationToken cancellationToken = default(CancellationToken))
     {
       if (maxHops <= 1)
       {
@@ -80,6 +89,8 @@
 
       for(int attempt = 0; attempt < maxHops; attempt++)
       {
+        cancellationToken.ThrowIfCancellationRequested();
+
         service.Url = url;
         service.EnableScpLookup = (attempt < 2);
 
@@ -87,13 +98,14 @@
         {
           wait = false;
 
-          await Task.Delay(30000);
+          await Task.Delay(30000, cancellationToken);
         }
 
         try
         {
           response = await Task.Run(
-            () => service.GetUserSettings(emailAddress, settings));
+            () => service.GetUserSettings(emailAddress, settings),
+            cancellationToken);
         }
         catch(Exception ex)
         {

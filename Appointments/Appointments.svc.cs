@@ -11,13 +11,13 @@
   using System.ServiceModel.Web;
   using System.Text;
   using System.Text.RegularExpressions;
-  using System.Threading.Tasks;
   using System.Xml;
+  using System.Threading.Tasks;
   using Multiconn.Experanto.Serializer;
   using Microsoft.Practices.Unity;
+  using Microsoft.Exchange.WebServices.Autodiscover;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
-  using Microsoft.Exchange.WebServices.Autodiscover;
   
   /// <summary>
   /// An implementation of IAppointments interface for CRUD operations with
@@ -90,7 +90,8 @@
         throw new ArgumentNullException("request.appointment");
       }
       
-      var service = GetService(request.email);
+      var email = request.email;
+      var service = GetService(email);
       var meeting = new Office365.Appointment(service);
       var appointment = request.appointment;
 
@@ -175,10 +176,13 @@
 
       //meeting.OptionalAttendees.Add("Magdalena.Kemp@contoso.com");
 
+      meeting.ICalUid = 
+        Guid.NewGuid().ToString() + email.Substring(email.IndexOf('@'));
+
       // Send the meeting request
       meeting.Save(Office365.SendInvitationsMode.SendToAllAndSaveCopy);
 
-      return meeting.ICalUid;
+      return meeting.Id.ToString();
     }
     #endregion
 
@@ -278,20 +282,20 @@
     /// Finds an appointment by its ID in the calendar of the specified user.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>
-    /// <param name="UID">
+    /// <param name="ID">
     /// the appointment unique ID received on successful Create method call.
     /// </param>
     /// <returns>
     /// an AppointmentProxy instance or null if the appointment was not found.
     /// </returns>
-    public Appointment Find(string email, string UID)
+    public Appointment Find(string email, string ID)
     {
       return Call(
         "Find",
         new FindRequest
         {
           email = email,
-          UID = UID
+          ID = ID
         },
         FindImpl);
     }
@@ -300,18 +304,18 @@
     /// Starts Find method asynchronously.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>
-    /// <param name="UID">
+    /// <param name="ID">
     /// the appointment unique ID received on successful Create method call.
     /// </param>
     /// <returns>a request ID.</returns>
-    public long FindBegin(string email, string UID)
+    public long FindBegin(string email, string ID)
     {
       return CallAsync(
         "Find",
         new FindRequest
         {
           email = email,
-          UID = UID
+          ID = ID
         },
         FindImpl);
     }
@@ -333,12 +337,12 @@
     public struct FindRequest
     {
       public string email;
-      public string UID;
+      public string ID;
     }
 
     private Appointment FindImpl(FindRequest request)
     {
-      var appointment = GetAppointment(request.email, request.UID);
+      var appointment = GetAppointment(request.email, request.ID);
 
       return ConvertAppointment(appointment);
     }
@@ -356,7 +360,7 @@
     /// </param>
     /// <param name="appointment">
     /// An appointment to update. 
-    /// The appointment UID must be not null.
+    /// The appointment ID must be not null.
     /// </param>
     /// <returns>
     /// true when the appointment was modified successfully, and false otherwise.
@@ -426,7 +430,7 @@
         throw new ArgumentNullException("request.appointment");
       }
 
-      var item = GetAppointment(request.email, appointment.UID);
+      var item = GetAppointment(request.email, appointment.ID);
 
       // Note: only organizer may update the appointment.
       if ((item != null) &&
@@ -498,20 +502,20 @@
     /// Sends corresponding notifications to all participants.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <param name="reason">a text message to be sent to all participants.</param>
     /// <returns>
     /// true when the appointment was canceled successfully, and false otherwise.
     /// </returns>
     /// <remarks>Only the appointment organizer may cancel it.</remarks>
-    public bool Cancel(string email, string UID, string reason)
+    public bool Cancel(string email, string ID, string reason)
     {
       return Call(
         "Cancel",
         new CancelRequest
         {
           email = email,
-          UID = UID,
+          ID = ID,
           reason = reason
         },
         CancelImpl).GetValueOrDefault(false);
@@ -521,17 +525,17 @@
     /// Starts Cancel method asynchronously.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <param name="reason">a text message to be sent to all participants.</param>
     /// <returns>a request ID.</returns>
-    public long CancelBegin(string email, string UID, string reason)
+    public long CancelBegin(string email, string ID, string reason)
     {
       return CallAsync(
         "Cancel",
         new CancelRequest
         {
           email = email,
-          UID = UID,
+          ID = ID,
           reason = reason
         },
         CancelImpl);
@@ -555,13 +559,13 @@
     public struct CancelRequest
     {
       public string email;
-      public string UID;
+      public string ID;
       public string reason;
     }
 
     private bool? CancelImpl(CancelRequest request)
     {
-      var appointment = GetAppointment(request.email, request.UID);
+      var appointment = GetAppointment(request.email, request.ID);
 
       if (appointment != null)
       {
@@ -580,19 +584,19 @@
     /// sends cancel notifications to all participants.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <returns>
     /// true when the appointment was successfully deleted, and false otherwise.
     /// </returns>
     /// <remarks>Only the appointment organizer may delete it.</remarks>
-    public bool Delete(string email, string UID)
+    public bool Delete(string email, string ID)
     {
       return Call(
         "Delete",
         new DeleteRequest
         {
           email = email,
-          UID = UID
+          ID = ID
         },
         DeleteImpl).GetValueOrDefault(false);
     }
@@ -601,17 +605,17 @@
     /// Starts Delete method asynchronously.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <returns>a request ID.</returns>
     /// <remarks>Only the appointment organizer may delete it.</remarks>
-    public long DeleteBegin(string email, string UID)
+    public long DeleteBegin(string email, string ID)
     {
       return CallAsync(
         "Delete",
         new DeleteRequest
         {
           email = email,
-          UID = UID
+          ID = ID
         },
         DeleteImpl);
     }
@@ -635,12 +639,12 @@
     public struct DeleteRequest
     {
       public string email;
-      public string UID;
+      public string ID;
     }
 
     private bool? DeleteImpl(DeleteRequest request)
     {
-      var appointment = GetAppointment(request.email, request.UID);
+      var appointment = GetAppointment(request.email, request.ID);
 
       if (appointment != null)
       {
@@ -658,18 +662,18 @@
     /// Accepts the specified appointment.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <returns>
     /// true when the operation succeseed, and false otherwise.
     /// </returns>
-    public bool Accept(string email, string UID)
+    public bool Accept(string email, string ID)
     {
       return Call(
         "Accept",
         new AcceptRequest
         {
           email = email,
-          UID = UID
+          ID = ID
         },
         AcceptImpl).GetValueOrDefault(false);
     }
@@ -678,16 +682,16 @@
     /// Starts Accept method asynchronously.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <returns>a request ID.</returns>
-    public long AcceptBegin(string email, string UID)
+    public long AcceptBegin(string email, string ID)
     {
       return CallAsync(
         "Accept",
         new AcceptRequest
         {
           email = email,
-          UID = UID
+          ID = ID
         },
         AcceptImpl);
     }
@@ -710,12 +714,12 @@
     public struct AcceptRequest
     {
       public string email;
-      public string UID;
+      public string ID;
     }
 
     private bool? AcceptImpl(AcceptRequest request)
     {
-      var appointment = GetAppointment(request.email, request.UID);
+      var appointment = GetAppointment(request.email, request.ID);
 
       if (appointment != null)
       {
@@ -733,18 +737,18 @@
     /// Declines the specified appointment.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <returns>
     /// true when the operation succeseed, and false otherwise.
     /// </returns>
-    public bool Decline(string email, string UID)
+    public bool Decline(string email, string ID)
     {
       return Call(
         "Decline",
         new DeclineRequest
         {
           email = email,
-          UID = UID
+          ID = ID
         },
         DeclineImpl).GetValueOrDefault(false);
     }
@@ -753,16 +757,16 @@
     /// Starts Decline method asynchronously.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <returns>a request ID.</returns>
-    public long DeclineBegin(string email, string UID)
+    public long DeclineBegin(string email, string ID)
     {
       return CallAsync(
         "Decline",
         new DeclineRequest
         {
           email = email,
-          UID = UID
+          ID = ID
         },
         DeclineImpl);
     }
@@ -785,12 +789,12 @@
     public struct DeclineRequest
     {
       public string email;
-      public string UID;
+      public string ID;
     }
 
     private bool? DeclineImpl(DeclineRequest request)
     {
-      var appointment = GetAppointment(request.email, request.UID);
+      var appointment = GetAppointment(request.email, request.ID);
 
       if (appointment != null)
       {
@@ -808,7 +812,7 @@
     public struct NotifyRequest
     {
       public string email;
-      public string UID;
+      public string ID;
       public string changeType;
     }
 
@@ -816,16 +820,16 @@
     /// Notifies about a change in a specified mail box.
     /// </summary>
     /// <param name="email">A mail box where change has occured.</param>
-    /// <param name="UID">An ID of item changed.</param>
+    /// <param name="ID">An ID of item changed.</param>
     /// <param name="changeType">A change type: delete, create, modify.</param>
-    public bool Notification(string email, string UID, string changeType)
+    public bool Notification(string email, string ID, string changeType)
     {
       return Call(
         "Notify",
         new NotifyRequest
         {
           email = email,
-          UID = UID,
+          ID = ID,
           changeType = changeType
         },
         request => true);
@@ -940,19 +944,22 @@
     /// <param name="email">
     /// an e-mail address of an organizer or a participant of the appointment.
     /// </param>
-    /// <param name="UID">an unique appointment ID to search.</param>
+    /// <param name="ID">an unique appointment ID to search.</param>
     /// <returns>
     /// an Appointment instance or null when the appointment was not found.
     /// </returns>
-    private Office365.Appointment GetAppointment(string email, string UID)
+    private Office365.Appointment GetAppointment(string email, string ID)
     {
-      var property = new Office365.ExtendedPropertyDefinition(
-        Office365.DefaultExtendedPropertySet.Meeting,
-        0x23,
-        Office365.MapiPropertyType.Binary);
-      var value =
-        Convert.ToBase64String(HexEncoder.HexStringToArray(UID));
-      var filter = new Office365.SearchFilter.IsEqualTo(property, value);
+      //var property = new Office365.ExtendedPropertyDefinition(
+      //  Office365.DefaultExtendedPropertySet.Meeting,
+      //  0x23,
+      //  Office365.MapiPropertyType.Binary);
+      //var value =
+      //  Convert.ToBase64String(HexEncoder.HexStringToArray(ID));
+      //var filter = new Office365.SearchFilter.IsEqualTo(property, value);
+
+      var filter = 
+        new Office365.SearchFilter.IsEqualTo(Office365.ItemSchema.Id, ID);
 
       Office365.ItemView view = new Office365.ItemView(1);
 
@@ -992,7 +999,6 @@
         ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart,
         Start = appointment.Start,
         Subject = appointment.Subject,
-        UID = appointment.ICalUid,
         RecurrenceType = RecurrenceType.Once
       };
 
@@ -1005,6 +1011,14 @@
         proxy.Message = message.ToString();
       }
 
+      var UID = null as string;
+
+      if (appointment.TryGetProperty(
+        Office365.AppointmentSchema.ICalUid, out UID))
+      {
+        proxy.UID = UID;
+      }
+      
       proxy.Attendees = new List<string>();
 
       var attendees = null as Office365.AttendeeCollection;

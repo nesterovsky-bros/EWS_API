@@ -5,6 +5,7 @@ namespace Bnhp.Office365
   using System.ServiceModel;
   using Microsoft.Practices.Unity;
   using Unity.Wcf;
+  using System.Net;
 
   public class WcfServiceFactory : UnityServiceHostFactory
   {
@@ -31,13 +32,27 @@ namespace Bnhp.Office365
         AutoDiscoveryUrl =
           ConfigurationManager.AppSettings["AutoDiscoveryUrl"],
         AttemptsToDiscoverUrl =
-          int.Parse(ConfigurationManager.AppSettings["AttemptsToDiscoverUrl"])
+          int.Parse(ConfigurationManager.AppSettings["AttemptsToDiscoverUrl"]),
+        ExchangeConnectionLimit =
+          int.Parse(ConfigurationManager.AppSettings["ExchangeConnectionLimit"]),
+        ExchangeListenerRecyclePeriod =
+          int.Parse(ConfigurationManager.AppSettings["ExchangeListenerRecyclePeriod"])
       };
 
+      var listener = new EwsListener();
+
       container.
-        RegisterInstance<IResponseNotifier>(new ResponseNotifier()).
         RegisterInstance(settings).
+        RegisterInstance<IResponseNotifier>(new ResponseNotifier()).
+        RegisterInstance(listener).
         RegisterType<IAppointments, Appointments>();
+
+      container.BuildUp(listener);
+
+      ServicePointManager.DefaultConnectionLimit = 
+        settings.ExchangeConnectionLimit;
+
+      var startTask = listener.Start();
     }
   }
 }

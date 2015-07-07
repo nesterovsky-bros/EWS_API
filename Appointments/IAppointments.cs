@@ -99,25 +99,25 @@ namespace Bnhp.Office365
     /// Finds an appointment by its ID in the calendar of the specified user.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>
-    /// <param name="UID">
+    /// <param name="ID">
     /// the appointment unique ID received on successful Create method call.
     /// </param>
     /// <returns>
     /// an Appointment instance or null if the appointment was not found.
     /// </returns>
     [OperationContract]
-    Appointment Find(string email, string UID);
+    Appointment Find(string email, string ID);
     
     /// <summary>
     /// Starts Find method asynchronously.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>
-    /// <param name="UID">
+    /// <param name="ID">
     /// the appointment unique ID received on successful Create method call.
     /// </param>
     /// <returns>a request ID.</returns>
     [OperationContract]
-    long FindBegin(string email, string UID);
+    long FindBegin(string email, string ID);
 
     /// <summary>
     /// Finishes asynchronous Find method call.
@@ -142,7 +142,7 @@ namespace Bnhp.Office365
     /// </param>
     /// <param name="appointment">
     /// An appointment to update. 
-    /// The appointment UID must be not null.
+    /// The appointment ID must be not null.
     /// </param>
     /// <returns>
     /// true when the appointment was modified successfully, and false otherwise.
@@ -182,24 +182,24 @@ namespace Bnhp.Office365
     /// Sends corresponding notifications to all participants.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <param name="reason">a text message to be sent to all participants.</param>
     /// <returns>
     /// true when the appointment was canceled successfully, and false otherwise.
     /// </returns>
     /// <remarks>Only the appointment organizer may cancel it.</remarks>
     [OperationContract]
-    bool Cancel(string email, string UID, string reason);
+    bool Cancel(string email, string ID, string reason);
 
     /// <summary>
     /// Starts Cancel method asynchronously.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <param name="reason">a text message to be sent to all participants.</param>
     /// <returns>a request ID.</returns>
     [OperationContract]
-    long CancelBegin(string email, string UID, string reason);
+    long CancelBegin(string email, string ID, string reason);
 
     /// <summary>
     /// Finishes asynchronous Cancel method call.
@@ -219,23 +219,23 @@ namespace Bnhp.Office365
     /// sends cancel notifications to all participants.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <returns>
     /// true when the appointment was successfully deleted, and false otherwise.
     /// </returns>
     /// <remarks>Only the appointment organizer may delete it.</remarks>
     [OperationContract]
-    bool Delete(string email, string UID);
+    bool Delete(string email, string ID);
 
     /// <summary>
     /// Starts Delete method asynchronously.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <returns>a request ID.</returns>
     /// <remarks>Only the appointment organizer may delete it.</remarks>
     [OperationContract]
-    long DeleteBegin(string email, string UID);
+    long DeleteBegin(string email, string ID);
 
     /// <summary>
     /// Finishes asynchronous Delete method call.
@@ -255,21 +255,21 @@ namespace Bnhp.Office365
     /// Accepts the specified appointment.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <returns>
     /// true when the operation succeseed, and false otherwise.
     /// </returns>
     [OperationContract]
-    bool Accept(string email, string UID);
+    bool Accept(string email, string ID);
 
     /// <summary>
     /// Starts Accept method asynchronously.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <returns>a request ID.</returns>
     [OperationContract]
-    long AcceptBegin(string email, string UID);
+    long AcceptBegin(string email, string ID);
 
     /// <summary>
     /// Finishes asynchronous Accept method call.
@@ -288,21 +288,21 @@ namespace Bnhp.Office365
     /// Declines the specified appointment.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <returns>
     /// true when the operation succeseed, and false otherwise.
     /// </returns>
     [OperationContract]
-    bool Decline(string email, string UID);
+    bool Decline(string email, string ID);
 
     /// <summary>
     /// Starts Decline method asynchronously.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="UID">the appointment unique ID.</param>
+    /// <param name="ID">the appointment unique ID.</param>
     /// <returns>a request ID.</returns>
     [OperationContract]
-    long DeclineBegin(string email, string UID);
+    long DeclineBegin(string email, string ID);
 
     /// <summary>
     /// Finishes asynchronous Decline method call.
@@ -321,9 +321,9 @@ namespace Bnhp.Office365
     /// Notifies about a change in a specified mail box.
     /// </summary>
     /// <param name="email">A mail box where change has occured.</param>
-    /// <param name="UID">An ID of item changed.</param>
+    /// <param name="ID">An ID of item changed.</param>
     /// <param name="changeType">A change type: delete, create, modify.</param>
     [OperationContract]
-    bool Notification(string email, string UID, string changeType);
+    bool Notification(string email, string ID, string changeType);
   }
 }

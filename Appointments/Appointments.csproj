@@ -202,6 +202,16 @@
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
+    <None Include="wsdl\Appointments.0.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="wsdl\Appointments.1.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="wsdl\Appointments.2.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="wsdl\Appointments.wsdl" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bnhp.RunitChannel\Bnhp.RunitChanel.csproj">
