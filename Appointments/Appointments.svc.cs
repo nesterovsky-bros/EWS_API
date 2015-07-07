@@ -13,7 +13,7 @@
   using System.Text.RegularExpressions;
   using System.Xml;
   using System.Threading.Tasks;
-  using Multiconn.Experanto.Serializer;
+  
   using Microsoft.Practices.Unity;
   using Microsoft.Exchange.WebServices.Autodiscover;
 
@@ -950,14 +950,6 @@
     /// </returns>
     private Office365.Appointment GetAppointment(string email, string ID)
     {
-      //var property = new Office365.ExtendedPropertyDefinition(
-      //  Office365.DefaultExtendedPropertySet.Meeting,
-      //  0x23,
-      //  Office365.MapiPropertyType.Binary);
-      //var value =
-      //  Convert.ToBase64String(HexEncoder.HexStringToArray(ID));
-      //var filter = new Office365.SearchFilter.IsEqualTo(property, value);
-
       var filter = 
         new Office365.SearchFilter.IsEqualTo(Office365.ItemSchema.Id, ID);
 

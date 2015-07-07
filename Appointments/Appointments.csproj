@@ -127,7 +127,6 @@
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="Cache.cs" />
-    <Compile Include="HexEncoder.cs" />
     <Compile Include="IAppointments.cs" />
     <Compile Include="MailboxAffinity.cs">
       <DependentUpon>Model.tt</DependentUpon>
