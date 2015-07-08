@@ -42,6 +42,7 @@
 
       await DiscoverMailboxes();
       await SyncMailboxes();
+      await ListenMailboxes();
     }
 
     /// <summary>
@@ -308,6 +309,12 @@
         syncState);
 
       return taskSource.Task;
+    }
+
+    //
+    private async Task ListenMailboxes()
+    {
+
     }
 
     /// <summary>
