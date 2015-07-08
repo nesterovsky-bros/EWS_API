@@ -991,8 +991,17 @@
         ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart,
         Start = appointment.Start,
         Subject = appointment.Subject,
-        RecurrenceType = RecurrenceType.Once
+        RecurrenceType = RecurrenceType.Once,
+        DateTimeCreated = appointment.DateTimeCreated,
+        DateTimeSent = appointment.DateTimeSent,
+        DateTimeReceived = appointment.DateTimeReceived
       };
+
+      if (!appointment.IsUnmodified)
+      {
+        proxy.LastModifiedName = appointment.LastModifiedName;
+        proxy.LastModifiedTime = appointment.LastModifiedTime;
+      }
 
       var message = null as Office365.TextBody;
 

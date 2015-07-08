@@ -116,6 +116,36 @@ namespace Bnhp.Office365
     /// </summary>
     [DataMember]
     public int ReminderMinutesBeforeStart { get; set; }
+
+    /// <summary>
+    /// Gets and sets the date and time at which this item was created.
+    /// </summary>
+    [DataMember]
+    public DateTime DateTimeCreated { get; set; }
+
+    /// <summary>
+    /// Gets and sets the time when this item was received.
+    /// </summary>
+    [DataMember]
+    public DateTime DateTimeReceived { get; set; }
+
+    /// <summary>
+    /// Gets and sets the time when this item was sent.
+    /// </summary>
+    [DataMember]
+    public DateTime DateTimeSent { get; set; }
+
+    /// <summary>
+    /// Gets and sets the date and time that this item was last modified.
+    /// </summary>
+    [DataMember]
+    public DateTime LastModifiedTime { get; set; }
+
+    /// <summary>
+    /// Gets and sets the name of the user who last modified this item.
+    /// </summary>
+    [DataMember]
+    public string LastModifiedName { get; set; }
   }
 
   /// <summary>
