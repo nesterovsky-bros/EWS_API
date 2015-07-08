@@ -41,7 +41,6 @@
       cancellationToken = cancellationSource.Token;
 
       await DiscoverMailboxes();
-      await SyncMailboxes();
       await ListenMailboxes();
     }
 
@@ -165,60 +164,6 @@
     }
 
     /// <summary>
-    /// Synchornizes all mailboxes.
-    /// </summary>
-    /// <returns>A task that completes when all mail boxes are in sync.</returns>
-    private async Task SyncMailboxes()
-    {
-      var flushSize = 100;
-      var tasks = new List<Task<BankMailbox>>();
-
-      Func<Task> flush = async () =>
-      {
-        var mailboxes = (await Task.WhenAll(tasks)).
-          Where(mailbox => mailbox != null).
-          ToArray();
-
-        tasks.Clear();
-
-        if (mailboxes.Length > 0)
-        {
-          using(var model = new EWSQueueEntities())
-          {
-            foreach(var mailbox in mailboxes)
-            {
-              model.Entry(mailbox).State = EntityState.Modified;
-            }
-
-            await model.SaveChangesAsync(cancellationToken);
-          }
-        }
-      };
-
-      using(var model = new EWSQueueEntities())
-      {
-        await model.BankMailboxes.AsNoTracking().
-          Where(mailbox => !mailbox.Invalid && (mailbox.ewsUrl != null)).
-          ForEachAsync(
-            async mailbox =>
-            {
-              tasks.Add(SyncMailbox(mailbox));
-
-              if (tasks.Count >= flushSize)
-              {
-                await flush();
-              }
-            },
-            cancellationToken);
-
-        if (tasks.Count > 0)
-        {
-          await flush();
-        }
-      }
-    }
-
-    /// <summary>
     /// Syncs a mail box.
     /// </summary>
     /// <param name="mailbox">A mailbox to synchronize.</param>
@@ -311,10 +256,192 @@
       return taskSource.Task;
     }
 
-    //
+    /// <summary>
+    /// Listens for mailboxes.
+    /// </summary>
+    /// <returns></returns>
     private async Task ListenMailboxes()
     {
+      var prev = null as BankMailbox;
+      var group = new List<BankMailbox>();
 
+      using(var model = new EWSQueueEntities())
+      {
+        await model.BankMailboxes.AsNoTracking().
+          Where(mailbox => 
+            !mailbox.Invalid && 
+            (mailbox.ewsUrl != null) && 
+            (mailbox.groupingInformation != null) &&
+            (mailbox.notifyOnNewMails || mailbox.notifyOnNewAppointments)).
+          OrderBy(mailbox => mailbox.ewsUrl).
+          ThenBy(mailbox => mailbox.groupingInformation).
+          ThenBy(mailbox => mailbox.mailAddress).
+          ForEachAsync(
+            async mailbox =>
+            {
+              if ((prev == null) ||
+                ((prev.ewsUrl == mailbox.ewsUrl) &&
+                (prev.groupingInformation == mailbox.groupingInformation) &&
+                (group.Count < 200)))
+              {
+                group.Add(mailbox);
+              }
+              else
+              {
+                await ListenMailboxes(group);
+                group.Clear();
+              }
+
+              prev = mailbox;
+            },
+            cancellationToken);
+
+        if (group.Count > 0)
+        {
+          await ListenMailboxes(group);
+          group.Clear();
+        }
+      }
+    }
+
+    /// <summary>
+    /// Syncs and subscribes a group of mail boxes.
+    /// </summary>
+    /// <param name="mailboxes">A group of mail boxes.</param>
+    /// <returns>A task instance.</returns>
+    private async Task ListenMailboxes(IEnumerable<BankMailbox> mailboxes)
+    {
+      var service = null as Office365.ExchangeService;
+
+      var subscriptions = await Task.WhenAll(
+        mailboxes.Select(
+          mailbox =>
+          {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (service == null)
+            {
+              service = GetService(mailbox);
+              service.HttpHeaders.Add("X-AnchorMailbox", mailbox.mailAddress);
+              service.HttpHeaders.Add("X-PreferServerAffinity", "true");
+            }
+
+            service.ImpersonatedUserId = new Office365.ImpersonatedUserId(
+              Office365.ConnectingIdType.SmtpAddress,
+              mailbox.mailAddress);
+
+            var taskSource =
+              new TaskCompletionSource<Office365.StreamingSubscription>();
+            var folderIds = new List<Office365.FolderId>();
+
+            if (mailbox.notifyOnNewAppointments)
+            {
+              folderIds.Add(Office365.WellKnownFolderName.Calendar);
+            }
+
+            if (mailbox.notifyOnNewMails)
+            {
+              folderIds.Add(Office365.WellKnownFolderName.Inbox);
+            }
+
+            service.BeginSubscribeToStreamingNotifications(
+              asyncResult =>
+              {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                  taskSource.SetResult(
+                    service.EndSubscribeToStreamingNotifications(asyncResult));
+                }
+                catch
+                {
+                  // TODO: log error.
+                  taskSource.SetResult(null);
+                }
+              },
+              null,
+              folderIds,
+              Office365.EventType.NewMail,
+              Office365.EventType.Created,
+              Office365.EventType.Deleted);
+
+            return taskSource.Task;
+          }));
+
+      var subscriptionMap = subscriptions.
+        Zip(
+          mailboxes,
+          (subscription, mailbox) => new { subscription, mailbox }).
+        Where(item => item.subscription != null).
+        ToDictionary(item => item.subscription.Id, item => item.mailbox.mailAddress);
+
+      if ((service == null) || (subscriptionMap.Count == 0))
+      {
+        return;
+      }
+
+      var connection = new Office365.StreamingSubscriptionConnection(
+        service,
+        subscriptions.Where(subscription => subscription != null),
+        Settings.ExchangeConnectionLimit);
+
+      connection.OnNotificationEvent += (sender, args) =>
+      {
+        var emailAddress = subscriptionMap.Get(args.Subscription.Id);
+
+        if (emailAddress != null)
+        {
+          // TODO: handle notification.
+        }
+      };
+
+      connection.OnSubscriptionError += (sender, args) =>
+      {
+        var emailAddress = subscriptionMap.Get(args.Subscription.Id);
+
+        if (emailAddress != null)
+        {
+          // TODO: handle subscription error.
+        }
+      };
+
+      connection.OnDisconnect += (sender, args) =>
+      {
+        var emailAddress = subscriptionMap.Get(args.Subscription.Id);
+
+        if (emailAddress != null)
+        {
+          // TODO: handle disconnect.
+        }
+      };
+
+      cancellationToken.ThrowIfCancellationRequested();
+
+      connection.Open();
+
+      var syncMailboxes = 
+        (await Task.WhenAll(
+          mailboxes.Select(mailbox => SyncMailbox(mailbox)))).
+        Where(mailbox => mailbox != null).
+        ToArray();
+
+      if (syncMailboxes.Length > 0)
+      {
+        using(var model = new EWSQueueEntities())
+        {
+          foreach(var mailbox in mailboxes)
+          {
+            model.Entry(mailbox).State = EntityState.Modified;
+          }
+
+          await model.SaveChangesAsync(cancellationToken);
+        }
+      }
+
+      subscriptions = null;
+      mailboxes = null;
+      syncMailboxes = null;
     }
 
     /// <summary>
