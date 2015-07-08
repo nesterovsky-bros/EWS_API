@@ -43,6 +43,7 @@
       CancellationToken cancellationToken = default(CancellationToken))
     {
       var autodiscoverService = new AutodiscoverService();
+
       autodiscoverService.Url = new Uri(autoDiscoveryUrl);
       autodiscoverService.Credentials =
         new Office365.WebCredentials(serviceUserName, servicePassword);
@@ -121,7 +122,7 @@
           }
           else
           {
-              throw;
+            throw;
           }
         }
           
