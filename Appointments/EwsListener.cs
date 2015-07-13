@@ -12,7 +12,6 @@
   using System.Threading;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
-  using System.Data;
   
   /// <summary>
   /// A EWS listener.
