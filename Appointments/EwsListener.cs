@@ -12,6 +12,7 @@
   using System.Threading;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
+  using System.Data;
   
   /// <summary>
   /// A EWS listener.
@@ -69,24 +70,7 @@
       var flushSize = 100;
       var tasks = new List<Task<BankMailbox>>();
 
-      Func<Task> flush = async () =>
-      {
-        var mailboxes = await Task.WhenAll(tasks);
-
-        tasks.Clear();
-
-        using(var model = new EWSQueueEntities())
-        {
-          foreach(var mailbox in mailboxes)
-          {
-            model.Entry(mailbox).State = EntityState.Modified;
-          }
-
-          await model.SaveChangesAsync(cancellationToken);
-        }
-      };
-
-      using(var model = new EWSQueueEntities())
+      using(var model = CreateModel())
       {
         await model.BankMailboxes.AsNoTracking().
           Where(
@@ -100,14 +84,15 @@
 
               if (tasks.Count >= flushSize)
               {
-                await flush();
+                await UpdateMailboxes(await Task.WhenAll(tasks));
+                tasks.Clear();
               }
             },
             cancellationToken);
 
         if (tasks.Count > 0)
         {
-          await flush();
+          await UpdateMailboxes(await Task.WhenAll(tasks));
         }
       }
     }
@@ -148,30 +133,54 @@
           userInfo.Settings[UserSettingName.GroupingInformation] as string;
       }
 
-      return new BankMailbox
+      mailbox.Invalid = invalid;
+      mailbox.ewsUrl = url;
+      mailbox.groupingInformation = group;
+
+      return mailbox;
+    }
+
+    /// <summary>
+    /// Updates information in the mailboxes.
+    /// </summary>
+    /// <param name="mailboxes">A list of mailboxes to update.</param>
+    private async Task UpdateMailboxes(
+      IEnumerable<BankMailbox> mailboxes)
+    {
+      using(var model = CreateModel())
       {
-        mailAddress = mailbox.mailAddress,
-        Invalid = invalid,
-        userName = mailbox.userName,
-        ewsUrl = url,
-        groupingInformation = group,
-        notifyOnNewMails = mailbox.notifyOnNewMails,
-        notifyOnNewAppointments = mailbox.notifyOnNewAppointments,
-        calendarSyncStatus = mailbox.calendarSyncStatus,
-        inboxSyncStatus = mailbox.inboxSyncStatus,
-        managingServer = mailbox.managingServer
-      };
+        foreach(var mailbox in mailboxes)
+        {
+          if (mailbox != null)
+          {
+            model.Entry(mailbox).State = EntityState.Modified;
+          }
+        }
+
+        await model.SaveChangesAsync(cancellationToken);
+      }
     }
 
     /// <summary>
     /// Syncs a mail box.
     /// </summary>
+    /// <param name="service">A Exchange service instance.</param>
     /// <param name="mailbox">A mailbox to synchronize.</param>
     /// <returns>Synced mail box, or null if mail box is up to date.</returns>
-    private async Task<BankMailbox> SyncMailbox(BankMailbox mailbox)
+    private async Task<BankMailbox> SyncMailbox(
+      Office365.ExchangeService service, 
+      BankMailbox mailbox)
     {
+      if ((mailbox.ewsUrl == null) || (mailbox.groupingInformation == null))
+      {
+        return null;
+      }
+
+      service.ImpersonatedUserId = new Office365.ImpersonatedUserId(
+        Office365.ConnectingIdType.SmtpAddress,
+        mailbox.mailAddress);
+
       var hasChanges = false;
-      var service = GetService(mailbox);
 
       try
       {
@@ -234,10 +243,9 @@
       service.BeginSyncFolderItems(
         asyncResult =>
         {
-          cancellationToken.ThrowIfCancellationRequested();
-
           try
           {
+            cancellationToken.ThrowIfCancellationRequested();
             taskSource.SetResult(service.EndSyncFolderItems(asyncResult));
           }
           catch (Exception e)
@@ -265,7 +273,7 @@
       var prev = null as BankMailbox;
       var group = new List<BankMailbox>();
 
-      using(var model = new EWSQueueEntities())
+      using(var model = CreateModel())
       {
         await model.BankMailboxes.AsNoTracking().
           Where(mailbox => 
@@ -279,19 +287,16 @@
           ForEachAsync(
             async mailbox =>
             {
-              if ((prev == null) ||
-                ((prev.ewsUrl == mailbox.ewsUrl) &&
-                (prev.groupingInformation == mailbox.groupingInformation) &&
-                (group.Count < 200)))
-              {
-                group.Add(mailbox);
-              }
-              else
+              if ((prev != null) &&
+                ((prev.ewsUrl != mailbox.ewsUrl) ||
+                  (prev.groupingInformation != mailbox.groupingInformation) ||
+                  (group.Count >= 200)))
               {
                 await ListenMailboxes(group);
                 group.Clear();
               }
 
+              group.Add(mailbox);
               prev = mailbox;
             },
             cancellationToken);
@@ -312,6 +317,7 @@
     private async Task ListenMailboxes(IEnumerable<BankMailbox> mailboxes)
     {
       var service = null as Office365.ExchangeService;
+      var primaryMailBox = null as BankMailbox;
 
       var subscriptions = await Task.WhenAll(
         mailboxes.Select(
@@ -321,6 +327,7 @@
 
             if (service == null)
             {
+              primaryMailBox = mailbox;
               service = GetService(mailbox);
               service.HttpHeaders.Add("X-AnchorMailbox", mailbox.mailAddress);
               service.HttpHeaders.Add("X-PreferServerAffinity", "true");
@@ -330,8 +337,6 @@
               Office365.ConnectingIdType.SmtpAddress,
               mailbox.mailAddress);
 
-            var taskSource =
-              new TaskCompletionSource<Office365.StreamingSubscription>();
             var folderIds = new List<Office365.FolderId>();
 
             if (mailbox.notifyOnNewAppointments)
@@ -344,15 +349,29 @@
               folderIds.Add(Office365.WellKnownFolderName.Inbox);
             }
 
+            var taskSource =
+              new TaskCompletionSource<Office365.StreamingSubscription>();
+
             service.BeginSubscribeToStreamingNotifications(
               asyncResult =>
               {
-                cancellationToken.ThrowIfCancellationRequested();
-
                 try
                 {
+                  cancellationToken.ThrowIfCancellationRequested();
                   taskSource.SetResult(
                     service.EndSubscribeToStreamingNotifications(asyncResult));
+                }
+                catch (OperationCanceledException e)
+                {
+                  taskSource.SetException(e);
+
+                  return;
+                }
+                catch(Office365.ServiceResponseException e)
+                {
+                  mailbox.ewsUrl = null;
+                  mailbox.groupingInformation = null;
+                  taskSource.SetResult(null);
                 }
                 catch
                 {
@@ -374,17 +393,25 @@
           mailboxes,
           (subscription, mailbox) => new { subscription, mailbox }).
         Where(item => item.subscription != null).
-        ToDictionary(item => item.subscription.Id, item => item.mailbox.mailAddress);
+        ToDictionary(
+          item => item.subscription.Id, 
+          item => item.mailbox.mailAddress);
+
+      await UpdateMailboxes(mailboxes.Where(mailbox => mailbox.ewsUrl == null));
 
       if ((service == null) || (subscriptionMap.Count == 0))
       {
         return;
       }
 
+      service.ImpersonatedUserId = new Office365.ImpersonatedUserId(
+        Office365.ConnectingIdType.SmtpAddress,
+        primaryMailBox.mailAddress);
+
       var connection = new Office365.StreamingSubscriptionConnection(
         service,
         subscriptions.Where(subscription => subscription != null),
-        Settings.ExchangeConnectionLimit);
+        Settings.ExchangeListenerRecyclePeriod);
 
       connection.OnNotificationEvent += (sender, args) =>
       {
@@ -420,28 +447,12 @@
 
       connection.Open();
 
-      var syncMailboxes = 
-        (await Task.WhenAll(
-          mailboxes.Select(mailbox => SyncMailbox(mailbox)))).
-        Where(mailbox => mailbox != null).
-        ToArray();
-
-      if (syncMailboxes.Length > 0)
-      {
-        using(var model = new EWSQueueEntities())
-        {
-          foreach(var mailbox in mailboxes)
-          {
-            model.Entry(mailbox).State = EntityState.Modified;
-          }
-
-          await model.SaveChangesAsync(cancellationToken);
-        }
-      }
+      await UpdateMailboxes(
+        await Task.WhenAll(
+          mailboxes.Select(mailbox => SyncMailbox(service, mailbox))));
 
       subscriptions = null;
       mailboxes = null;
-      syncMailboxes = null;
     }
 
     /// <summary>
@@ -470,6 +481,19 @@
       service.Url = new Uri(mailbox.ewsUrl);
 
       return service;
+    }
+
+    /// <summary>
+    /// Creates a model instance.
+    /// </summary>
+    /// <returns></returns>
+    private EWSQueueEntities CreateModel()
+    {
+      var model = new EWSQueueEntities();
+
+      model.Configuration.ProxyCreationEnabled = false;
+
+      return model;
     }
 
     /// <summary>
