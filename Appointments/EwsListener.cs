@@ -155,24 +155,29 @@
     }
 
     /// <summary>
+    /// Synchronizes a 
+    /// </summary>
+    /// <param name="mailboxes">A enumeration of mailboxes.</param>
+    /// <returns>A task instance.</returns>
+    private async Task SyncMailboxes(IEnumerable<BankMailbox> mailboxes)
+    {
+      await UpdateMailboxes(
+        await Task.WhenAll(mailboxes.Select(mailbox => SyncMailbox(mailbox))));
+    }
+
+    /// <summary>
     /// Syncs a mail box.
     /// </summary>
-    /// <param name="service">A Exchange service instance.</param>
     /// <param name="mailbox">A mailbox to synchronize.</param>
     /// <returns>Synced mail box, or null if mail box is up to date.</returns>
-    private async Task<BankMailbox> SyncMailbox(
-      Office365.ExchangeService service, 
-      BankMailbox mailbox)
+    private async Task<BankMailbox> SyncMailbox(BankMailbox mailbox)
     {
       if ((mailbox.ewsUrl == null) || (mailbox.groupingInformation == null))
       {
         return null;
       }
 
-      service.ImpersonatedUserId = new Office365.ImpersonatedUserId(
-        Office365.ConnectingIdType.SmtpAddress,
-        mailbox.mailAddress);
-
+      var service = GetService(mailbox);
       var changed = false;
 
       try
@@ -221,14 +226,15 @@
     /// Syncs and updates a mail box.
     /// </summary>
     /// <param name="emailAddress">An email address to sync.</param>
+    /// <param name="events">A enumeration of events.</param>
     /// <returns>Task instance.</returns>
-    private async Task SyncAndUpdateMailbox(string emailAddress)
+    private async Task SyncAndUpdateMailbox(
+      string emailAddress,
+      IEnumerable<Office365.NotificationEvent> events)
     {
-      var mailbox = null as BankMailbox;
-
       using(var model = CreateModel())
       {
-        mailbox = await model.BankMailboxes.
+        var mailbox = await model.BankMailboxes.
           Where(
             item =>
               (item.mailAddress == emailAddress) &&
@@ -236,20 +242,32 @@
               !item.Invalid).
           AsNoTracking().
           FirstOrDefaultAsync();
-      }
 
-      if (mailbox == null)
-      {
-        return;
-      }
+        if (mailbox == null)
+        {
+          return;
+        }
 
-      var service = GetService(mailbox);
+        model.BankNotifications.AddRange(
+          events.
+            OfType<Office365.ItemEvent>().
+            Select(
+              item =>
+                new BankNotification
+                {
+                  UpdatedAt = item.TimeStamp,
+                  itemId = item.ItemId.UniqueId,
+                  mailAddress = mailbox.mailAddress,
+                  ChangeType = 
+                    (item.EventType == Office365.EventType.NewMail) ||
+                    (item.EventType == Office365.EventType.Created) ?
+                      (int)Office365.ChangeType.Create :
+                      item.EventType == Office365.EventType.Deleted ?
+                      (int)Office365.ChangeType.Delete :
+                      (int)Office365.ChangeType.Update
+                }));
 
-      mailbox = await SyncMailbox(service, mailbox);
-
-      if (mailbox != null)
-      {
-        await UpdateMailboxes(new[] { mailbox });
+        await model.SaveChangesAsync(cancellationToken);
       }
     }
 
@@ -454,7 +472,8 @@
             folderIds,
             Office365.EventType.NewMail,
             Office365.EventType.Created,
-            Office365.EventType.Deleted);
+            Office365.EventType.Deleted,
+            Office365.EventType.Modified);
 
           return taskSource.Task;
         };
@@ -482,20 +501,12 @@
 
                   return subscribe(service, mailbox);
                 }))).
+        Where(item => item != null).
         ToArray();
-
-      var subscriptionMap = subscriptions.
-        Zip(
-          mailboxes,
-          (subscription, mailbox) => new { subscription, mailbox }).
-        Where(item => item.subscription != null).
-        ToDictionary(
-          item => item.subscription.Id, 
-          item => item.mailbox.mailAddress);
 
       await UpdateMailboxes(mailboxes.Where(mailbox => mailbox.ewsUrl == null));
 
-      if (subscriptionMap.Count == 0)
+      if (subscriptions.Length == 0)
       {
         return;
       }
@@ -507,42 +518,46 @@
 
       connection.OnNotificationEvent += (sender, args) =>
       {
-        var emailAddress = subscriptionMap.Get(args.Subscription.Id);
-
-        if (emailAddress != null)
+        if (args.Subscription == null)
         {
-          // Note: fire and forget task.
-          var syncTask = SyncAndUpdateMailbox(emailAddress);
+          return;
         }
+
+        var emailAddress = args.Subscription.Service.ImpersonatedUserId.Id;
+        // Note: fire and forget task.
+        var syncTask = SyncAndUpdateMailbox(emailAddress, args.Events);
       };
 
       connection.OnSubscriptionError += (sender, args) =>
       {
-        var emailAddress = subscriptionMap.Get(args.Subscription.Id);
-
-        if (emailAddress != null)
+        if (args.Subscription == null)
         {
-          // TODO: handle subscription error.
+          return;
         }
+
+        var emailAddress = args.Subscription.Service.ImpersonatedUserId.Id;
+
+        // TODO: handle subscription error.
       };
 
       connection.OnDisconnect += (sender, args) =>
       {
-        var emailAddress = subscriptionMap.Get(args.Subscription.Id);
-
-        if (emailAddress != null)
+        if (args.Subscription == null)
         {
-          // TODO: handle disconnect.
+          return;
         }
+
+        var emailAddress = args.Subscription.Service.ImpersonatedUserId.Id;
+
+        // TODO: handle disconnect.
       };
 
       cancellationToken.ThrowIfCancellationRequested();
 
       connection.Open();
 
-      await UpdateMailboxes(
-        await Task.WhenAll(
-          mailboxes.Select(mailbox => SyncMailbox(GetService(mailbox), mailbox))));
+      // NOTE: run and forget.
+      var syncMailBoxesTask = SyncMailboxes(mailboxes);
 
       subscriptions = null;
       mailboxes = null;
@@ -564,12 +579,9 @@
       service.UseDefaultCredentials = false;
       service.PreAuthenticate = true;
 
-      if (Settings.ExchangeUserName != mailbox.mailAddress)
-      {
-        service.ImpersonatedUserId = new Office365.ImpersonatedUserId(
-          Office365.ConnectingIdType.SmtpAddress,
-          mailbox.mailAddress);
-      }
+      service.ImpersonatedUserId = new Office365.ImpersonatedUserId(
+        Office365.ConnectingIdType.SmtpAddress,
+        mailbox.mailAddress);
 
       service.Url = new Uri(mailbox.ewsUrl);
 
