@@ -325,5 +325,26 @@ namespace Bnhp.Office365
     /// <param name="changeType">A change type: delete, create, modify.</param>
     [OperationContract]
     bool Notification(string email, string ID, string changeType);
+
+    /// <summary>
+    /// Gets a set of changes.
+    /// </summary>
+    /// <param name="systemID">An optional system ID</param>
+    /// <param name="startDate">Optional start date.</param>
+    /// <param name="endDate">Optional end date.</param>
+    /// <param name="skip">
+    /// Optional number of record to skip in result.
+    /// </param>
+    /// <param name="take">
+    /// Optional number of records to return from result.
+    /// </param>
+    /// <returns>A enumeration of changes.</returns>
+    [OperationContract]
+    IEnumerable<Change> GetChanges(
+      string systemID,
+      DateTime? startDate,
+      DateTime? endDate,
+      int? skip = 0,
+      int? take = 0);
   }
 }

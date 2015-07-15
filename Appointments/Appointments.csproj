@@ -111,6 +111,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Changes.cs" />
     <Compile Include="AutoDiscovery.cs" />
     <Compile Include="Appointment.cs" />
     <Compile Include="Appointments.svc.cs">
@@ -126,6 +127,7 @@
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="Cache.cs" />
+    <Compile Include="EwsListener.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="IAppointments.cs" />
     <Compile Include="MailboxAffinity.cs">

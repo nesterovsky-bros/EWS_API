@@ -20,7 +20,7 @@ public partial class WorkTable
 
     public string mailAddress { get; set; }
 
-    public int systemId { get; set; }
+    public int systemID { get; set; }
 
     public bool notifyOnNewMails { get; set; }
 
@@ -29,8 +29,6 @@ public partial class WorkTable
 
 
     public virtual BankMailbox BankMailbox { get; set; }
-
-    public virtual BankSystem BankSystem { get; set; }
 
 }
 

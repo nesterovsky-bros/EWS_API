@@ -2,6 +2,7 @@
 {
   using System;
   using System.Diagnostics;
+  using System.Threading.Tasks;
 
   /// <summary>
   /// A service to notify about response.
@@ -17,7 +18,7 @@
     /// <param name="request">A request instance.</param>
     /// <param name="response">A response intance, if any.</param>
     /// <param name="error">An error in case of error.</param>
-    public virtual void Notify<I, O>(
+    public virtual Task Notify<I, O>(
       long ID, 
       I request, 
       O response, 
@@ -31,6 +32,8 @@
       {
         Trace.TraceInformation("Response {0} is ready.", ID);
       }
+
+      return Task.FromResult(true);
     }
   }
 }

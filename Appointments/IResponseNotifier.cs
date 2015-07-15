@@ -1,6 +1,7 @@
 ﻿namespace Bnhp.Office365
 {
   using System;
+  using System.Threading.Tasks;
 
   /// <summary>
   /// A service to notify about response.
@@ -16,6 +17,6 @@
     /// <param name="request">A request instance.</param>
     /// <param name="response">A response intance, if any.</param>
     /// <param name="error">An error in case of error.</param>
-    void Notify<I, O>(long ID, I request, O response, Exception error);
+    Task Notify<I, O>(long ID, I request, O response, Exception error);
   }
 }

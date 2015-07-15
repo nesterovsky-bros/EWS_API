@@ -18,13 +18,7 @@ using System;
 public partial class BankSystem
 {
 
-    public BankSystem()
-    {
-
-        this.WorkTables = new HashSet<WorkTable>();
-
-    }
-
+    public string systemName { get; set; }
 
     public int systemID { get; set; }
 
@@ -39,8 +33,6 @@ public partial class BankSystem
 
 
     public virtual SystemManager SystemManager { get; set; }
-
-    public virtual ICollection<WorkTable> WorkTables { get; set; }
 
 }
 

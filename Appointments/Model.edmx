@@ -53,8 +53,9 @@
         </EntityType>
         <EntityType Name="BankSystems">
           <Key>
-            <PropertyRef Name="systemID" />
+            <PropertyRef Name="systemName" />
           </Key>
+          <Property Name="systemName" Type="nvarchar" MaxLength="128" Nullable="false" />
           <Property Name="systemID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="name" Type="nvarchar" MaxLength="50" Nullable="false" />
           <Property Name="userName" Type="nvarchar" MaxLength="20" Nullable="false" />
@@ -73,10 +74,10 @@
         <EntityType Name="WorkTable">
           <Key>
             <PropertyRef Name="mailAddress" />
-            <PropertyRef Name="systemId" />
+            <PropertyRef Name="systemID" />
           </Key>
           <Property Name="mailAddress" Type="nvarchar" MaxLength="128" Nullable="false" />
-          <Property Name="systemId" Type="int" Nullable="false" />
+          <Property Name="systemID" Type="int" Nullable="false" />
           <Property Name="notifyOnNewMails" Type="bit" Nullable="false" />
           <Property Name="notifyOnNewAppointments" Type="bit" Nullable="false" />
         </EntityType>
@@ -116,18 +117,6 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_WorkTable_Systems">
-          <End Role="BankSystems" Type="Self.BankSystems" Multiplicity="1" />
-          <End Role="WorkTable" Type="Self.WorkTable" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="BankSystems">
-              <PropertyRef Name="systemID" />
-            </Principal>
-            <Dependent Role="WorkTable">
-              <PropertyRef Name="systemId" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
         <EntityContainer Name="EWSQueueModelStoreContainer">
           <EntitySet Name="MailboxAffinity" EntityType="Self.MailboxAffinity" Schema="Data" store:Type="Tables" />
           <EntitySet Name="Queue" EntityType="Self.Queue" Schema="Data" store:Type="Tables" />
@@ -146,10 +135,6 @@
           </AssociationSet>
           <AssociationSet Name="FK_WorkTable_Mailboxes" Association="Self.FK_WorkTable_Mailboxes">
             <End Role="BankMailboxes" EntitySet="BankMailboxes" />
-            <End Role="WorkTable" EntitySet="WorkTable" />
-          </AssociationSet>
-          <AssociationSet Name="FK_WorkTable_Systems" Association="Self.FK_WorkTable_Systems">
-            <End Role="BankSystems" EntitySet="BankSystems" />
             <End Role="WorkTable" EntitySet="WorkTable" />
           </AssociationSet>
         </EntityContainer>
@@ -176,10 +161,6 @@
           <AssociationSet Name="FK_Systems_SystemManagers" Association="EWSQueueModel.FK_Systems_SystemManagers">
             <End Role="SystemManager" EntitySet="SystemManagers" />
             <End Role="BankSystem" EntitySet="BankSystems" />
-          </AssociationSet>
-          <AssociationSet Name="FK_WorkTable_Systems" Association="EWSQueueModel.FK_WorkTable_Systems">
-            <End Role="BankSystem" EntitySet="BankSystems" />
-            <End Role="WorkTable" EntitySet="WorkTables" />
           </AssociationSet>
         </EntityContainer>
         <EntityType Name="MailboxAffinity">
@@ -233,15 +214,15 @@
         </EntityType>
         <EntityType Name="BankSystem">
           <Key>
-            <PropertyRef Name="systemID" />
+            <PropertyRef Name="systemName" />
           </Key>
+          <Property Name="systemName" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
           <Property Name="systemID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="name" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
           <Property Name="userName" Type="String" Nullable="false" MaxLength="20" FixedLength="false" Unicode="true" />
           <Property Name="description" Type="String" MaxLength="200" FixedLength="false" Unicode="true" />
           <Property Name="systemManagerId" Type="Int32" Nullable="false" />
           <NavigationProperty Name="SystemManager" Relationship="EWSQueueModel.FK_Systems_SystemManagers" FromRole="BankSystem" ToRole="SystemManager" />
-          <NavigationProperty Name="WorkTables" Relationship="EWSQueueModel.FK_WorkTable_Systems" FromRole="BankSystem" ToRole="WorkTable" />
         </EntityType>
         <EntityType Name="SystemManager">
           <Key>
@@ -256,14 +237,13 @@
         <EntityType Name="WorkTable">
           <Key>
             <PropertyRef Name="mailAddress" />
-            <PropertyRef Name="systemId" />
+            <PropertyRef Name="systemID" />
           </Key>
           <Property Name="mailAddress" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
-          <Property Name="systemId" Type="Int32" Nullable="false" />
+          <Property Name="systemID" Type="Int32" Nullable="false" />
           <Property Name="notifyOnNewMails" Type="Boolean" Nullable="false" />
           <Property Name="notifyOnNewAppointments" Type="Boolean" Nullable="false" />
           <NavigationProperty Name="BankMailbox" Relationship="EWSQueueModel.FK_WorkTable_Mailboxes" FromRole="WorkTable" ToRole="BankMailbox" />
-          <NavigationProperty Name="BankSystem" Relationship="EWSQueueModel.FK_WorkTable_Systems" FromRole="WorkTable" ToRole="BankSystem" />
         </EntityType>
         <Association Name="FK_Notifications_Mailboxes">
           <End Type="EWSQueueModel.BankMailbox" Role="BankMailbox" Multiplicity="1" />
@@ -298,18 +278,6 @@
             </Principal>
             <Dependent Role="BankSystem">
               <PropertyRef Name="systemManagerId" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_WorkTable_Systems">
-          <End Type="EWSQueueModel.BankSystem" Role="BankSystem" Multiplicity="1" />
-          <End Type="EWSQueueModel.WorkTable" Role="WorkTable" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="BankSystem">
-              <PropertyRef Name="systemID" />
-            </Principal>
-            <Dependent Role="WorkTable">
-              <PropertyRef Name="systemId" />
             </Dependent>
           </ReferentialConstraint>
         </Association>
@@ -375,6 +343,7 @@
                 <ScalarProperty Name="userName" ColumnName="userName" />
                 <ScalarProperty Name="name" ColumnName="name" />
                 <ScalarProperty Name="systemID" ColumnName="systemID" />
+                <ScalarProperty Name="systemName" ColumnName="systemName" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -393,7 +362,7 @@
               <MappingFragment StoreEntitySet="WorkTable">
                 <ScalarProperty Name="notifyOnNewAppointments" ColumnName="notifyOnNewAppointments" />
                 <ScalarProperty Name="notifyOnNewMails" ColumnName="notifyOnNewMails" />
-                <ScalarProperty Name="systemId" ColumnName="systemId" />
+                <ScalarProperty Name="systemID" ColumnName="systemID" />
                 <ScalarProperty Name="mailAddress" ColumnName="mailAddress" />
               </MappingFragment>
             </EntityTypeMapping>

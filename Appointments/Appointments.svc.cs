@@ -836,6 +836,107 @@
     }
     #endregion
 
+    #region GetChanges
+
+    public struct GetChangesRequest
+    {
+      public string systemName;
+      public DateTime? startDate;
+      public DateTime? endDate;
+      public int? skip;
+      public int? take;
+    }
+    
+    /// <summary>
+    /// Gets a set of changes.
+    /// </summary>
+    /// <param name="systemName">An optional system name.</param>
+    /// <param name="startDate">Optional start date.</param>
+    /// <param name="endDate">Optional end date.</param>
+    /// <param name="skip">
+    /// Optional number of record to skip in result.
+    /// </param>
+    /// <param name="take">
+    /// Optional number of records to return from result.
+    /// </param>
+    /// <returns>A enumeration of changes.</returns>
+    public IEnumerable<Change> GetChanges(
+      string systemName,
+      DateTime? startDate,
+      DateTime? endDate,
+      int? skip = 0,
+      int? take = 0)
+    {
+      return Call(
+        "GetChanges",
+        new GetChangesRequest
+        {
+          systemName = systemName,
+          startDate = startDate,
+          endDate = endDate,
+          skip = skip,
+          take = take
+        },
+        GetChangesImpl);
+    }
+
+    private IEnumerable<Change> GetChangesImpl(GetChangesRequest request)
+    {
+      using(var model = new EWSQueueEntities())
+      {
+        var query = request.systemName == null ? 
+          model.BankNotifications.AsNoTracking() :
+          model.BankNotifications.AsNoTracking().Join(
+            model.BankSystems.
+              Where(item => item.systemName == request.systemName).
+              Join(
+                model.WorkTables, 
+                outer => outer.systemID, 
+                inner => inner.systemID,
+                (outer, inner) => inner),
+            outer => outer.mailAddress,
+            inner => inner.mailAddress,
+            (outer, inner) => outer);
+
+        if (request.startDate == null)
+        {
+          query = query.Where(item => item.UpdatedAt >= request.startDate);
+        }
+
+        if (request.endDate == null)
+        {
+          query = query.Where(item => item.UpdatedAt <= request.endDate);
+        }
+
+        query = query.
+          OrderBy(item => item.UpdatedAt).
+          ThenBy(item => item.mailAddress).
+          ThenBy(item => item.itemId);
+
+        if (request.skip != null)
+        {
+          query = query.Skip(request.skip.Value);
+        }
+
+        if (request.take != null)
+        {
+          query = query.Take(request.take.Value);
+        }
+
+        return query.Select(
+          item => new Change 
+          {
+            Timestamp = item.UpdatedAt,
+            MailAddress = item.mailAddress,
+            ItemId = item.itemId,
+            ChangeType = (ChangeType)item.ChangeType
+          }).
+          ToArray();
+      }
+    }
+
+    #endregion
+
     #region Private methods
     /// <summary>
     /// Gets a service instance.
