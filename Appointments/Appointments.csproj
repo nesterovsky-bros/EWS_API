@@ -112,7 +112,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutoDiscovery.cs" />
-    <Compile Include="EwsListener.cs" />
     <Compile Include="Appointment.cs" />
     <Compile Include="Appointments.svc.cs">
       <DependentUpon>Appointments.svc</DependentUpon>
