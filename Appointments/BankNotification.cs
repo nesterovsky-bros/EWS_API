@@ -18,17 +18,17 @@ using System;
 public partial class BankNotification
 {
 
-    public int itemId { get; set; }
+    public System.DateTime UpdatedAt { get; set; }
 
-    public int systemId { get; set; }
+    public string itemId { get; set; }
 
     public string mailAddress { get; set; }
+
+    public int ChangeType { get; set; }
 
 
 
     public virtual BankMailbox BankMailbox { get; set; }
-
-    public virtual BankSystem BankSystem { get; set; }
 
 }
 

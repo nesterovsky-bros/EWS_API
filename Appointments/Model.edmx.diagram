@@ -4,17 +4,16 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="7138d730a49840dfb26d8b8ee93844b2" Name="Diagram1" ZoomLevel="86">
-        <EntityTypeShape EntityType="EWSQueueModel.Queue" Width="1.5" PointX="0.75" PointY="0.625" />
-        <EntityTypeShape EntityType="EWSQueueModel.MailboxAffinity" Width="1.5" PointX="3.375" PointY="0.75" />
-        <EntityTypeShape EntityType="EWSQueueModel.BankMailbox" Width="1.5" PointX="12" PointY="4.5" />
-        <EntityTypeShape EntityType="EWSQueueModel.BankNotification" Width="1.5" PointX="12.375" PointY="0.875" />
-        <EntityTypeShape EntityType="EWSQueueModel.BankSystem" Width="1.5" PointX="10.125" PointY="0.625" />
-        <EntityTypeShape EntityType="EWSQueueModel.SystemManager" Width="1.5" PointX="7.875" PointY="0.875" />
-        <EntityTypeShape EntityType="EWSQueueModel.WorkTable" Width="1.5" PointX="9.625" PointY="4" />
+      <Diagram DiagramId="7138d730a49840dfb26d8b8ee93844b2" Name="Diagram1" ZoomLevel="46">
+        <EntityTypeShape EntityType="EWSQueueModel.MailboxAffinity" Width="1.5" PointX="5.75" PointY="0.75" />
+        <EntityTypeShape EntityType="EWSQueueModel.Queue" Width="1.5" PointX="5.75" PointY="3.75" />
+        <EntityTypeShape EntityType="EWSQueueModel.BankMailbox" Width="1.5" PointX="11.375" PointY="2.375" />
+        <EntityTypeShape EntityType="EWSQueueModel.BankNotification" Width="1.5" PointX="14.5" PointY="5.5" />
+        <EntityTypeShape EntityType="EWSQueueModel.BankSystem" Width="1.5" PointX="18.375" PointY="2.375" />
+        <EntityTypeShape EntityType="EWSQueueModel.SystemManager" Width="1.5" PointX="18.25" PointY="7.25" />
+        <EntityTypeShape EntityType="EWSQueueModel.WorkTable" Width="1.5" PointX="14.625" PointY="2.5" />
         <AssociationConnector Association="EWSQueueModel.FK_Notifications_Mailboxes" />
         <AssociationConnector Association="EWSQueueModel.FK_WorkTable_Mailboxes" />
-        <AssociationConnector Association="EWSQueueModel.FK_Notifications_Systems" />
         <AssociationConnector Association="EWSQueueModel.FK_Systems_SystemManagers" />
         <AssociationConnector Association="EWSQueueModel.FK_WorkTable_Systems" />
       </Diagram>

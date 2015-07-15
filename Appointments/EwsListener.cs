@@ -71,11 +71,12 @@
 
       using(var model = CreateModel())
       {
-        await model.BankMailboxes.AsNoTracking().
+        await model.BankMailboxes.
           Where(
             mailbox =>
               !mailbox.Invalid &&
               ((mailbox.ewsUrl == null) || (mailbox.groupingInformation == null))).
+          AsNoTracking().
           ForEachAsync(
             async mailbox =>
             {
@@ -115,26 +116,19 @@
           Settings.AttemptsToDiscoverUrl,
           mailbox.mailAddress,
           cancellationToken);
+
+        mailbox.ewsUrl = 
+          userInfo.Settings[UserSettingName.ExternalEwsUrl] as string;
+        mailbox.groupingInformation = 
+          userInfo.Settings[UserSettingName.GroupingInformation] as string;
+        mailbox.inboxSyncStatus = null;
+        mailbox.calendarSyncStatus = null;
       }
       catch
       { 
         // Consider the user invalid.
-        invalid = true;
+        mailbox.Invalid = invalid;
       }
-
-      string url = null;
-      string group = null;
-
-      if (userInfo != null)
-      {
-        url = userInfo.Settings[UserSettingName.ExternalEwsUrl] as string;
-        group =
-          userInfo.Settings[UserSettingName.GroupingInformation] as string;
-      }
-
-      mailbox.Invalid = invalid;
-      mailbox.ewsUrl = url;
-      mailbox.groupingInformation = group;
 
       return mailbox;
     }
@@ -179,47 +173,84 @@
         Office365.ConnectingIdType.SmtpAddress,
         mailbox.mailAddress);
 
-      var hasChanges = false;
+      var changed = false;
 
       try
       {
         if (mailbox.notifyOnNewMails)
         {
-          var changes = await SyncMailbox(
+          var syncState = await SyncMailbox(
             mailbox,
             service,
             Office365.WellKnownFolderName.Inbox,
             mailbox.inboxSyncStatus);
 
-          if (mailbox.inboxSyncStatus != changes.SyncState)
+          if (mailbox.inboxSyncStatus != syncState)
           {
-            mailbox.inboxSyncStatus = changes.SyncState;
-            hasChanges = true;
+            mailbox.inboxSyncStatus = syncState;
+            changed = true;
           }
         }
 
         if (mailbox.notifyOnNewAppointments)
         {
-          var changes = await SyncMailbox(
+          var syncState = await SyncMailbox(
             mailbox,
             service,
-            Office365.WellKnownFolderName.Inbox,
+            Office365.WellKnownFolderName.Calendar,
             mailbox.calendarSyncStatus);
 
-          if (mailbox.calendarSyncStatus != changes.SyncState)
+          if (mailbox.calendarSyncStatus != syncState)
           {
-            mailbox.calendarSyncStatus = changes.SyncState;
-            hasChanges = true;
+            mailbox.calendarSyncStatus = syncState;
+            changed = true;
           }
         }
       }
       catch
       {
-        hasChanges = true;
-        mailbox.ewsUrl = null;
+        changed = true;
+        mailbox.calendarSyncStatus = null;
+        mailbox.inboxSyncStatus = null;
       }
 
-      return hasChanges ? mailbox : null;
+      return changed ? mailbox : null;
+    }
+
+    /// <summary>
+    /// Syncs and updates a mail box.
+    /// </summary>
+    /// <param name="emailAddress">An email address to sync.</param>
+    /// <returns>Task instance.</returns>
+    private async Task SyncAndUpdateMailbox(string emailAddress)
+    {
+      var mailbox = null as BankMailbox;
+
+      using(var model = CreateModel())
+      {
+        mailbox = await model.BankMailboxes.
+          Where(
+            item =>
+              (item.mailAddress == emailAddress) &&
+              (item.ewsUrl != null) &&
+              !item.Invalid).
+          AsNoTracking().
+          FirstOrDefaultAsync();
+      }
+
+      if (mailbox == null)
+      {
+        return;
+      }
+
+      var service = GetService(mailbox);
+
+      mailbox = await SyncMailbox(service, mailbox);
+
+      if (mailbox != null)
+      {
+        await UpdateMailboxes(new[] { mailbox });
+      }
     }
 
     /// <summary>
@@ -229,38 +260,79 @@
     /// <param name="service">An Exchange service.</param>
     /// <param name="folderId">A folder id.</param>
     /// <param name="syncState">A folder SyncState.</param>
-    /// <returns>Synced mail box, or null if mail box is up to date.</returns>
-    private Task<Office365.ChangeCollection<Office365.ItemChange>> SyncMailbox(
+    /// <returns>A new syncState value.</returns>
+    private async Task<string> SyncMailbox(
       BankMailbox mailbox,
       Office365.ExchangeService service, 
       Office365.FolderId folderId,
       string syncState)
     {
-      var taskSource = new TaskCompletionSource<
-        Office365.ChangeCollection<Office365.ItemChange>>();
+      var state = syncState;
+      var hasMore = false;
 
-      service.BeginSyncFolderItems(
-        asyncResult =>
+      do
+      {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var now = DateTime.Now;
+        var taskSource = new TaskCompletionSource<
+          Office365.ChangeCollection<Office365.ItemChange>>();
+
+        service.BeginSyncFolderItems(
+          asyncResult =>
+          {
+            try
+            {
+              cancellationToken.ThrowIfCancellationRequested();
+              taskSource.SetResult(service.EndSyncFolderItems(asyncResult));
+            }
+            catch(Exception e)
+            {
+              taskSource.SetException(e);
+            }
+          },
+          null,
+          folderId,
+          Office365.PropertySet.IdOnly,
+          null,
+          512,
+          Office365.SyncFolderItemsScope.NormalItems,
+          state);
+
+        try
         {
-          try
-          {
-            cancellationToken.ThrowIfCancellationRequested();
-            taskSource.SetResult(service.EndSyncFolderItems(asyncResult));
-          }
-          catch (Exception e)
-          {
-            taskSource.TrySetException(e);
-          }
-        },
-        null,
-        folderId,
-        Office365.PropertySet.IdOnly,
-        null,
-        1,
-        Office365.SyncFolderItemsScope.NormalItems,
-        syncState);
+          var changes = await taskSource.Task;
 
-      return taskSource.Task;
+          if (changes.Count > 0)
+          {
+            using (var model = CreateModel())
+            {
+              model.BankNotifications.AddRange(
+                changes.Select(
+                  change => new BankNotification
+                  {
+                    UpdatedAt = now,
+                    itemId = change.ItemId.UniqueId,
+                    mailAddress = mailbox.mailAddress,
+                    ChangeType = (int)change.ChangeType
+                  }));
+
+              await model.SaveChangesAsync(cancellationToken);
+            }
+          }
+
+          state = changes.SyncState;
+          hasMore = changes.MoreChangesAvailable;
+        }
+        catch
+        { 
+          // TODO: log error
+          return null;
+        }
+      }
+      while(hasMore);
+
+      return state;
     }
 
     /// <summary>
@@ -274,7 +346,7 @@
 
       using(var model = CreateModel())
       {
-        await model.BankMailboxes.AsNoTracking().
+        await model.BankMailboxes.
           Where(mailbox => 
             !mailbox.Invalid && 
             (mailbox.ewsUrl != null) && 
@@ -283,6 +355,7 @@
           OrderBy(mailbox => mailbox.ewsUrl).
           ThenBy(mailbox => mailbox.groupingInformation).
           ThenBy(mailbox => mailbox.mailAddress).
+          AsNoTracking().
           ForEachAsync(
             async mailbox =>
             {
@@ -315,77 +388,101 @@
     /// <returns>A task instance.</returns>
     private async Task ListenMailboxes(IEnumerable<BankMailbox> mailboxes)
     {
-      var service = null as Office365.ExchangeService;
-      var primaryMailBox = null as BankMailbox;
+      var primaryMailbox = mailboxes.FirstOrDefault();
 
-      var subscriptions = await Task.WhenAll(
-        mailboxes.Select(
-          mailbox =>
+      if (primaryMailbox == null)
+      {
+        return;
+      }
+
+      var primaryService = GetService(primaryMailbox);
+
+      Func<
+        Office365.ExchangeService, 
+        BankMailbox, 
+        Task<Office365.StreamingSubscription>> subscribe =
+        (service, mailbox) =>
+        {
+          service.HttpHeaders.Add("X-AnchorMailbox", primaryMailbox.mailAddress);
+          service.HttpHeaders.Add("X-PreferServerAffinity", "true");
+
+          var folderIds = new List<Office365.FolderId>();
+
+          if (mailbox.notifyOnNewAppointments)
           {
-            cancellationToken.ThrowIfCancellationRequested();
+            folderIds.Add(Office365.WellKnownFolderName.Calendar);
+          }
 
-            if (service == null)
+          if (mailbox.notifyOnNewMails)
+          {
+            folderIds.Add(Office365.WellKnownFolderName.Inbox);
+          }
+
+          var taskSource =
+            new TaskCompletionSource<Office365.StreamingSubscription>();
+
+          service.BeginSubscribeToStreamingNotifications(
+            asyncResult =>
             {
-              primaryMailBox = mailbox;
-              service = GetService(mailbox);
-              service.HttpHeaders.Add("X-AnchorMailbox", mailbox.mailAddress);
-              service.HttpHeaders.Add("X-PreferServerAffinity", "true");
-            }
-
-            service.ImpersonatedUserId = new Office365.ImpersonatedUserId(
-              Office365.ConnectingIdType.SmtpAddress,
-              mailbox.mailAddress);
-
-            var folderIds = new List<Office365.FolderId>();
-
-            if (mailbox.notifyOnNewAppointments)
-            {
-              folderIds.Add(Office365.WellKnownFolderName.Calendar);
-            }
-
-            if (mailbox.notifyOnNewMails)
-            {
-              folderIds.Add(Office365.WellKnownFolderName.Inbox);
-            }
-
-            var taskSource =
-              new TaskCompletionSource<Office365.StreamingSubscription>();
-
-            service.BeginSubscribeToStreamingNotifications(
-              asyncResult =>
+              try
               {
-                try
-                {
-                  cancellationToken.ThrowIfCancellationRequested();
-                  taskSource.SetResult(
-                    service.EndSubscribeToStreamingNotifications(asyncResult));
-                }
-                catch (OperationCanceledException e)
-                {
-                  taskSource.SetException(e);
+                cancellationToken.ThrowIfCancellationRequested();
+                taskSource.SetResult(
+                  service.EndSubscribeToStreamingNotifications(asyncResult));
+              }
+              catch(OperationCanceledException e)
+              {
+                taskSource.SetException(e);
 
-                  return;
-                }
-                catch(Office365.ServiceResponseException e)
-                {
-                  mailbox.ewsUrl = null;
-                  mailbox.groupingInformation = null;
-                  taskSource.SetResult(null);
-                }
-                catch
-                {
-                  // TODO: log error.
-                  taskSource.SetResult(null);
-                }
-              },
-              null,
-              folderIds,
-              Office365.EventType.NewMail,
-              Office365.EventType.Created,
-              Office365.EventType.Deleted);
+                return;
+              }
+              catch(Office365.ServiceResponseException)
+              {
+                mailbox.ewsUrl = null;
+                mailbox.groupingInformation = null;
+                mailbox.calendarSyncStatus = null;
+                mailbox.inboxSyncStatus = null;
+                taskSource.SetResult(null);
+              }
+              catch
+              {
+                // TODO: log error.
+                taskSource.SetResult(null);
+              }
+            },
+            null,
+            folderIds,
+            Office365.EventType.NewMail,
+            Office365.EventType.Created,
+            Office365.EventType.Deleted);
 
-            return taskSource.Task;
-          }));
+          return taskSource.Task;
+        };
+
+      var primarySubscription = 
+        await subscribe(primaryService, primaryMailbox);
+
+      var subscriptions = 
+        new[] { primarySubscription }.
+        Concat(
+          await Task.WhenAll(
+            mailboxes.
+              Skip(1).
+              Select(
+                mailbox =>
+                {
+                  var service = GetService(mailbox);
+
+                  service.CookieContainer.Add(
+                    service.Url,
+                    primaryService.CookieContainer.
+                      GetCookies(primaryService.Url));
+
+                  // set X-BackEndOverrideCookie
+
+                  return subscribe(service, mailbox);
+                }))).
+        ToArray();
 
       var subscriptionMap = subscriptions.
         Zip(
@@ -398,17 +495,13 @@
 
       await UpdateMailboxes(mailboxes.Where(mailbox => mailbox.ewsUrl == null));
 
-      if ((service == null) || (subscriptionMap.Count == 0))
+      if (subscriptionMap.Count == 0)
       {
         return;
       }
 
-      service.ImpersonatedUserId = new Office365.ImpersonatedUserId(
-        Office365.ConnectingIdType.SmtpAddress,
-        primaryMailBox.mailAddress);
-
       var connection = new Office365.StreamingSubscriptionConnection(
-        service,
+        primaryService,
         subscriptions.Where(subscription => subscription != null),
         Settings.ExchangeListenerRecyclePeriod);
 
@@ -418,7 +511,8 @@
 
         if (emailAddress != null)
         {
-          // TODO: handle notification.
+          // Note: fire and forget task.
+          var syncTask = SyncAndUpdateMailbox(emailAddress);
         }
       };
 
@@ -448,7 +542,7 @@
 
       await UpdateMailboxes(
         await Task.WhenAll(
-          mailboxes.Select(mailbox => SyncMailbox(service, mailbox))));
+          mailboxes.Select(mailbox => SyncMailbox(GetService(mailbox), mailbox))));
 
       subscriptions = null;
       mailboxes = null;

@@ -21,8 +21,6 @@ public partial class BankSystem
     public BankSystem()
     {
 
-        this.BankNotifications = new HashSet<BankNotification>();
-
         this.WorkTables = new HashSet<WorkTable>();
 
     }
@@ -39,8 +37,6 @@ public partial class BankSystem
     public int systemManagerId { get; set; }
 
 
-
-    public virtual ICollection<BankNotification> BankNotifications { get; set; }
 
     public virtual SystemManager SystemManager { get; set; }
 

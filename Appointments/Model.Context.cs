@@ -32,9 +32,9 @@ public partial class EWSQueueEntities : DbContext
     }
 
 
-    public virtual DbSet<Queue> Queues { get; set; }
-
     public virtual DbSet<MailboxAffinity> MailboxAffinities { get; set; }
+
+    public virtual DbSet<Queue> Queues { get; set; }
 
     public virtual DbSet<BankMailbox> BankMailboxes { get; set; }
 
