@@ -1051,25 +1051,29 @@
     /// </returns>
     private Office365.Appointment GetAppointment(string email, string ID)
     {
-      var filter = 
-        new Office365.SearchFilter.IsEqualTo(Office365.ItemSchema.Id, ID);
+      //var filter = 
+      //  new Office365.SearchFilter.IsEqualTo(Office365.ItemSchema.Id, ID);
 
-      Office365.ItemView view = new Office365.ItemView(1);
+      //Office365.ItemView view = new Office365.ItemView(1);
 
-      view.Traversal = Office365.ItemTraversal.Shallow;
+      //view.Traversal = Office365.ItemTraversal.Shallow;
+
+      //var service = GetService(email);
+      //var appointments = service.FindItems(
+      //  Office365.WellKnownFolderName.Calendar,
+      //  filter,
+      //  view);
+
+      //if (appointments != null)
+      //{
+      //  return appointments.FirstOrDefault() as Office365.Appointment;
+      //}
+
+      //return null;
 
       var service = GetService(email);
-      var appointments = service.FindItems(
-        Office365.WellKnownFolderName.Calendar,
-        filter,
-        view);
 
-      if (appointments != null)
-      {
-        return appointments.FirstOrDefault() as Office365.Appointment;
-      }
-
-      return null;
+      return Office365.Appointment.Bind(service, new Office365.ItemId(ID));
     }
 
     private Appointment ConvertAppointment(Office365.Appointment appointment)
@@ -1095,7 +1099,8 @@
         RecurrenceType = RecurrenceType.Once,
         DateTimeCreated = appointment.DateTimeCreated,
         DateTimeSent = appointment.DateTimeSent,
-        DateTimeReceived = appointment.DateTimeReceived
+        DateTimeReceived = appointment.DateTimeReceived,
+        AppointmentState = appointment.AppointmentState
       };
 
       if (!appointment.IsUnmodified)

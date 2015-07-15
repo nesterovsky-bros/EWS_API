@@ -190,3 +190,11 @@ FakesAssemblies/
 GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
+/Appointments/BankMailbox.cs
+/Appointments/BankNotification.cs
+/Appointments/BankSystem.cs
+/Appointments/SystemManager.cs
+/Appointments/WorkTable.cs
+/wsdl/Appointments.2.xsd
+/wsdl/Appointments.4.xsd
+/readme.txt
