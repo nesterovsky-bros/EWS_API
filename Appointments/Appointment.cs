@@ -146,6 +146,25 @@ namespace Bnhp.Office365
     /// </summary>
     [DataMember]
     public string LastModifiedName { get; set; }
+
+    /// <summary>
+    /// Gets and sets a value that indicates whether the associated object is an appointment, 
+    /// a meeting, a response to a meeting, or a cancelled meeting.
+    /// The possible values are:
+    /// 0 - No response is required for this object. This is the case for appointment 
+    ///     objects and meeting response objects.
+    /// 1 - This meeting belongs to the organizer.
+    /// 2 - This value on the attendee's meeting indicates that the attendee has 
+    ///     tentatively accepted the meeting request.
+    /// 3 - This value on the attendee's meeting t indicates that the attendee has 
+    ///     accepted the meeting request.
+    /// 4 - This value on the attendee's meeting indicates that the attendee has 
+    ///     declined the meeting request.
+    /// 5 - This value on the attendee's meeting indicates the attendee has not 
+    ///     yet responded. This value is on the meeting request, meeting update, and meeting cancelation.
+    /// </summary>
+    [DataMember]
+    public int AppointmentState { get; set; }
   }
 
   /// <summary>
