@@ -898,12 +898,12 @@
             inner => inner.mailAddress,
             (outer, inner) => outer);
 
-        if (request.startDate == null)
+        if (request.startDate != null)
         {
           query = query.Where(item => item.UpdatedAt >= request.startDate);
         }
 
-        if (request.endDate == null)
+        if (request.endDate != null)
         {
           query = query.Where(item => item.UpdatedAt <= request.endDate);
         }
@@ -931,7 +931,7 @@
             ItemId = item.itemId,
             ChangeType = (ChangeType)item.ChangeType
           }).
-          ToArray();
+          ToList();
       }
     }
 
