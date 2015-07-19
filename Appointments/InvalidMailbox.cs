@@ -15,28 +15,10 @@ namespace Bnhp.Office365
 using System;
     using System.Collections.Generic;
     
-public partial class SystemManager
+public partial class InvalidMailbox
 {
 
-    public SystemManager()
-    {
-
-        this.BankSystems = new HashSet<BankSystem>();
-
-    }
-
-
-    public int systemManagerId { get; set; }
-
-    public string name { get; set; }
-
-    public string phone { get; set; }
-
-    public string mail { get; set; }
-
-
-
-    public virtual ICollection<BankSystem> BankSystems { get; set; }
+    public string Email { get; set; }
 
 }
 

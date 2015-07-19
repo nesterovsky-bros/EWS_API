@@ -31,7 +31,7 @@
     /// <param name="maxHops">
     /// Number of attempts to perform auto discovery.
     /// </param>
-    /// <param name="emailAddress">Email to get user settings for.</param>
+    /// <param name="email">Email to get user settings for.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>User settings for an email.</returns>
     public static Task<GetUserSettingsResponse> GetUserSettings(
@@ -39,7 +39,7 @@
       string serviceUserName,
       string servicePassword,
       int maxHops,
-      string emailAddress,
+      string email,
       CancellationToken cancellationToken = default(CancellationToken))
     {
       var autodiscoverService = new AutodiscoverService();
@@ -50,7 +50,7 @@
 
       return GetUserSettings(
         autodiscoverService,
-        emailAddress,
+        email,
         maxHops,
         new []
         {
@@ -64,7 +64,7 @@
     /// Gets user settings using AutoDiscovery service.
     /// </summary>
     /// <param name="service">An instance of the AutoDiscovery service.</param>
-    /// <param name="emailAddress">Email to get user settings for.</param>
+    /// <param name="email">Email to get user settings for.</param>
     /// <param name="maxHops">
     /// Number of attempts to perform auto discovery.
     /// </param>
@@ -73,7 +73,7 @@
     /// <returns>User settings for an email.</returns>
     public static async Task<GetUserSettingsResponse> GetUserSettings(
       AutodiscoverService service,
-      string emailAddress,
+      string email,
       int maxHops,
       UserSettingName[] settings,
       CancellationToken cancellationToken = default(CancellationToken))
@@ -105,7 +105,7 @@
         try
         {
           response = await Task.Run(
-            () => service.GetUserSettings(emailAddress, settings),
+            () => service.GetUserSettings(email, settings),
             cancellationToken);
         }
         catch(Exception ex)
@@ -139,8 +139,7 @@
           if (response.ErrorCode == AutodiscoverErrorCode.InvalidUser)
           {
             throw new Exception(
-              "The user " + emailAddress +
-              "was not found in Office 365.");
+              "The user " + email + "was not found in Office 365.");
           }
 
           return response;

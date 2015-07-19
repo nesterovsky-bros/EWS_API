@@ -125,13 +125,20 @@
     <Compile Include="BankSystem.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
+    <Compile Include="BankSystemMailbox.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
     <Compile Include="Cache.cs" />
     <Compile Include="Changes.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="DatabaseTraceListener.cs" />
     <Compile Include="EwsListener.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="IAppointments.cs" />
+    <Compile Include="InvalidMailbox.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
     <Compile Include="MailboxAffinity.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
@@ -151,10 +158,10 @@
       <DependentUpon>Model.edmx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="IResponseNotifier.cs" />
     <Compile Include="Queue.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
-    <Compile Include="IResponseNotifier.cs" />
     <Compile Include="ResponseNotifier.cs" />
     <Compile Include="RunitService.cs" />
     <Compile Include="RunIT\Operations\Accept.cs">
@@ -169,13 +176,10 @@
     <Compile Include="RunIT\Operations\Create.cs" />
     <Compile Include="RunIT\RunITService.cs" />
     <Compile Include="Settings.cs" />
-    <Compile Include="SystemManager.cs">
+    <Compile Include="TraceMessage.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="WcfServiceFactory.cs" />
-    <Compile Include="WorkTable.cs">
-      <DependentUpon>Model.tt</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />

@@ -20,13 +20,13 @@
     /// Milbox address.
     /// </summary>
     [DataMember]
-    public string MailAddress { get; set; }
+    public string Email { get; set; }
 
     /// <summary>
     /// Items ID.
     /// </summary>
     [DataMember]
-    public string ItemId { get; set; }
+    public string ItemID { get; set; }
 
     /// <summary>
     /// A change type.

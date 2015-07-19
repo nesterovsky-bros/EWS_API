@@ -15,20 +15,18 @@ namespace Bnhp.Office365
 using System;
     using System.Collections.Generic;
     
-public partial class WorkTable
+public partial class TraceMessage
 {
 
-    public string mailAddress { get; set; }
+    public int ID { get; set; }
 
-    public int systemID { get; set; }
+    public System.DateTime Timestamp { get; set; }
 
-    public bool notifyOnNewMails { get; set; }
+    public string Type { get; set; }
 
-    public bool notifyOnNewAppointments { get; set; }
+    public string Message { get; set; }
 
-
-
-    public virtual BankMailbox BankMailbox { get; set; }
+    public string Details { get; set; }
 
 }
 

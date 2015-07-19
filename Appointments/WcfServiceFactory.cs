@@ -33,8 +33,6 @@ namespace Bnhp.Office365
           ConfigurationManager.AppSettings["AutoDiscoveryUrl"],
         AttemptsToDiscoverUrl =
           int.Parse(ConfigurationManager.AppSettings["AttemptsToDiscoverUrl"]),
-        ExchangeConnectionLimit =
-          int.Parse(ConfigurationManager.AppSettings["ExchangeConnectionLimit"]),
         ExchangeListenerRecyclePeriod =
           int.Parse(ConfigurationManager.AppSettings["ExchangeListenerRecyclePeriod"])
       };
@@ -48,9 +46,6 @@ namespace Bnhp.Office365
         RegisterType<IAppointments, Appointments>();
 
       container.BuildUp(listener);
-
-      ServicePointManager.DefaultConnectionLimit = 
-        settings.ExchangeConnectionLimit;
 
       var startTask = listener.Start();
     }

@@ -18,41 +18,11 @@ using System;
 public partial class BankMailbox
 {
 
-    public BankMailbox()
-    {
+    public string Email { get; set; }
 
-        this.BankNotifications = new HashSet<BankNotification>();
+    public string CalendarSyncState { get; set; }
 
-        this.WorkTables = new HashSet<WorkTable>();
-
-    }
-
-
-    public string mailAddress { get; set; }
-
-    public string userName { get; set; }
-
-    public string groupingInformation { get; set; }
-
-    public bool notifyOnNewMails { get; set; }
-
-    public bool notifyOnNewAppointments { get; set; }
-
-    public string ewsUrl { get; set; }
-
-    public string calendarSyncStatus { get; set; }
-
-    public string inboxSyncStatus { get; set; }
-
-    public string managingServer { get; set; }
-
-    public bool Invalid { get; set; }
-
-
-
-    public virtual ICollection<BankNotification> BankNotifications { get; set; }
-
-    public virtual ICollection<WorkTable> WorkTables { get; set; }
+    public string InboxSyncState { get; set; }
 
 }
 

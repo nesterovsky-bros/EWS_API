@@ -12,6 +12,7 @@
   using System.Threading;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
+  using System.Diagnostics;
   
   /// <summary>
   /// A EWS listener.
@@ -33,15 +34,35 @@
     /// <summary>
     /// Starts the listener.
     /// </summary>
-    public async Task Start()
+    /// <param name="cancellationToken">Optional cancellation token.</param>
+    /// <returns>A task associated with listener task.</returns>
+    public async Task Start(
+      CancellationToken cancellationToken = default(CancellationToken))
     {
-      var cancellationSource = new CancellationTokenSource(
-        TimeSpan.FromMinutes(Settings.ExchangeListenerRecyclePeriod));
+      this.cancellationToken = cancellationToken;
 
-      cancellationToken = cancellationSource.Token;
+      var watch = new Stopwatch();
 
-      await DiscoverMailboxes();
-      await ListenMailboxes();
+      watch.Start();
+
+      Trace.TraceInformation("Starting EWS listener.");
+
+      try
+      {
+        Trace.TraceInformation("Start discover mailboxes.");
+        await DiscoverMailboxes();
+        Trace.TraceInformation("End discover mailboxes; elasped: {0}.", watch.Elapsed);
+
+        Trace.TraceInformation("Listen mailboxes.");
+        await ListenMailboxes();
+        Trace.TraceInformation("Listener is started; elapsed: {0}.", watch.Elapsed);
+      }
+      catch(Exception e)
+      {
+        Trace.TraceError("Failed to start EWS listener; elapsed: {0}. {1}" + e);
+
+        throw;
+      }
     }
 
     /// <summary>
@@ -66,33 +87,60 @@
     /// <returns>A task that completes when all mail boxes are in sync.</returns>
     private async Task DiscoverMailboxes()
     {
-      var flushSize = 100;
-      var tasks = new List<Task<BankMailbox>>();
+      const int parallelism = 100;
 
-      using(var model = CreateModel())
+      using(var semaphore = new SemaphoreSlim(parallelism))
       {
-        await model.BankMailboxes.
-          Where(
-            mailbox =>
-              !mailbox.Invalid &&
-              ((mailbox.ewsUrl == null) || (mailbox.groupingInformation == null))).
-          AsNoTracking().
-          ForEachAsync(
-            async mailbox =>
-            {
-              tasks.Add(DiscoverMailbox(mailbox));
-
-              if (tasks.Count >= flushSize)
-              {
-                await UpdateMailboxes(await Task.WhenAll(tasks));
-                tasks.Clear();
-              }
-            },
-            cancellationToken);
-
-        if (tasks.Count > 0)
+        Func<string, Task> discover = async email =>
         {
-          await UpdateMailboxes(await Task.WhenAll(tasks));
+          try
+          {
+            var mailbox = await DiscoverMailbox(email);
+
+            using(var model = CreateModel())
+            {
+              if (mailbox.ExternalEwsUrl != null)
+              {
+                model.Entry(mailbox).State = EntityState.Added;
+              }
+              else
+              {
+                var invalid = new InvalidMailbox { Email = mailbox.Email };
+
+                model.Entry(invalid).State = EntityState.Added;
+              }
+
+              await model.SaveChangesAsync(cancellationToken);
+            }
+          }
+          finally
+          {
+            semaphore.Release();
+          }
+        };
+
+        using(var model = CreateModel())
+        {
+          await model.BankSystemMailboxes.
+            Select(item => item.Email).
+            Distinct().
+            Except(model.MailboxAffinities.Select(item => item.Email)).
+            Except(model.InvalidMailboxes.Select(item => item.Email)).
+            AsNoTracking().
+            ForEachAsync(
+              async email =>
+              {
+                await semaphore.WaitAsync(cancellationToken);
+                
+                var task = discover(email);
+              },
+              cancellationToken);
+        }
+
+        // Wait to complete pending tasks.
+        for(var i = 0;  semaphore.CurrentCount + i < parallelism; ++i)
+        {
+          await semaphore.WaitAsync(cancellationToken);
         }
       }
     }
@@ -100,12 +148,11 @@
     /// <summary>
     /// Discovers a mailbox instance.
     /// </summary>
-    /// <param name="mailbox">A mailbox instance.</param>
-    /// <returns>A BankMailbox instance.</returns>
-    private async Task<BankMailbox> DiscoverMailbox(BankMailbox mailbox)
+    /// <param name="email">A email.</param>
+    /// <returns>A MailboxAffinity instance.</returns>
+    private async Task<MailboxAffinity> DiscoverMailbox(string email)
     {
       GetUserSettingsResponse userInfo = null;
-      var invalid = false;
 
       try
       {
@@ -114,39 +161,43 @@
           Settings.ExchangeUserName,
           Settings.ExchangePassword,
           Settings.AttemptsToDiscoverUrl,
-          mailbox.mailAddress,
+          email,
           cancellationToken);
 
-        mailbox.ewsUrl = 
-          userInfo.Settings[UserSettingName.ExternalEwsUrl] as string;
-        mailbox.groupingInformation = 
-          userInfo.Settings[UserSettingName.GroupingInformation] as string;
-        mailbox.inboxSyncStatus = null;
-        mailbox.calendarSyncStatus = null;
+        return new MailboxAffinity
+        {
+          Email = email,
+          ExternalEwsUrl = 
+            userInfo.Settings[UserSettingName.ExternalEwsUrl] as string,
+          GroupingInformation =
+            userInfo.Settings[UserSettingName.GroupingInformation] as string
+        };
       }
-      catch
-      { 
-        // Consider the user invalid.
-        mailbox.Invalid = invalid;
-      }
+      catch(Exception e)
+      {
+        Trace.TraceError(
+          "Cannot resolve affinity for a mailbox: {0}. {1}", 
+          email, 
+          e);
 
-      return mailbox;
+        return new MailboxAffinity { Email = email };
+      }
     }
 
     /// <summary>
-    /// Updates information in the mailboxes.
+    /// Updates entities.
     /// </summary>
-    /// <param name="mailboxes">A list of mailboxes to update.</param>
-    private async Task UpdateMailboxes(
-      IEnumerable<BankMailbox> mailboxes)
+    /// <param name="entities">A enumeration of entities to update.</param>
+    private async Task UpdateEntities<T>(IEnumerable<T> entities)
+      where T: class
     {
       using(var model = CreateModel())
       {
-        foreach(var mailbox in mailboxes)
+        foreach(var entity in entities)
         {
-          if (mailbox != null)
+          if (entity != null)
           {
-            model.Entry(mailbox).State = EntityState.Modified;
+            model.Entry(entity).State = EntityState.Modified;
           }
         }
 
@@ -159,10 +210,9 @@
     /// </summary>
     /// <param name="mailboxes">A enumeration of mailboxes.</param>
     /// <returns>A task instance.</returns>
-    private async Task SyncMailboxes(IEnumerable<BankMailbox> mailboxes)
+    private Task SyncMailboxes(IEnumerable<MailboxAffinity> mailboxes)
     {
-      await UpdateMailboxes(
-        await Task.WhenAll(mailboxes.Select(mailbox => SyncMailbox(mailbox))));
+      return Task.WhenAll(mailboxes.Select(mailbox => SyncMailbox(mailbox)));
     }
 
     /// <summary>
@@ -170,84 +220,82 @@
     /// </summary>
     /// <param name="mailbox">A mailbox to synchronize.</param>
     /// <returns>Synced mail box, or null if mail box is up to date.</returns>
-    private async Task<BankMailbox> SyncMailbox(BankMailbox mailbox)
+    private async Task SyncMailbox(MailboxAffinity mailbox)
     {
-      if ((mailbox.ewsUrl == null) || (mailbox.groupingInformation == null))
+      if ((mailbox == null) || 
+        (mailbox.ExternalEwsUrl == null) || 
+        (mailbox.GroupingInformation == null))
       {
-        return null;
+        return;
       }
 
       var service = GetService(mailbox);
+      var state = null as BankMailbox;
+
+      using(var model = CreateModel())
+      {
+        state = await model.BankMailboxes.
+          AsNoTracking().
+          Where(item => item.Email == mailbox.Email).
+          FirstOrDefaultAsync();
+      }
+
       var changed = false;
+      var isNew = state == null;
 
-      try
+      if (isNew)
       {
-        if (mailbox.notifyOnNewMails)
-        {
-          var syncState = await SyncMailbox(
-            mailbox,
-            service,
-            Office365.WellKnownFolderName.Inbox,
-            mailbox.inboxSyncStatus);
-
-          if (mailbox.inboxSyncStatus != syncState)
-          {
-            mailbox.inboxSyncStatus = syncState;
-            changed = true;
-          }
-        }
-
-        if (mailbox.notifyOnNewAppointments)
-        {
-          var syncState = await SyncMailbox(
-            mailbox,
-            service,
-            Office365.WellKnownFolderName.Calendar,
-            mailbox.calendarSyncStatus);
-
-          if (mailbox.calendarSyncStatus != syncState)
-          {
-            mailbox.calendarSyncStatus = syncState;
-            changed = true;
-          }
-        }
+        state = new BankMailbox();
       }
-      catch
+
+      var syncState = await SyncMailbox(
+        mailbox,
+        service,
+        Office365.WellKnownFolderName.Inbox,
+        state.InboxSyncState);
+
+      if (state.InboxSyncState != syncState)
       {
+        state.InboxSyncState = syncState;
         changed = true;
-        mailbox.calendarSyncStatus = null;
-        mailbox.inboxSyncStatus = null;
       }
 
-      return changed ? mailbox : null;
+      syncState = await SyncMailbox(
+        mailbox,
+        service,
+        Office365.WellKnownFolderName.Calendar,
+        state.CalendarSyncState);
+
+      if (state.CalendarSyncState != syncState)
+      {
+        state.CalendarSyncState = syncState;
+        changed = true;
+      }
+
+      if (changed)
+      {
+        using(var model = CreateModel())
+        {
+          model.Entry(state).State =
+            isNew ? EntityState.Added : EntityState.Modified;
+
+          await model.SaveChangesAsync(cancellationToken);
+        }
+      }
     }
 
     /// <summary>
     /// Syncs and updates a mail box.
     /// </summary>
-    /// <param name="emailAddress">An email address to sync.</param>
+    /// <param name="email">An email address to sync.</param>
     /// <param name="events">A enumeration of events.</param>
     /// <returns>Task instance.</returns>
     private async Task SyncAndUpdateMailbox(
-      string emailAddress,
+      string email,
       IEnumerable<Office365.NotificationEvent> events)
     {
       using(var model = CreateModel())
       {
-        var mailbox = await model.BankMailboxes.
-          Where(
-            item =>
-              (item.mailAddress == emailAddress) &&
-              (item.ewsUrl != null) &&
-              !item.Invalid).
-          AsNoTracking().
-          FirstOrDefaultAsync();
-
-        if (mailbox == null)
-        {
-          return;
-        }
-
         model.BankNotifications.AddRange(
           events.
             OfType<Office365.ItemEvent>().
@@ -255,16 +303,16 @@
               item =>
                 new BankNotification
                 {
-                  UpdatedAt = item.TimeStamp,
-                  itemId = item.ItemId.UniqueId,
-                  mailAddress = mailbox.mailAddress,
+                  Timestamp = item.TimeStamp,
+                  ItemID = item.ItemId.UniqueId,
+                  Email = email,
                   ChangeType = 
                     (item.EventType == Office365.EventType.NewMail) ||
                     (item.EventType == Office365.EventType.Created) ?
-                      (int)Office365.ChangeType.Create :
+                      Office365.ChangeType.Create.ToString() :
                       item.EventType == Office365.EventType.Deleted ?
-                      (int)Office365.ChangeType.Delete :
-                      (int)Office365.ChangeType.Update
+                      Office365.ChangeType.Delete.ToString() :
+                      Office365.ChangeType.Update.ToString()
                 }));
 
         await model.SaveChangesAsync(cancellationToken);
@@ -280,7 +328,7 @@
     /// <param name="syncState">A folder SyncState.</param>
     /// <returns>A new syncState value.</returns>
     private async Task<string> SyncMailbox(
-      BankMailbox mailbox,
+      MailboxAffinity mailbox,
       Office365.ExchangeService service, 
       Office365.FolderId folderId,
       string syncState)
@@ -323,16 +371,16 @@
 
           if (changes.Count > 0)
           {
-            using (var model = CreateModel())
+            using(var model = CreateModel())
             {
               model.BankNotifications.AddRange(
                 changes.Select(
                   change => new BankNotification
                   {
-                    UpdatedAt = now,
-                    itemId = change.ItemId.UniqueId,
-                    mailAddress = mailbox.mailAddress,
-                    ChangeType = (int)change.ChangeType
+                    Timestamp = now,
+                    ItemID = change.ItemId.UniqueId,
+                    Email = mailbox.Email,
+                    ChangeType = change.ChangeType.ToString()
                   }));
 
               await model.SaveChangesAsync(cancellationToken);
@@ -342,9 +390,14 @@
           state = changes.SyncState;
           hasMore = changes.MoreChangesAvailable;
         }
-        catch
-        { 
-          // TODO: log error
+        catch(Exception e)
+        {
+          Trace.TraceError(
+            "Cannot synchronize a mailbox: {0}, filderId: {1}. {2}", 
+            mailbox.Email, 
+            folderId, 
+            e);
+
           return null;
         }
       }
@@ -359,42 +412,44 @@
     /// <returns></returns>
     private async Task ListenMailboxes()
     {
-      var prev = null as BankMailbox;
-      var group = new List<BankMailbox>();
+      var prev = null as MailboxAffinity;
+      var group = new List<MailboxAffinity>();
 
       using(var model = CreateModel())
       {
-        await model.BankMailboxes.
-          Where(mailbox => 
-            !mailbox.Invalid && 
-            (mailbox.ewsUrl != null) && 
-            (mailbox.groupingInformation != null) &&
-            (mailbox.notifyOnNewMails || mailbox.notifyOnNewAppointments)).
-          OrderBy(mailbox => mailbox.ewsUrl).
-          ThenBy(mailbox => mailbox.groupingInformation).
-          ThenBy(mailbox => mailbox.mailAddress).
+        await model.BankSystemMailboxes.
+          Select(item => item.Email).
+          Except(model.InvalidMailboxes.Select(item => item.Email)).
+          Distinct().
+          Join(
+            model.MailboxAffinities,
+            outer => outer,
+            inner => inner.Email,
+            (outer, inner) => inner).
+          OrderBy(item => item.ExternalEwsUrl).
+          ThenBy(item => item.GroupingInformation).
+          ThenBy(item => item.Email).
           AsNoTracking().
           ForEachAsync(
-            async mailbox =>
+            async item =>
             {
               if ((prev != null) &&
-                ((prev.ewsUrl != mailbox.ewsUrl) ||
-                  (prev.groupingInformation != mailbox.groupingInformation) ||
+                ((prev.ExternalEwsUrl != item.ExternalEwsUrl) ||
+                  (prev.GroupingInformation != item.GroupingInformation) ||
                   (group.Count >= 200)))
               {
                 await ListenMailboxes(group);
                 group.Clear();
               }
 
-              group.Add(mailbox);
-              prev = mailbox;
+              group.Add(item);
+              prev = item;
             },
             cancellationToken);
 
         if (group.Count > 0)
         {
           await ListenMailboxes(group);
-          group.Clear();
         }
       }
     }
@@ -402,9 +457,9 @@
     /// <summary>
     /// Syncs and subscribes a group of mail boxes.
     /// </summary>
-    /// <param name="mailboxes">A group of mail boxes.</param>
+    /// <param name="items">A group of mailboxes to listen.</param>
     /// <returns>A task instance.</returns>
-    private async Task ListenMailboxes(IEnumerable<BankMailbox> mailboxes)
+    private async Task ListenMailboxes(IEnumerable<MailboxAffinity> mailboxes)
     {
       var primaryMailbox = mailboxes.FirstOrDefault();
 
@@ -417,24 +472,17 @@
 
       Func<
         Office365.ExchangeService, 
-        BankMailbox, 
+        MailboxAffinity, 
         Task<Office365.StreamingSubscription>> subscribe =
         (service, mailbox) =>
         {
-          service.HttpHeaders.Add("X-AnchorMailbox", primaryMailbox.mailAddress);
+          service.HttpHeaders.Add("X-AnchorMailbox", primaryMailbox.Email);
           service.HttpHeaders.Add("X-PreferServerAffinity", "true");
 
           var folderIds = new List<Office365.FolderId>();
 
-          if (mailbox.notifyOnNewAppointments)
-          {
-            folderIds.Add(Office365.WellKnownFolderName.Calendar);
-          }
-
-          if (mailbox.notifyOnNewMails)
-          {
-            folderIds.Add(Office365.WellKnownFolderName.Inbox);
-          }
+          folderIds.Add(Office365.WellKnownFolderName.Calendar);
+          folderIds.Add(Office365.WellKnownFolderName.Inbox);
 
           var taskSource =
             new TaskCompletionSource<Office365.StreamingSubscription>();
@@ -454,17 +502,24 @@
 
                 return;
               }
-              catch(Office365.ServiceResponseException)
+              catch(Office365.ServiceResponseException e)
               {
-                mailbox.ewsUrl = null;
-                mailbox.groupingInformation = null;
-                mailbox.calendarSyncStatus = null;
-                mailbox.inboxSyncStatus = null;
+                Trace.TraceError(
+                  "Cannot subscribe on events of mailbox: {0}. {1}",
+                  mailbox.Email,
+                  e);
+
+                mailbox.ExternalEwsUrl = null;
+                mailbox.GroupingInformation = null;
                 taskSource.SetResult(null);
               }
-              catch
+              catch(Exception e)
               {
-                // TODO: log error.
+                Trace.TraceError(
+                  "Cannot subscribe on events of mailbox: {0}. {1}",
+                  mailbox.Email,
+                  e);
+
                 taskSource.SetResult(null);
               }
             },
@@ -504,7 +559,18 @@
         Where(item => item != null).
         ToArray();
 
-      await UpdateMailboxes(mailboxes.Where(mailbox => mailbox.ewsUrl == null));
+      using(var model = CreateModel())
+      {
+        foreach(var mailbox in mailboxes)
+        {
+          if (mailbox.ExternalEwsUrl == null)
+          {
+            model.Entry(mailbox).State = EntityState.Deleted;
+          }
+        }
+
+        await model.SaveChangesAsync(cancellationToken);
+      }
 
       if (subscriptions.Length == 0)
       {
@@ -523,9 +589,9 @@
           return;
         }
 
-        var emailAddress = args.Subscription.Service.ImpersonatedUserId.Id;
+        var email = args.Subscription.Service.ImpersonatedUserId.Id;
         // Note: fire and forget task.
-        var syncTask = SyncAndUpdateMailbox(emailAddress, args.Events);
+        var syncTask = SyncAndUpdateMailbox(email, args.Events);
       };
 
       connection.OnSubscriptionError += (sender, args) =>
@@ -566,9 +632,9 @@
     /// <summary>
     /// Gets an Exchange service instance.
     /// </summary>
-    /// <param name="mailbox">A mailbox instance.</param>
+    /// <param name="mailbox">A MailboxAffinity instance.</param>
     /// <returns>a ExchangeService instance.</returns>
-    private Office365.ExchangeService GetService(BankMailbox mailbox)
+    private Office365.ExchangeService GetService(MailboxAffinity mailbox)
     {
       var service = new Office365.ExchangeService(
         Office365.ExchangeVersion.Exchange2013);
@@ -581,9 +647,9 @@
 
       service.ImpersonatedUserId = new Office365.ImpersonatedUserId(
         Office365.ConnectingIdType.SmtpAddress,
-        mailbox.mailAddress);
+        mailbox.Email);
 
-      service.Url = new Uri(mailbox.ewsUrl);
+      service.Url = new Uri(mailbox.ExternalEwsUrl);
 
       return service;
     }

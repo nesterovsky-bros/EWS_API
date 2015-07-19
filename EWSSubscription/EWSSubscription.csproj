@@ -86,7 +86,6 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="RunitChannelBase.cs" />
     <Compile Include="Util.cs" />
   </ItemGroup>
   <ItemGroup>

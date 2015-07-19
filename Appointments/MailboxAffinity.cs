@@ -18,7 +18,7 @@ using System;
 public partial class MailboxAffinity
 {
 
-    public string Mailbox { get; set; }
+    public string Email { get; set; }
 
     public string GroupingInformation { get; set; }
 

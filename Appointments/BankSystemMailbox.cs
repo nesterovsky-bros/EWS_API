@@ -15,14 +15,12 @@ namespace Bnhp.Office365
 using System;
     using System.Collections.Generic;
     
-public partial class BankSystem
+public partial class BankSystemMailbox
 {
-
-    public string Name { get; set; }
 
     public int SystemID { get; set; }
 
-    public string Description { get; set; }
+    public string Email { get; set; }
 
 }
 

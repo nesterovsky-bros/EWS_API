@@ -888,30 +888,30 @@
           model.BankNotifications.AsNoTracking() :
           model.BankNotifications.AsNoTracking().Join(
             model.BankSystems.
-              Where(item => item.systemName == request.systemName).
+              Where(item => item.Name == request.systemName).
               Join(
-                model.WorkTables, 
-                outer => outer.systemID, 
-                inner => inner.systemID,
+                model.BankSystemMailboxes, 
+                outer => outer.SystemID, 
+                inner => inner.SystemID,
                 (outer, inner) => inner),
-            outer => outer.mailAddress,
-            inner => inner.mailAddress,
+            outer => outer.Email,
+            inner => inner.Email,
             (outer, inner) => outer);
 
         if (request.startDate != null)
         {
-          query = query.Where(item => item.UpdatedAt >= request.startDate);
+          query = query.Where(item => item.Timestamp >= request.startDate);
         }
 
         if (request.endDate != null)
         {
-          query = query.Where(item => item.UpdatedAt <= request.endDate);
+          query = query.Where(item => item.Timestamp <= request.endDate);
         }
 
         query = query.
-          OrderBy(item => item.UpdatedAt).
-          ThenBy(item => item.mailAddress).
-          ThenBy(item => item.itemId);
+          OrderBy(item => item.Timestamp).
+          ThenBy(item => item.Email).
+          ThenBy(item => item.ItemID);
 
         if (request.skip != null)
         {
@@ -926,10 +926,11 @@
         return query.Select(
           item => new Change 
           {
-            Timestamp = item.UpdatedAt,
-            MailAddress = item.mailAddress,
-            ItemId = item.itemId,
-            ChangeType = (ChangeType)item.ChangeType
+            Timestamp = item.Timestamp,
+            Email = item.Email,
+            ItemID = item.ItemID,
+            ChangeType =  
+              (ChangeType)Enum.Parse(typeof(ChangeType), item.ChangeType)
           }).
           ToList();
       }
@@ -1353,7 +1354,7 @@
       using (var model = new EWSQueueEntities())
       {
         return model.MailboxAffinities.
-          Where(item => item.Mailbox == email).
+          Where(item => item.Email == email).
           Select(item => item.ExternalEwsUrl).
           FirstOrDefault();
       }
@@ -1364,7 +1365,7 @@
       using (var model = new EWSQueueEntities())
       {
         var affinity = model.MailboxAffinities.
-          Where(item => item.Mailbox == email).
+          Where(item => item.Email == email).
           FirstOrDefault();
 
         if (affinity == null)
@@ -1372,7 +1373,7 @@
           model.MailboxAffinities.Add(
             new MailboxAffinity
             {
-              Mailbox = email,
+              Email = email,
               ExternalEwsUrl = url,
               GroupingInformation = groupInfo
             });
