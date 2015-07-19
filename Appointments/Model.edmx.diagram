@@ -4,13 +4,13 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="7138d730a49840dfb26d8b8ee93844b2" Name="Diagram1" ZoomLevel="77">
-        <EntityTypeShape EntityType="EWSQueueModel.BankMailbox" Width="1.5" PointX="0.75" PointY="0.75" />
+      <Diagram DiagramId="7138d730a49840dfb26d8b8ee93844b2" Name="Diagram1" ZoomLevel="88">
+        <EntityTypeShape EntityType="EWSQueueModel.BankMailbox" Width="1.875" PointX="0.5" PointY="0.75" />
         <EntityTypeShape EntityType="EWSQueueModel.BankNotification" Width="1.5" PointX="2.75" PointY="0.75" />
         <EntityTypeShape EntityType="EWSQueueModel.BankSystem" Width="1.5" PointX="0.75" PointY="3.75" />
-        <EntityTypeShape EntityType="EWSQueueModel.BankSystemMailbox" Width="1.5" PointX="2.75" PointY="3.75" />
+        <EntityTypeShape EntityType="EWSQueueModel.BankSystemMailbox" Width="2.25" PointX="2.75" PointY="3.75" />
         <EntityTypeShape EntityType="EWSQueueModel.InvalidMailbox" Width="1.5" PointX="4.75" PointY="0.75" />
-        <EntityTypeShape EntityType="EWSQueueModel.MailboxAffinity" Width="1.5" PointX="4.75" PointY="2.75" />
+        <EntityTypeShape EntityType="EWSQueueModel.MailboxAffinity" Width="1.5" PointX="6.5" PointY="3" />
         <EntityTypeShape EntityType="EWSQueueModel.Queue" Width="1.5" PointX="4.75" PointY="5.75" />
         <EntityTypeShape EntityType="EWSQueueModel.TraceMessage" Width="1.5" PointX="6.75" PointY="0.75" />
       </Diagram>
