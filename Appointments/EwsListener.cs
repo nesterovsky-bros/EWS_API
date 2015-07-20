@@ -468,6 +468,10 @@
         return;
       }
 
+      Trace.TraceInformation(
+        "Subscribe to a group with primary mailbox: {0}", 
+        primaryMailbox.Email);
+
       var primaryService = GetService(primaryMailbox);
 
       Func<
@@ -505,8 +509,10 @@
               catch(Office365.ServiceResponseException e)
               {
                 Trace.TraceError(
-                  "Cannot subscribe on events of mailbox: {0}. {1}",
+                  "Cannot subscribe on mailbox events at: {0}, " +
+                    "errorCode = {1}. {2}",
                   mailbox.Email,
+                  e.ErrorCode,
                   e);
 
                 mailbox.ExternalEwsUrl = null;
@@ -516,7 +522,7 @@
               catch(Exception e)
               {
                 Trace.TraceError(
-                  "Cannot subscribe on events of mailbox: {0}. {1}",
+                  "Cannot subscribe on mailbox events at: {0}. {1}",
                   mailbox.Email,
                   e);
 
