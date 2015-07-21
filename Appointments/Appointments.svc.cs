@@ -952,19 +952,16 @@
 
       var service = new Office365.ExchangeService(
         Office365.ExchangeVersion.Exchange2013);
+      var user = Settings.DefaultApplicationUser;
 
-      service.Credentials = new Office365.WebCredentials(
-        Settings.ExchangeUserName, 
-        Settings.ExchangePassword);
+      service.Credentials = 
+        new Office365.WebCredentials(user.Email, user.Password);
       service.UseDefaultCredentials = false;
       service.PreAuthenticate = true;
 
-      if (Settings.ExchangeUserName != impersonatedUserId)
-      {
-        service.ImpersonatedUserId = new Office365.ImpersonatedUserId(
-          Office365.ConnectingIdType.SmtpAddress,
-          impersonatedUserId);
-      }
+      service.ImpersonatedUserId = new Office365.ImpersonatedUserId(
+        Office365.ConnectingIdType.SmtpAddress,
+        impersonatedUserId);
 
       var url = GetServiceUrl(impersonatedUserId);
 
@@ -972,8 +969,8 @@
       {
         var userInfo = AutoDiscovery.GetUserSettings(
           Settings.AutoDiscoveryUrl,
-          Settings.ExchangeUserName,
-          Settings.ExchangePassword,
+          user.Email,
+          user.Password,
           Settings.AttemptsToDiscoverUrl,
           impersonatedUserId).Result;
 
@@ -986,53 +983,6 @@
       service.Url = new Uri(url);
 
       return service;
-    }
-
-    private GetUserSettingsResponse GetUserSettings(
-      AutodiscoverService service, 
-      string emailAddress, 
-      int maxHops, 
-      params UserSettingName[] settings)
-    {
-      Uri url = null;
-      GetUserSettingsResponse response = null;
-      
-      for (int attempt = 0; attempt < maxHops; attempt++)
-      {
-        service.Url = url;
-        service.EnableScpLookup = (attempt < 2);
-      
-        try
-        {
-          response = service.GetUserSettings(emailAddress, settings);
-        
-          if (response.ErrorCode == AutodiscoverErrorCode.RedirectAddress)
-          {
-            url = new Uri(response.RedirectTarget);
-          }
-          else if (response.ErrorCode == AutodiscoverErrorCode.RedirectUrl)
-          {
-            url = new Uri(response.RedirectTarget);
-          }
-          else
-          {
-            return response;
-          }
-        }
-        catch (Exception ex)
-        {
-          if (ex.Message == "The server is too busy to process the request.")
-          {
-            // The server is too busy to process the request waiting 30sec.
-            Thread.Sleep(30000);
-          
-            //try again until we get an answer!!!
-            return GetUserSettings(service, emailAddress, maxHops, settings);
-          }
-        }
-      }
-      
-      throw new Exception("No suitable Autodiscover endpoint was found.");
     }
 
     private bool RedirectionUrlValidationCallback(string url)

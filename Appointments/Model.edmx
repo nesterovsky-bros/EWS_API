@@ -5,6 +5,13 @@
     <!-- SSDL content -->
     <edmx:StorageModels>
     <Schema Namespace="EWSQueueModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="ApplicationUser">
+          <Key>
+            <PropertyRef Name="Email" />
+          </Key>
+          <Property Name="Email" Type="nvarchar" MaxLength="128" Nullable="false" />
+          <Property Name="Password" Type="nvarchar" MaxLength="128" Nullable="false" />
+        </EntityType>
         <EntityType Name="BankMailbox">
           <Key>
             <PropertyRef Name="Email" />
@@ -77,6 +84,7 @@
           <Property Name="Details" Type="nvarchar(max)" />
         </EntityType>
         <EntityContainer Name="EWSQueueModelStoreContainer">
+          <EntitySet Name="ApplicationUser" EntityType="Self.ApplicationUser" Schema="Data" store:Type="Tables" />
           <EntitySet Name="BankMailbox" EntityType="Self.BankMailbox" Schema="Data" store:Type="Tables" />
           <EntitySet Name="BankNotification" EntityType="Self.BankNotification" Schema="Data" store:Type="Tables" />
           <EntitySet Name="BankSystem" EntityType="Self.BankSystem" Schema="Data" store:Type="Tables" />
@@ -99,6 +107,7 @@
           <EntitySet Name="MailboxAffinities" EntityType="EWSQueueModel.MailboxAffinity" />
           <EntitySet Name="Queues" EntityType="EWSQueueModel.Queue" />
           <EntitySet Name="TraceMessages" EntityType="EWSQueueModel.TraceMessage" />
+          <EntitySet Name="ApplicationUsers" EntityType="EWSQueueModel.ApplicationUser" />
         </EntityContainer>
         <EntityType Name="BankMailbox">
           <Key>
@@ -170,6 +179,13 @@
           <Property Name="Type" Type="String" Nullable="false" MaxLength="32" FixedLength="false" Unicode="true" />
           <Property Name="Message" Type="String" MaxLength="1024" FixedLength="false" Unicode="true" />
           <Property Name="Details" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ApplicationUser">
+          <Key>
+            <PropertyRef Name="Email" />
+          </Key>
+          <Property Name="Email" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
+          <Property Name="Password" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
         </EntityType>
         </Schema>
     </edmx:ConceptualModels>
@@ -250,6 +266,14 @@
                 <ScalarProperty Name="Type" ColumnName="Type" />
                 <ScalarProperty Name="Timestamp" ColumnName="Timestamp" />
                 <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ApplicationUsers">
+            <EntityTypeMapping TypeName="EWSQueueModel.ApplicationUser">
+              <MappingFragment StoreEntitySet="ApplicationUser">
+                <ScalarProperty Name="Password" ColumnName="Password" />
+                <ScalarProperty Name="Email" ColumnName="Email" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

@@ -10,6 +10,7 @@
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
   using System.Threading;
+  using System.Diagnostics;
   
   /// <summary>
   /// Auto discovery API
@@ -88,6 +89,8 @@
       Exception error = null;
       var wait = false;
 
+      await Task.Yield();
+
       for(int attempt = 0; attempt < maxHops; attempt++)
       {
         cancellationToken.ThrowIfCancellationRequested();
@@ -104,26 +107,27 @@
 
         try
         {
-          response = await Task.Run(
-            () => service.GetUserSettings(email, settings),
-            cancellationToken);
+          response = service.GetUserSettings(email, settings);
         }
-        catch(Exception ex)
+        catch(AutodiscoverResponseException e)
         {
-          error = ex;
+          error = e;
 
-          if (ex.Message == "The server is too busy to process the request.")
+          if (e.ErrorCode == AutodiscoverErrorCode.ServerBusy)
           {
+            Trace.TraceWarning(
+              "Server is busy to autodiscover: {0}. {1}", 
+              email, 
+              e);
+
             // The server is too busy to process the request waiting 30sec.
             wait = true;
 
             //try again until we get an answer!!!
             continue;
           }
-          else
-          {
-            throw;
-          }
+
+          throw;
         }
           
         if (response.ErrorCode == AutodiscoverErrorCode.RedirectAddress)

@@ -2,8 +2,10 @@ namespace Bnhp.Office365
 {
   public class Settings
   {
-    public string ExchangeUserName { get; set; }
-    public string ExchangePassword { get; set; }
+    public ApplicationUser DefaultApplicationUser { get; set; }
+    public ApplicationUser[] ApplicationUsers { get; set; }
+    public int HangingConnectionLimit { get; set; }
+    public int EWSMaxConcurrency { get; set; }
     public double RequestTimeout { get; set; }
     public string AutoDiscoveryUrl { get; set; }
     public int AttemptsToDiscoverUrl { get; set; }

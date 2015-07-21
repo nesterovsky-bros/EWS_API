@@ -48,6 +48,8 @@ public partial class EWSQueueEntities : DbContext
 
     public virtual DbSet<TraceMessage> TraceMessages { get; set; }
 
+    public virtual DbSet<ApplicationUser> ApplicationUsers { get; set; }
+
 }
 
 }

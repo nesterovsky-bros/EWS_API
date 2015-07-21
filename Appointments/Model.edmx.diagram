@@ -13,6 +13,7 @@
         <EntityTypeShape EntityType="EWSQueueModel.MailboxAffinity" Width="1.5" PointX="6.5" PointY="3" />
         <EntityTypeShape EntityType="EWSQueueModel.Queue" Width="1.5" PointX="4.75" PointY="5.75" />
         <EntityTypeShape EntityType="EWSQueueModel.TraceMessage" Width="1.5" PointX="6.75" PointY="0.75" />
+        <EntityTypeShape EntityType="EWSQueueModel.ApplicationUser" Width="1.5" PointX="0.75" PointY="6.75" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

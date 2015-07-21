@@ -17,7 +17,7 @@
   /// <summary>
   /// A EWS listener.
   /// </summary>
-  public class EwsListener: IDisposable
+  public class EwsListener
   {
     /// <summary>
     /// A settings instance.
@@ -40,45 +40,67 @@
       CancellationToken cancellationToken = default(CancellationToken))
     {
       this.cancellationToken = cancellationToken;
+      //if (running)
+      //{
+      //  throw new InvalidOperationException("Listener is already running.");
+      //}
 
-      var watch = new Stopwatch();
+      //running = true;
 
-      watch.Start();
+      //try
+      //{
+      //  while(true)
+      //  {
+      //    using(restartSource = new CancellationTokenSource())
+      //    {
+      //      try
+      //      {
+      //        using(var cancellationSource = 
+      //          CancellationTokenSource.CreateLinkedTokenSource(
+      //            restartSource.Token, 
+      //            cancellationToken))
+      //        {
+      //          cancellationToken = cancellationSource.Token;
 
-      Trace.TraceInformation("Starting EWS listener.");
+                var watch = new Stopwatch();
 
-      try
-      {
-        Trace.TraceInformation("Start discover mailboxes.");
-        await DiscoverMailboxes();
-        Trace.TraceInformation("End discover mailboxes; elasped: {0}.", watch.Elapsed);
+                Trace.TraceInformation("Starting EWS listener.");
+                Trace.TraceInformation("Start discover mailboxes.");
+                watch.Start();
+                await DiscoverMailboxes();
+                watch.Stop();
+                Trace.TraceInformation("End discover mailboxes; elasped: {0}.", watch.Elapsed);
 
-        Trace.TraceInformation("Listen mailboxes.");
-        await ListenMailboxes();
-        Trace.TraceInformation("Listener is started; elapsed: {0}.", watch.Elapsed);
-      }
-      catch(Exception e)
-      {
-        Trace.TraceError("Failed to start EWS listener; elapsed: {0}. {1}" + e);
+                Trace.TraceInformation("Listen mailboxes.");
+                watch.Restart();
+                await ListenMailboxes();
+                watch.Stop();
+                Trace.TraceInformation("Listener is started; elapsed: {0}.", watch.Elapsed);
+      //        }
+      //      }
+      //      catch(OperationCanceledException e)
+      //      {
+      //        if (e.CancellationToken == restartSource.Token)
+      //        {
+      //          continue;
+      //        }
 
-        throw;
-      }
-    }
+      //        throw;
+      //      }
+      //      catch(Exception e)
+      //      {
+      //        Trace.TraceError("Failed to start EWS listener. " + e);
 
-    /// <summary>
-    /// Stops the listener.
-    /// </summary>
-    public void Stop()
-    {
-      // TODO: implement this.
-    }
-
-    /// <summary>
-    /// Disposes the listener.
-    /// </summary>
-    public void Dispose()
-    {
-      Stop();
+      //        throw;
+      //      }
+      //    }
+      //  }
+      //}
+      //finally
+      //{
+      //  restartSource = null;
+      //  running = false;
+      //}
     }
 
     /// <summary>
@@ -87,7 +109,7 @@
     /// <returns>A task that completes when all mail boxes are in sync.</returns>
     private async Task DiscoverMailboxes()
     {
-      const int parallelism = 100;
+      var parallelism = Settings.EWSMaxConcurrency;
 
       using(var semaphore = new SemaphoreSlim(parallelism))
       {
@@ -121,6 +143,19 @@
 
         using(var model = CreateModel())
         {
+          while(true)
+          {
+            var mailboxes = model.MailboxAffinities.Take(1000).ToArray();
+
+            if (mailboxes.Length == 0)
+            {
+              break;
+            }
+
+            model.MailboxAffinities.RemoveRange(mailboxes);
+            await model.SaveChangesAsync();
+          }
+
           await model.BankSystemMailboxes.
             Select(item => item.Email).
             Distinct().
@@ -152,14 +187,14 @@
     /// <returns>A MailboxAffinity instance.</returns>
     private async Task<MailboxAffinity> DiscoverMailbox(string email)
     {
-      GetUserSettingsResponse userInfo = null;
-
       try
       {
-        userInfo = await AutoDiscovery.GetUserSettings(
+        var user = Settings.DefaultApplicationUser;
+
+        var userInfo = await AutoDiscovery.GetUserSettings(
           Settings.AutoDiscoveryUrl,
-          Settings.ExchangeUserName,
-          Settings.ExchangePassword,
+          user.Email,
+          user.Password,
           Settings.AttemptsToDiscoverUrl,
           email,
           cancellationToken);
@@ -185,42 +220,28 @@
     }
 
     /// <summary>
-    /// Updates entities.
+    /// Synchronizes mailboxes.
     /// </summary>
-    /// <param name="entities">A enumeration of entities to update.</param>
-    private async Task UpdateEntities<T>(IEnumerable<T> entities)
-      where T: class
-    {
-      using(var model = CreateModel())
-      {
-        foreach(var entity in entities)
-        {
-          if (entity != null)
-          {
-            model.Entry(entity).State = EntityState.Modified;
-          }
-        }
-
-        await model.SaveChangesAsync(cancellationToken);
-      }
-    }
-
-    /// <summary>
-    /// Synchronizes a 
-    /// </summary>
+    /// <param name="user">An application user.</param>
     /// <param name="mailboxes">A enumeration of mailboxes.</param>
     /// <returns>A task instance.</returns>
-    private Task SyncMailboxes(IEnumerable<MailboxAffinity> mailboxes)
+    private Task SyncMailboxes(
+      ApplicationUser user,
+      IEnumerable<MailboxAffinity> mailboxes)
     {
-      return Task.WhenAll(mailboxes.Select(mailbox => SyncMailbox(mailbox)));
+      return Task.WhenAll(
+        mailboxes.Select(mailbox => SyncMailbox(user, mailbox)));
     }
 
     /// <summary>
     /// Syncs a mail box.
     /// </summary>
+    /// <param name="user">An application user.</param>
     /// <param name="mailbox">A mailbox to synchronize.</param>
     /// <returns>Synced mail box, or null if mail box is up to date.</returns>
-    private async Task SyncMailbox(MailboxAffinity mailbox)
+    private async Task SyncMailbox(
+      ApplicationUser user, 
+      MailboxAffinity mailbox)
     {
       if ((mailbox == null) || 
         (mailbox.ExternalEwsUrl == null) || 
@@ -229,7 +250,7 @@
         return;
       }
 
-      var service = GetService(mailbox);
+      var service = GetService(mailbox, user);
       var state = null as BankMailbox;
 
       using(var model = CreateModel())
@@ -335,10 +356,18 @@
     {
       var state = syncState;
       var hasMore = false;
+      var attempt = 0;
+      var wait = false;
 
       do
       {
         cancellationToken.ThrowIfCancellationRequested();
+
+        if (wait)
+        {
+          wait = false;
+          await Task.Delay(1000);
+        }
 
         var now = DateTime.Now;
         var taskSource = new TaskCompletionSource<
@@ -359,7 +388,7 @@
           },
           null,
           folderId,
-          Office365.PropertySet.IdOnly,
+          SyncProperties,
           null,
           512,
           Office365.SyncFolderItemsScope.NormalItems,
@@ -377,11 +406,18 @@
                 changes.Select(
                   change => new BankNotification
                   {
-                    Timestamp = now,
+                    Timestamp = change.Item.LastModifiedTime,
                     ItemID = change.ItemId.UniqueId,
                     Email = mailbox.Email,
                     ChangeType = change.ChangeType.ToString()
-                  }));
+                  }).
+                Where(
+                  outer => !model.BankNotifications.
+                    Any(
+                      inner => 
+                        (outer.Timestamp == inner.Timestamp) &&
+                        (outer.Email == inner.Email) &&
+                        (outer.ItemID == inner.ItemID))));
 
               await model.SaveChangesAsync(cancellationToken);
             }
@@ -392,6 +428,15 @@
         }
         catch(Exception e)
         {
+          if (attempt < 1)
+          {
+            ++attempt;
+            state = syncState;
+            hasMore = true;
+
+            continue;
+          }
+
           Trace.TraceError(
             "Cannot synchronize a mailbox: {0}, filderId: {1}. {2}", 
             mailbox.Email, 
@@ -412,11 +457,30 @@
     /// <returns></returns>
     private async Task ListenMailboxes()
     {
+      var groupSize = 200;
+      var index = 0;
       var prev = null as MailboxAffinity;
-      var group = new List<MailboxAffinity>();
+      var group = new List<MailboxAffinity>(groupSize);
 
+      using(var semaphore = new SemaphoreSlim(groupSize))
       using(var model = CreateModel())
       {
+        Func<int, MailboxAffinity[], Task> listen = async (i, mailboxes) =>
+        {
+          try
+          {
+            var user = Settings.ApplicationUsers[
+              (i / Settings.HangingConnectionLimit) %
+                Settings.ApplicationUsers.Length];
+
+            await ListenMailboxes(user, mailboxes);
+          }
+          finally
+          {
+            semaphore.Release(mailboxes.Length);
+          }
+        };
+
         await model.BankSystemMailboxes.
           Select(item => item.Email).
           Except(model.InvalidMailboxes.Select(item => item.Email)).
@@ -436,12 +500,15 @@
               if ((prev != null) &&
                 ((prev.ExternalEwsUrl != item.ExternalEwsUrl) ||
                   (prev.GroupingInformation != item.GroupingInformation) ||
-                  (group.Count >= 200)))
+                  (group.Count >= groupSize)))
               {
-                await ListenMailboxes(group);
+                var task = listen(index, group.ToArray());
+
                 group.Clear();
+                ++index;
               }
 
+              await semaphore.WaitAsync(cancellationToken);
               group.Add(item);
               prev = item;
             },
@@ -449,7 +516,13 @@
 
         if (group.Count > 0)
         {
-          await ListenMailboxes(group);
+          var task = listen(index, group.ToArray());
+        }
+
+        // Wait to complete pending tasks.
+        for (var i = 0; semaphore.CurrentCount + i < groupSize; ++i)
+        {
+          await semaphore.WaitAsync(cancellationToken);
         }
       }
     }
@@ -457,9 +530,12 @@
     /// <summary>
     /// Syncs and subscribes a group of mail boxes.
     /// </summary>
-    /// <param name="items">A group of mailboxes to listen.</param>
+    /// <param name="user">An application user.</param>
+    /// <param name="mailboxes">A group of mailboxes to listen.</param>
     /// <returns>A task instance.</returns>
-    private async Task ListenMailboxes(IEnumerable<MailboxAffinity> mailboxes)
+    private async Task ListenMailboxes(
+      ApplicationUser user,
+      MailboxAffinity[] mailboxes)
     {
       var primaryMailbox = mailboxes.FirstOrDefault();
 
@@ -469,10 +545,11 @@
       }
 
       Trace.TraceInformation(
-        "Subscribe to a group with primary mailbox: {0}", 
-        primaryMailbox.Email);
+        "Subscribe to a group with primary mailbox: {0}, group size is: {1}", 
+        primaryMailbox.Email,
+        mailboxes.Length);
 
-      var primaryService = GetService(primaryMailbox);
+      var primaryService = GetService(primaryMailbox, user);
 
       Func<
         Office365.ExchangeService, 
@@ -541,6 +618,8 @@
 
       var primarySubscription = 
         await subscribe(primaryService, primaryMailbox);
+      var backEndOverrideCookie = primaryService.CookieContainer.
+        GetCookies(primaryService.Url)["X-BackEndOverrideCookie"];
 
       var subscriptions = 
         new[] { primarySubscription }.
@@ -551,14 +630,9 @@
               Select(
                 mailbox =>
                 {
-                  var service = GetService(mailbox);
+                  var service = GetService(mailbox, user);
 
-                  service.CookieContainer.Add(
-                    service.Url,
-                    primaryService.CookieContainer.
-                      GetCookies(primaryService.Url));
-
-                  // set X-BackEndOverrideCookie
+                  service.CookieContainer.Add(service.Url, backEndOverrideCookie);
 
                   return subscribe(service, mailbox);
                 }))).
@@ -602,26 +676,14 @@
 
       connection.OnSubscriptionError += (sender, args) =>
       {
-        if (args.Subscription == null)
-        {
-          return;
-        }
-
-        var emailAddress = args.Subscription.Service.ImpersonatedUserId.Id;
-
-        // TODO: handle subscription error.
+        // TODO: implement this.
+        //restartSource.Cancel();
       };
 
       connection.OnDisconnect += (sender, args) =>
       {
-        if (args.Subscription == null)
-        {
-          return;
-        }
-
-        var emailAddress = args.Subscription.Service.ImpersonatedUserId.Id;
-
-        // TODO: handle disconnect.
+        // TODO: implement this.
+        //restartSource.Cancel();
       };
 
       cancellationToken.ThrowIfCancellationRequested();
@@ -629,7 +691,7 @@
       connection.Open();
 
       // NOTE: run and forget.
-      var syncMailBoxesTask = SyncMailboxes(mailboxes);
+      var syncMailBoxesTask = SyncMailboxes(user, mailboxes);
 
       subscriptions = null;
       mailboxes = null;
@@ -639,15 +701,22 @@
     /// Gets an Exchange service instance.
     /// </summary>
     /// <param name="mailbox">A MailboxAffinity instance.</param>
+    /// <param name="user">Optional application user.</param>
     /// <returns>a ExchangeService instance.</returns>
-    private Office365.ExchangeService GetService(MailboxAffinity mailbox)
+    private Office365.ExchangeService GetService(
+      MailboxAffinity mailbox,
+      ApplicationUser user = null)
     {
       var service = new Office365.ExchangeService(
         Office365.ExchangeVersion.Exchange2013);
 
-      service.Credentials = new Office365.WebCredentials(
-        Settings.ExchangeUserName,
-        Settings.ExchangePassword);
+      if (user == null)
+      {
+        user = Settings.DefaultApplicationUser;
+      }
+
+      service.Credentials = 
+        new Office365.WebCredentials(user.Email, user.Password);
       service.UseDefaultCredentials = false;
       service.PreAuthenticate = true;
 
@@ -673,9 +742,28 @@
       return model;
     }
 
+
     /// <summary>
-    /// Cancellation source.
+    /// Running indicator.
+    /// </summary>
+//    private bool running;
+
+    /// <summary>
+    /// A cancellation token.
     /// </summary>
     private CancellationToken cancellationToken;
+
+    /// <summary>
+    /// Restart cancellation source.
+    /// </summary>
+//    private CancellationTokenSource restartSource;
+
+    /// <summary>
+    /// A properies to retrieve during Sync.
+    /// </summary>
+    private static readonly Office365.PropertySet SyncProperties =  
+      new Office365.PropertySet(
+        Office365.ItemSchema.Id, 
+        Office365.ItemSchema.LastModifiedTime);
   }
 }

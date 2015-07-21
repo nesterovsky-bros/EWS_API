@@ -111,6 +111,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApplicationUser.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
     <Compile Include="AutoDiscovery.cs" />
     <Compile Include="Appointment.cs" />
     <Compile Include="Appointments.svc.cs">
