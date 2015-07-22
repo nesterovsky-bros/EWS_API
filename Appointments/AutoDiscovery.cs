@@ -142,8 +142,8 @@
         {
           if (response.ErrorCode == AutodiscoverErrorCode.InvalidUser)
           {
-            throw new Exception(
-              "The user " + email + "was not found in Office 365.");
+            throw new ApplicationException(
+              "Mailbox " + email + "was not found.");
           }
 
           return response;
@@ -151,7 +151,8 @@
       }
 
       throw error ?? 
-        new Exception("No suitable Autodiscover endpoint was found.");
+        new ApplicationException(
+          "No suitable Autodiscover endpoint was found.");
     }
   }
 }
