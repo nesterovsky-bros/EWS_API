@@ -254,7 +254,7 @@
 
       if (isNew)
       {
-        state = new BankMailbox();
+        state = new BankMailbox { Email = mailbox.Email };
       }
 
       var syncState = await SyncMailbox(
@@ -307,6 +307,8 @@
       IEnumerable<Office365.NotificationEvent> events,
       CancellationTokenSource cancellation)
     {
+      await Task.Yield();
+
       using(var model = CreateModel())
       {
         model.BankNotifications.AddRange(
@@ -425,7 +427,7 @@
           if (attempt < 1)
           {
             Trace.TraceWarning(
-              "Cannot synchronize a mailbox: {0}, filderId: {1}. {2}",
+              "Cannot synchronize a mailbox: {0}, folderId: {1}. {2}",
               mailbox.Email,
               folderId,
               e);
@@ -438,7 +440,7 @@
           }
 
           Trace.TraceError(
-            "Cannot synchronize a mailbox: {0}, filderId: {1}. {2}", 
+            "Cannot synchronize a mailbox: {0}, folderId: {1}. {2}", 
             mailbox.Email, 
             folderId, 
             e);
@@ -557,7 +559,7 @@
         Office365.ExchangeService, 
         MailboxAffinity, 
         Task<Office365.StreamingSubscription>> subscribe =
-        (service, mailbox) =>
+        async (service, mailbox) =>
         {
           service.HttpHeaders.Add("X-AnchorMailbox", primaryMailbox.Email);
           service.HttpHeaders.Add("X-PreferServerAffinity", "true");
@@ -567,55 +569,91 @@
           folderIds.Add(Office365.WellKnownFolderName.Calendar);
           folderIds.Add(Office365.WellKnownFolderName.Inbox);
 
-          var taskSource =
-            new TaskCompletionSource<Office365.StreamingSubscription>();
+          var attempt = 0;
 
-          service.BeginSubscribeToStreamingNotifications(
-            asyncResult =>
+          while(true)
+          {
+            var retry = false;
+            var taskSource =
+              new TaskCompletionSource<Office365.StreamingSubscription>();
+
+            service.BeginSubscribeToStreamingNotifications(
+              asyncResult =>
+              {
+                try
+                {
+                  cancellation.Token.ThrowIfCancellationRequested();
+                  taskSource.SetResult(
+                    service.EndSubscribeToStreamingNotifications(asyncResult));
+                }
+                catch (OperationCanceledException e)
+                {
+                  taskSource.SetException(e);
+
+                  return;
+                }
+                catch (Office365.ServiceResponseException e)
+                {
+                  Trace.TraceError(
+                    "Cannot subscribe on mailbox events at: {0}, " +
+                      "errorCode = {1}. {2}",
+                    mailbox.Email,
+                    e.ErrorCode,
+                    e);
+
+                  mailbox.ExternalEwsUrl = null;
+                  mailbox.GroupingInformation = null;
+                  taskSource.SetResult(null);
+                }
+                catch (Office365.ServiceRequestException e)
+                {
+                  if (attempt++ < 2)
+                  {
+                    retry = true;
+
+                    Trace.TraceWarning(
+                      "Cannot subscribe on mailbox events at: {0}. {1}",
+                      mailbox.Email,
+                      e);
+                  }
+                  else
+                  {
+                    Trace.TraceError(
+                      "Cannot subscribe on mailbox events at: {0}. {1}",
+                      mailbox.Email,
+                      e);
+                  }
+
+                  taskSource.SetResult(null);
+                }
+                catch (Exception e)
+                {
+                  Trace.TraceError(
+                    "Cannot subscribe on mailbox events at: {0}. {1}",
+                    mailbox.Email,
+                    e);
+
+                  taskSource.SetResult(null);
+                }
+              },
+              null,
+              folderIds,
+              Office365.EventType.NewMail,
+              Office365.EventType.Created,
+              Office365.EventType.Deleted,
+              Office365.EventType.Modified);
+
+            var result = await taskSource.Task;
+
+            if (retry)
             {
-              try
-              {
-                cancellation.Token.ThrowIfCancellationRequested();
-                taskSource.SetResult(
-                  service.EndSubscribeToStreamingNotifications(asyncResult));
-              }
-              catch(OperationCanceledException e)
-              {
-                taskSource.SetException(e);
+              await Task.Delay(1000, cancellation.Token);
 
-                return;
-              }
-              catch(Office365.ServiceResponseException e)
-              {
-                Trace.TraceError(
-                  "Cannot subscribe on mailbox events at: {0}, " +
-                    "errorCode = {1}. {2}",
-                  mailbox.Email,
-                  e.ErrorCode,
-                  e);
+              continue;
+            }
 
-                mailbox.ExternalEwsUrl = null;
-                mailbox.GroupingInformation = null;
-                taskSource.SetResult(null);
-              }
-              catch(Exception e)
-              {
-                Trace.TraceError(
-                  "Cannot subscribe on mailbox events at: {0}. {1}",
-                  mailbox.Email,
-                  e);
-
-                taskSource.SetResult(null);
-              }
-            },
-            null,
-            folderIds,
-            Office365.EventType.NewMail,
-            Office365.EventType.Created,
-            Office365.EventType.Deleted,
-            Office365.EventType.Modified);
-
-          return taskSource.Task;
+            return result;
+          }
         };
 
       var primarySubscription = 
@@ -678,12 +716,18 @@
 
       connection.OnSubscriptionError += (sender, args) =>
       {
-        cancellation.Cancel();
+        if (!cancellation.IsCancellationRequested)
+        {
+          cancellation.Cancel();
+        }
       };
 
       connection.OnDisconnect += (sender, args) =>
       {
-        cancellation.Cancel();
+        if (!cancellation.IsCancellationRequested)
+        {
+          cancellation.Cancel();
+        }
       };
 
       cancellation.Token.ThrowIfCancellationRequested();
