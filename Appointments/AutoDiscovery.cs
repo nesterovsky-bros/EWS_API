@@ -23,11 +23,8 @@
     /// <param name="autoDiscoveryUrl">
     /// Address of the AutoDiscovery service.
     /// </param>
-    /// <param name="serviceUserName">
-    /// User name to connect AutoDiscovery service.
-    /// </param>
-    /// <param name="servicePassword">
-    /// User password to connect AutoDiscovery service.
+    /// <param name="user">
+    /// An application user.
     /// </param>
     /// <param name="maxHops">
     /// Number of attempts to perform auto discovery.
@@ -37,8 +34,7 @@
     /// <returns>User settings for an email.</returns>
     public static Task<GetUserSettingsResponse> GetUserSettings(
       string autoDiscoveryUrl,
-      string serviceUserName,
-      string servicePassword,
+      ApplicationUser user,
       int maxHops,
       string email,
       CancellationToken cancellationToken = default(CancellationToken))
@@ -47,7 +43,7 @@
 
       autodiscoverService.Url = new Uri(autoDiscoveryUrl);
       autodiscoverService.Credentials =
-        new Office365.WebCredentials(serviceUserName, servicePassword);
+        new Office365.WebCredentials(user.Email, user.Password);
 
       return GetUserSettings(
         autodiscoverService,

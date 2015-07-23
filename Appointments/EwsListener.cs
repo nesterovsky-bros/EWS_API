@@ -35,7 +35,7 @@
     /// Starts the listener.
     /// </summary>
     /// <param name="cancellationToken">Optional cancellation token.</param>
-    /// <returns>A task associated with listener task.</returns>
+    /// <returns>A task associated with the listener task.</returns>
     public async Task Start(
       CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -62,7 +62,10 @@
             watch.Restart();
             await ListenMailboxes(cancellation);
             watch.Stop();
-            Trace.TraceInformation("Listener is started; elapsed: {0}.", watch.Elapsed);
+            
+            Trace.TraceInformation(
+              "Listener has started; elapsed: {0}.", 
+              watch.Elapsed);
 
             await Task.Delay(int.MaxValue, cancellation.Token);
           }
@@ -85,15 +88,19 @@
     /// <returns>A task that completes when all mail boxes are in sync.</returns>
     private async Task DiscoverMailboxes(CancellationTokenSource cancellation)
     {
-      var parallelism = Settings.EWSMaxConcurrency;
+      var parallelism = Math.Min(
+        Settings.EWSMaxConcurrency * Settings.ApplicationUsers.Length, 
+        1000);
 
       using(var semaphore = new SemaphoreSlim(parallelism))
       {
-        Func<string, Task> discover = async email =>
+        Func<int, string, Task> discover = async (index, email) =>
         {
           try
           {
-            var mailbox = await DiscoverMailbox(email, cancellation);
+            var users = Settings.ApplicationUsers;
+            var user = users[index % users.Length];
+            var mailbox = await DiscoverMailbox(user, email, cancellation);
 
             using(var model = CreateModel())
             {
@@ -111,7 +118,7 @@
                     model.Entry(mailbox).State = EntityState.Modified;
 
                     Trace.TraceInformation(
-                      "Affinity of the mailbox {0} has changed.", 
+                      "Affinity has changed for a mailbox {0}.", 
                       mailbox.Email);
                   }
                 }
@@ -138,6 +145,8 @@
 
         using(var model = CreateModel())
         {
+          var index = 0;
+
           await model.BankSystemMailboxes.
             Select(item => item.Email).
             Distinct().
@@ -147,14 +156,14 @@
               async email =>
               {
                 await semaphore.WaitAsync(cancellation.Token);
-                
-                var task = discover(email);
+
+                var task = discover(index++, email);
               },
               cancellation.Token);
         }
 
         // Wait to complete pending tasks.
-        for(var i = 0;  semaphore.CurrentCount + i < parallelism; ++i)
+        for(var i = 0; semaphore.CurrentCount + i < parallelism; ++i)
         {
           await semaphore.WaitAsync(cancellation.Token);
         }
@@ -164,41 +173,42 @@
     /// <summary>
     /// Discovers a mailbox instance.
     /// </summary>
+    /// <param name="user">An application user.</param>
     /// <param name="email">A email.</param>
     /// <param name="cancellation">A cancellation token source.</param>
     /// <returns>A MailboxAffinity instance.</returns>
     private async Task<MailboxAffinity> DiscoverMailbox(
+      ApplicationUser user,
       string email,
       CancellationTokenSource cancellation)
     {
       try
       {
-        var user = Settings.DefaultApplicationUser;
-
-        var userInfo = await AutoDiscovery.GetUserSettings(
-          Settings.AutoDiscoveryUrl,
-          user.Email,
-          user.Password,
-          Settings.AttemptsToDiscoverUrl,
+        return await TryAction(
+          "discover",
           email,
-          cancellation.Token);
+          async attempt =>
+          {
+            var userInfo = await AutoDiscovery.GetUserSettings(
+              Settings.AutoDiscoveryUrl,
+              user,
+              Settings.AttemptsToDiscoverUrl,
+              email,
+              cancellation.Token);
 
-        return new MailboxAffinity
-        {
-          Email = email,
-          ExternalEwsUrl = 
-            userInfo.Settings[UserSettingName.ExternalEwsUrl] as string,
-          GroupingInformation =
-            userInfo.Settings[UserSettingName.GroupingInformation] as string
-        };
+            return new MailboxAffinity
+            {
+              Email = email,
+              ExternalEwsUrl =
+                userInfo.Settings[UserSettingName.ExternalEwsUrl] as string,
+              GroupingInformation =
+                userInfo.Settings[UserSettingName.GroupingInformation] as string
+            };
+          },
+          cancellation);
       }
-      catch(Exception e)
-      {
-        Trace.TraceError(
-          "Cannot resolve affinity for a mailbox: {0}. {1}", 
-          email, 
-          e);
-
+      catch
+      { 
         return new MailboxAffinity { Email = email };
       }
     }
@@ -238,7 +248,7 @@
         return;
       }
 
-      var service = GetService(mailbox, user);
+      var service = GetService(user, mailbox);
       var state = null as BankMailbox;
 
       using(var model = CreateModel())
@@ -352,47 +362,49 @@
     {
       var state = syncState;
       var hasMore = false;
-      var attempt = 0;
-      var wait = false;
 
       do
       {
         cancellation.Token.ThrowIfCancellationRequested();
 
-        if (wait)
-        {
-          wait = false;
-          await Task.Delay(1000);
-        }
-
-        var now = DateTime.Now;
-        var taskSource = new TaskCompletionSource<
-          Office365.ChangeCollection<Office365.ItemChange>>();
-
-        service.BeginSyncFolderItems(
-          asyncResult =>
-          {
-            try
-            {
-              cancellation.Token.ThrowIfCancellationRequested();
-              taskSource.SetResult(service.EndSyncFolderItems(asyncResult));
-            }
-            catch(Exception e)
-            {
-              taskSource.SetException(e);
-            }
-          },
-          null,
-          folderId,
-          SyncProperties,
-          null,
-          512,
-          Office365.SyncFolderItemsScope.NormalItems,
-          state);
-
         try
         {
-          var changes = await taskSource.Task;
+          var changes = await TryAction(
+            "sync",
+            mailbox.Email,
+            attempt =>
+            {
+              if ((attempt > 0) && (state == syncState))
+              {
+                state = null;
+              }
+
+              var source = new TaskCompletionSource<
+                Office365.ChangeCollection<Office365.ItemChange>>();
+
+              service.BeginSyncFolderItems(
+                asyncResult =>
+                {
+                  try
+                  {
+                    source.SetResult(service.EndSyncFolderItems(asyncResult));
+                  }
+                  catch(Exception e)
+                  {
+                    source.SetException(e);
+                  }
+                },
+                null,
+                folderId,
+                SyncProperties,
+                null,
+                512,
+                Office365.SyncFolderItemsScope.NormalItems,
+                state);
+
+              return source.Task;
+            },
+            cancellation);
 
           if (changes.Count > 0)
           {
@@ -410,7 +422,7 @@
                 Where(
                   outer => !model.BankNotifications.
                     Any(
-                      inner => 
+                      inner =>
                         (outer.Timestamp == inner.Timestamp) &&
                         (outer.Email == inner.Email) &&
                         (outer.ItemID == inner.ItemID))));
@@ -422,30 +434,9 @@
           state = changes.SyncState;
           hasMore = changes.MoreChangesAvailable;
         }
-        catch(Exception e)
+        catch 
         {
-          if (attempt < 1)
-          {
-            Trace.TraceWarning(
-              "Cannot synchronize a mailbox: {0}, folderId: {1}. {2}",
-              mailbox.Email,
-              folderId,
-              e);
-
-            ++attempt;
-            state = syncState;
-            hasMore = true;
-
-            continue;
-          }
-
-          Trace.TraceError(
-            "Cannot synchronize a mailbox: {0}, folderId: {1}. {2}", 
-            mailbox.Email, 
-            folderId, 
-            e);
-
-          return null;
+          return state == syncState ? null : state;
         }
       }
       while(hasMore);
@@ -464,16 +455,19 @@
       var prev = null as MailboxAffinity;
       var group = new List<MailboxAffinity>(groupSize);
 
-      using(var semaphore = new SemaphoreSlim(groupSize))
+      var parallelism = Math.Min(
+        groupSize * Settings.ApplicationUsers.Length,
+        1000);
+
+      using(var semaphore = new SemaphoreSlim(parallelism))
       using(var model = CreateModel())
       {
         Func<int, MailboxAffinity[], Task> listen = async (i, mailboxes) =>
         {
           try
           {
-            var user = Settings.ApplicationUsers[
-              (i / Settings.HangingConnectionLimit) %
-                Settings.ApplicationUsers.Length];
+            var users = Settings.ApplicationUsers;
+            var user = users[i % users.Length];
 
             await ListenMailboxes(user, mailboxes, cancellation);
           }
@@ -522,7 +516,7 @@
         }
 
         // Wait to complete pending tasks.
-        for (var i = 0; semaphore.CurrentCount + i < groupSize; ++i)
+        for(var i = 0; semaphore.CurrentCount + i < parallelism; ++i)
         {
           await semaphore.WaitAsync(cancellation.Token);
         }
@@ -548,12 +542,14 @@
         return;
       }
 
+      var primaryEmail = primaryMailbox.Email;
+
       Trace.TraceInformation(
         "Subscribe to a group with primary mailbox: {0}, group size is: {1}", 
         primaryMailbox.Email,
         mailboxes.Length);
 
-      var primaryService = GetService(primaryMailbox, user);
+      var primaryService = GetService(user, primaryMailbox);
 
       Func<
         Office365.ExchangeService, 
@@ -561,7 +557,7 @@
         Task<Office365.StreamingSubscription>> subscribe =
         async (service, mailbox) =>
         {
-          service.HttpHeaders.Add("X-AnchorMailbox", primaryMailbox.Email);
+          service.HttpHeaders.Add("X-AnchorMailbox", primaryEmail);
           service.HttpHeaders.Add("X-PreferServerAffinity", "true");
 
           var folderIds = new List<Office365.FolderId>();
@@ -569,90 +565,54 @@
           folderIds.Add(Office365.WellKnownFolderName.Calendar);
           folderIds.Add(Office365.WellKnownFolderName.Inbox);
 
-          var attempt = 0;
-
-          while(true)
+          try
           {
-            var retry = false;
-            var taskSource =
-              new TaskCompletionSource<Office365.StreamingSubscription>();
-
-            service.BeginSubscribeToStreamingNotifications(
-              asyncResult =>
+            return await TryAction(
+              "subscribe",
+              mailbox.Email,
+              attempt =>
               {
-                try
-                {
-                  cancellation.Token.ThrowIfCancellationRequested();
-                  taskSource.SetResult(
-                    service.EndSubscribeToStreamingNotifications(asyncResult));
-                }
-                catch (OperationCanceledException e)
-                {
-                  taskSource.SetException(e);
+                var source =
+                  new TaskCompletionSource<Office365.StreamingSubscription>();
 
-                  return;
-                }
-                catch (Office365.ServiceResponseException e)
-                {
-                  Trace.TraceError(
-                    "Cannot subscribe on mailbox events at: {0}, " +
-                      "errorCode = {1}. {2}",
-                    mailbox.Email,
-                    e.ErrorCode,
-                    e);
-
-                  mailbox.ExternalEwsUrl = null;
-                  mailbox.GroupingInformation = null;
-                  taskSource.SetResult(null);
-                }
-                catch (Office365.ServiceRequestException e)
-                {
-                  if (attempt++ < 2)
+                service.BeginSubscribeToStreamingNotifications(
+                  asyncResult =>
                   {
-                    retry = true;
+                    try
+                    {
+                      source.SetResult(service.
+                        EndSubscribeToStreamingNotifications(asyncResult));
+                    }
+                    catch(Exception e)
+                    {
+                      source.SetException(e);
+                    }
+                  },
+                  null,
+                  folderIds,
+                  Office365.EventType.NewMail,
+                  Office365.EventType.Created,
+                  Office365.EventType.Deleted,
+                  Office365.EventType.Modified);
 
-                    Trace.TraceWarning(
-                      "Cannot subscribe on mailbox events at: {0}. {1}",
-                      mailbox.Email,
-                      e);
-                  }
-                  else
-                  {
-                    Trace.TraceError(
-                      "Cannot subscribe on mailbox events at: {0}. {1}",
-                      mailbox.Email,
-                      e);
-                  }
-
-                  taskSource.SetResult(null);
-                }
-                catch (Exception e)
-                {
-                  Trace.TraceError(
-                    "Cannot subscribe on mailbox events at: {0}. {1}",
-                    mailbox.Email,
-                    e);
-
-                  taskSource.SetResult(null);
-                }
+                return source.Task;
               },
-              null,
-              folderIds,
-              Office365.EventType.NewMail,
-              Office365.EventType.Created,
-              Office365.EventType.Deleted,
-              Office365.EventType.Modified);
+              cancellation);
+          }
+          catch(OperationCanceledException)
+          {
+            throw;
+          }
+          catch(Office365.ServiceResponseException)
+          {
+            mailbox.ExternalEwsUrl = null;
+            mailbox.GroupingInformation = null;
 
-            var result = await taskSource.Task;
-
-            if (retry)
-            {
-              await Task.Delay(1000, cancellation.Token);
-
-              continue;
-            }
-
-            return result;
+            return null;
+          }
+          catch
+          {
+            return null;
           }
         };
 
@@ -670,7 +630,7 @@
               Select(
                 mailbox =>
                 {
-                  var service = GetService(mailbox, user);
+                  var service = GetService(user, mailbox);
 
                   service.CookieContainer.Add(service.Url, backEndOverrideCookie);
 
@@ -716,6 +676,25 @@
 
       connection.OnSubscriptionError += (sender, args) =>
       {
+        var subscription = args.Subscription;
+        var service = subscription == null ? null : subscription.Service;
+        var email = service == null ? null : service.ImpersonatedUserId.Id;
+
+        if (email != null)
+        {
+          Trace.TraceInformation(
+            "Subscription error for a mailbox: {0}. {1}",
+            email,
+            args.Exception);
+        }
+        else
+        {
+          Trace.TraceInformation(
+            "Subscription error for a group with primary mailbox: {0}. {1}",
+            primaryEmail,
+            args.Exception);
+        }
+
         if (!cancellation.IsCancellationRequested)
         {
           cancellation.Cancel();
@@ -724,6 +703,11 @@
 
       connection.OnDisconnect += (sender, args) =>
       {
+        Trace.TraceInformation(
+          "Disconnection for a group with primary mailbox: {0}. {1}",
+          primaryEmail, 
+          args.Exception);
+
         if (!cancellation.IsCancellationRequested)
         {
           cancellation.Cancel();
@@ -734,9 +718,6 @@
 
       // NOTE: run and forget.
       var syncMailBoxesTask = SyncMailboxes(user, mailboxes, cancellation);
-
-      subscriptions = null;
-      mailboxes = null;
 
       cancellation.Token.Register(() =>
       {
@@ -755,12 +736,12 @@
     /// <summary>
     /// Gets an Exchange service instance.
     /// </summary>
+    /// <param name="user">An application user.</param>
     /// <param name="mailbox">A MailboxAffinity instance.</param>
-    /// <param name="user">Optional application user.</param>
     /// <returns>a ExchangeService instance.</returns>
     private Office365.ExchangeService GetService(
-      MailboxAffinity mailbox,
-      ApplicationUser user = null)
+      ApplicationUser user,
+      MailboxAffinity mailbox)
     {
       var service = new Office365.ExchangeService(
         Office365.ExchangeVersion.Exchange2013);
@@ -798,11 +779,154 @@
     }
 
     /// <summary>
+    /// Performs an action a specified number of times.
+    /// </summary>
+    /// <typeparam name="T">A result type.</typeparam>
+    /// <param name="name">Action name.</param>
+    /// <param name="email">A mailbox.</param>
+    /// <param name="action">Action function.</param>
+    /// <param name="cancellation">A cancellation source.</param>
+    /// <returns>Actio result.</returns>
+    private static async Task<T> TryAction<T>(
+      string name,
+      string email,
+      Func<int, Task<T>> action,
+      CancellationTokenSource cancellation)
+    {
+      const int retryCount = 2;
+
+      for(var i = 0; i < retryCount; ++i)
+      {
+        try
+        {
+          return await action(i);
+        }
+        catch(OperationCanceledException)
+        {
+          throw;
+        }
+        catch(Office365.ServiceResponseException e)
+        {
+          switch(e.ErrorCode)
+          {
+            case Office365.ServiceError.ErrorMailboxStoreUnavailable:
+            case Office365.ServiceError.ErrorInternalServerError:
+            {
+              if (i + 1 < retryCount)
+              {
+                Trace.TraceWarning(
+                  "Cannot perform {0} for a mailbox: {1}, eventCode = {2}. {3}",
+                  name,
+                  email,
+                  e.ErrorCode,
+                  e);
+
+                break;
+              }
+
+              goto default;
+            }
+            default:
+            {
+              Trace.TraceError(
+                "Cannot perform {0} for a mailbox: {1}, eventCode = {2}. {3}",
+                name,
+                email,
+                e.ErrorCode,
+                e);
+
+              throw;
+            }
+          }
+        }
+        catch(Office365.ServiceRequestException e)
+        {
+          var webException = e.InnerException as WebException;
+          var webResponse = webException == null ? null : 
+            webException.Response as HttpWebResponse;
+
+          if ((webResponse != null) && 
+            (webResponse.StatusCode == HttpStatusCode.Unauthorized))
+          {
+            Trace.TraceError(
+              "Cannot perform {0} for a mailbox: {1}; Unauthorized. {2}",
+              name,
+              email,
+              e);
+
+            throw;
+          }
+
+          if (i + 1 < retryCount)
+          {
+            Trace.TraceWarning(
+              "Cannot perform {0} for a mailbox: {1}. {2}",
+              name,
+              email,
+              e);
+
+            break;
+          }
+
+          Trace.TraceError(
+            "Cannot perform {0} for a mailbox: {1}. {2}",
+            name,
+            email,
+            e);
+
+          throw;
+        }
+        catch(Exception e)
+        {
+          Trace.TraceError(
+            "Cannot perform {0} for a mailbox: {1}. {2}",
+            name,
+            email,
+            e);
+
+          throw;
+        }
+
+        await Task.Delay(Random(500, 1500), cancellation.Token);
+      }
+
+      return default(T);
+    }
+
+    /// <summary>
+    /// Returns a random number within a specified range.
+    /// </summary>
+    /// <param name="minValue">
+    /// The inclusive lower bound of the random number returned.
+    /// </param>
+    /// <param name="maxValue">
+    /// The exclusive upper bound of the random number returned.
+    /// </param>
+    /// <returns>A random value within requested range,</returns>
+    private static int Random(int minValue, int maxValue)
+    { 
+      lock(sync)
+      {
+        return random.Next(minValue, maxValue);
+      }
+    }
+
+    /// <summary>
     /// A properies to retrieve during Sync.
     /// </summary>
     private static readonly Office365.PropertySet SyncProperties =  
       new Office365.PropertySet(
         Office365.ItemSchema.Id, 
         Office365.ItemSchema.LastModifiedTime);
+
+    /// <summary>
+    /// Global lock.
+    /// </summary>
+    private static object sync = new object();
+
+    /// <summary>
+    /// Random used to generate delays.
+    /// </summary>
+    private static Random random = new Random();
   }
 }

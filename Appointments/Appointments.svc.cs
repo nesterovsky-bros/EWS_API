@@ -969,8 +969,7 @@
       {
         var userInfo = AutoDiscovery.GetUserSettings(
           Settings.AutoDiscoveryUrl,
-          user.Email,
-          user.Password,
+          user,
           Settings.AttemptsToDiscoverUrl,
           impersonatedUserId).Result;
 
