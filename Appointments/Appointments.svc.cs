@@ -13,6 +13,7 @@
   using System.Text.RegularExpressions;
   using System.Xml;
   using System.Threading.Tasks;
+  using System.Data.Entity;
   
   using Microsoft.Practices.Unity;
   using Microsoft.Exchange.WebServices.Autodiscover;
@@ -967,16 +968,14 @@
 
       if (url == null)
       {
-        var userInfo = AutoDiscovery.GetUserSettings(
-          Settings.AutoDiscoveryUrl,
+        var mailbox = EwsUtils.GetMailboxAffinities(
           user,
-          Settings.AttemptsToDiscoverUrl,
-          impersonatedUserId).Result;
+          Settings.AutoDiscoveryUrl,
+          new [] { impersonatedUserId }).
+          FirstOrDefault() ??
+          new MailboxAffinity { Email = impersonatedUserId };
 
-        SaveServiceUrl(
-          impersonatedUserId, 
-          userInfo.Settings[UserSettingName.ExternalEwsUrl] as string, 
-          userInfo.Settings[UserSettingName.GroupingInformation] as string);
+        SaveServiceUrl(mailbox);
       }
 
       service.Url = new Uri(url);
@@ -1309,28 +1308,15 @@
       }
     }
 
-    private static void SaveServiceUrl(string email, string url, string groupInfo = null)
+    private static void SaveServiceUrl(MailboxAffinity mailbox)
     {
-      using (var model = new EWSQueueEntities())
+      using(var model = new EWSQueueEntities())
       {
-        var affinity = model.MailboxAffinities.
-          Where(item => item.Email == email).
-          FirstOrDefault();
-
-        if (affinity == null)
-        {
-          model.MailboxAffinities.Add(
-            new MailboxAffinity
-            {
-              Email = email,
-              ExternalEwsUrl = url,
-              GroupingInformation = groupInfo
-            });
-        }
-        else
-        {
-          affinity.ExternalEwsUrl = url;
-        }
+        model.Entry(mailbox).State = 
+          mailbox.ExternalEwsUrl == null ?  EntityState.Deleted :
+          model.MailboxAffinities.AsNoTracking().
+            Any(item => item.Email == mailbox.Email) ? EntityState.Added :
+          EntityState.Modified;
 
         model.SaveChanges();
       }

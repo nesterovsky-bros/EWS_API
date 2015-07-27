@@ -42,8 +42,8 @@ namespace Bnhp.Office365
           double.Parse(ConfigurationManager.AppSettings["RequestTimeout"]),
         AutoDiscoveryUrl =
           ConfigurationManager.AppSettings["AutoDiscoveryUrl"],
-        AttemptsToDiscoverUrl =
-          int.Parse(ConfigurationManager.AppSettings["AttemptsToDiscoverUrl"]),
+        UsersPerUsersSettins =
+          int.Parse(ConfigurationManager.AppSettings["UsersPerUsersSettins"]),
         ExchangeListenerRecyclePeriod =
           int.Parse(ConfigurationManager.AppSettings["ExchangeListenerRecyclePeriod"]),
         ApplicationUsers = users,

@@ -114,7 +114,7 @@
     <Compile Include="ApplicationUser.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
-    <Compile Include="AutoDiscovery.cs" />
+    <Compile Include="EwsUtils.cs" />
     <Compile Include="Appointment.cs" />
     <Compile Include="Appointments.svc.cs">
       <DependentUpon>Appointments.svc</DependentUpon>
