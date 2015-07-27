@@ -22,6 +22,10 @@ public partial class BankSystemMailbox
 
     public string Email { get; set; }
 
+
+
+    public virtual BankSystem BankSystem { get; set; }
+
 }
 
 }

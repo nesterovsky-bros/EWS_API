@@ -167,17 +167,9 @@
               }
             }
           }
-          catch(OperationCanceledException)
-          {
-            throw;
-          }
-          catch(ObjectDisposedException)
-          {
-            throw;
-          }
           catch(Exception e)
           {
-            Trace.TraceError("Discovery error. {0}", e);
+            EwsUtils.Log(true, "Discovery", null, e);
 
             throw;
           }
@@ -247,17 +239,9 @@
           {
             await SyncMailbox(GetUser(i), mailbox, cancellation);
           }
-          catch(OperationCanceledException)
+          catch (Exception e)
           {
-            throw;
-          }
-          catch(ObjectDisposedException)
-          {
-            throw;
-          }
-          catch(Exception e)
-          {
-            Trace.TraceError("Sync error. {0}", e);
+            EwsUtils.Log(true, "Sync", null, e);
 
             throw;
           }
@@ -316,59 +300,57 @@
         return;
       }
 
+      var folderIDs = 
+        await GetNotificationFolders(mailbox.Email, cancellation);
+
+      if (folderIDs.Length == 0)
+      {
+        return;
+      }
+
       var service = GetService(user, mailbox);
-      var state = null as BankMailbox;
 
-      using(var model = CreateModel())
+      foreach(var folderID in folderIDs)
       {
-        state = await model.BankMailboxes.
-          AsNoTracking().
-          Where(item => item.Email == mailbox.Email).
-          FirstOrDefaultAsync();
-      }
+        var folderName = folderID.FolderName.ToString();
+        string state;
 
-      var changed = false;
-      var isNew = state == null;
-
-      if (isNew)
-      {
-        state = new BankMailbox { Email = mailbox.Email };
-      }
-
-      var syncState = await SyncMailbox(
-        mailbox,
-        service,
-        Office365.WellKnownFolderName.Inbox,
-        state.InboxSyncState,
-        cancellation);
-
-      if (state.InboxSyncState != syncState)
-      {
-        state.InboxSyncState = syncState;
-        changed = true;
-      }
-
-      syncState = await SyncMailbox(
-        mailbox,
-        service,
-        Office365.WellKnownFolderName.Calendar,
-        state.CalendarSyncState,
-        cancellation);
-
-      if (state.CalendarSyncState != syncState)
-      {
-        state.CalendarSyncState = syncState;
-        changed = true;
-      }
-
-      if (changed)
-      {
         using(var model = CreateModel())
         {
-          model.Entry(state).State =
-            isNew ? EntityState.Added : EntityState.Modified;
+          state = await model.MailboxSyncs.
+            Where(
+              item =>
+                (item.Email == mailbox.Email) &&
+                (item.FolderID == folderName)).
+            Select(item => item.SyncState).
+            FirstOrDefaultAsync(cancellation.Token);
+        }
 
-          await model.SaveChangesAsync(cancellation.Token);
+        var newState = await SyncMailbox(
+          mailbox,
+          service,
+          folderID,
+          state,
+          cancellation);
+
+        if (state != newState)
+        {
+          using(var model = CreateModel())
+          {
+            var item = new MailboxSync
+            {
+              Email = mailbox.Email,
+              FolderID = folderName,
+              SyncState = newState
+            };
+
+            model.Entry(item).State =
+              newState == null ? EntityState.Deleted :
+              state == null ? EntityState.Added : 
+              EntityState.Modified;
+
+            await model.SaveChangesAsync(cancellation.Token);
+          }
         }
       }
     }
@@ -389,15 +371,16 @@
 
       using(var model = CreateModel())
       {
-        model.BankNotifications.AddRange(
+        model.MailboxNotifications.AddRange(
           events.
             OfType<Office365.ItemEvent>().
             Select(
               item =>
-                new BankNotification
+                new MailboxNotification
                 {
                   Timestamp = item.TimeStamp,
                   ItemID = item.ItemId.UniqueId,
+                  FolderID = item.ParentFolderId.FolderName.ToString(),
                   Email = email,
                   ChangeType = 
                     (item.EventType == Office365.EventType.NewMail) ||
@@ -417,14 +400,14 @@
     /// </summary>
     /// <param name="mailbox">A mailbox to synchronize.</param>
     /// <param name="service">An Exchange service.</param>
-    /// <param name="folderId">A folder id.</param>
+    /// <param name="folderID">A folder id.</param>
     /// <param name="syncState">A folder SyncState.</param>
     /// <param name="cancellation">A cancellation token source.</param>
     /// <returns>A new syncState value.</returns>
     private async Task<string> SyncMailbox(
       MailboxAffinity mailbox,
       Office365.ExchangeService service, 
-      Office365.FolderId folderId,
+      Office365.FolderId folderID,
       string syncState,
       CancellationTokenSource cancellation)
     {
@@ -463,7 +446,7 @@
                   }
                 },
                 null,
-                folderId,
+                folderID,
                 SyncProperties,
                 null,
                 512,
@@ -478,17 +461,18 @@
           {
             using(var model = CreateModel())
             {
-              model.BankNotifications.AddRange(
+              model.MailboxNotifications.AddRange(
                 changes.Select(
-                  change => new BankNotification
+                  change => new MailboxNotification
                   {
                     Timestamp = change.Item.LastModifiedTime,
-                    ItemID = change.ItemId.UniqueId,
                     Email = mailbox.Email,
+                    FolderID = folderID.FolderName.ToString(),
+                    ItemID = change.ItemId.UniqueId,
                     ChangeType = change.ChangeType.ToString()
                   }).
                 Where(
-                  outer => !model.BankNotifications.
+                  outer => !model.MailboxNotifications.
                     Any(
                       inner =>
                         (outer.Timestamp == inner.Timestamp) &&
@@ -536,17 +520,9 @@
           {
             await ListenMailboxes(GetUser(i), mailboxes, cancellation);
           }
-          catch(OperationCanceledException)
+          catch (Exception e)
           {
-            throw;
-          }
-          catch(ObjectDisposedException)
-          {
-            throw;
-          }
-          catch(Exception e)
-          {
-            Trace.TraceError("Listen error. {0}", e);
+            EwsUtils.Log(true, "Listen", null, e);
 
             throw;
           }
@@ -624,10 +600,8 @@
           service.HttpHeaders.Add("X-AnchorMailbox", anchorMailbox);
           service.HttpHeaders.Add("X-PreferServerAffinity", "true");
 
-          var folderIds = new List<Office365.FolderId>();
-
-          folderIds.Add(Office365.WellKnownFolderName.Calendar);
-          folderIds.Add(Office365.WellKnownFolderName.Inbox);
+          var folderIDs = 
+            await GetNotificationFolders(mailbox.Email, cancellation);
 
           try
           {
@@ -647,13 +621,13 @@
                       source.SetResult(service.
                         EndSubscribeToStreamingNotifications(asyncResult));
                     }
-                    catch (Exception e)
+                    catch(Exception e)
                     {
                       source.SetException(e);
                     }
                   },
                   null,
-                  folderIds,
+                  folderIDs,
                   Office365.EventType.NewMail,
                   Office365.EventType.Created,
                   Office365.EventType.Deleted,
@@ -663,15 +637,15 @@
               },
               cancellation.Token);
           }
-          catch (OperationCanceledException)
+          catch(OperationCanceledException)
           {
             throw;
           }
-          catch (ObjectDisposedException)
+          catch(ObjectDisposedException)
           {
             throw;
           }
-          catch (Office365.ServiceResponseException)
+          catch(Office365.ServiceResponseException)
           {
             mailbox.ExternalEwsUrl = null;
             mailbox.GroupingInformation = null;
@@ -782,14 +756,14 @@
 
         if (email != null)
         {
-          Trace.TraceInformation(
+          Trace.TraceWarning(
             "Subscription error for a mailbox: {0}. {1}",
             email,
             args.Exception);
         }
         else
         {
-          Trace.TraceInformation(
+          Trace.TraceWarning(
             "Subscription error for a group with primary mailbox: {0}. {1}",
             primaryEmail,
             args.Exception);
@@ -888,6 +862,46 @@
       var users = Settings.ApplicationUsers;
 
       return users[index % users.Length];
+    }
+
+    /// <summary>
+    /// Gets an array of folders to notify for a email.
+    /// </summary>
+    /// <param name="email">A email.</param>
+    /// <param name="cancellation">A cancellation source.</param>
+    /// <returns>A task producing an array of folder ids.</returns>
+    private async Task<Office365.FolderId[]> GetNotificationFolders(
+      string email,
+      CancellationTokenSource cancellation)
+    {
+      string[] folderNames;
+
+      using(var model = CreateModel())
+      {
+        folderNames = await model.BankSystemNotifications.
+          Join(
+            model.BankSystemMailboxes.
+              Where(item => item.Email == email),
+            outer => outer.SystemID,
+            inner => inner.SystemID,
+            (outer, inner) => outer.FolderID).
+          Distinct().
+          ToArrayAsync(cancellation.Token);
+      }
+
+      var folderIDs = new List<Office365.FolderId>(folderNames.Length);
+
+      foreach(var folderName in folderNames)
+      {
+        Office365.WellKnownFolderName folderID;
+
+        if (Enum.TryParse(folderName, out folderID))
+        {
+          folderIDs.Add(folderID);
+        }
+      }
+
+      return folderIDs.ToArray();
     }
 
     /// <summary>

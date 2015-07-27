@@ -96,86 +96,16 @@
         {
           return await action(i);
         }
-        catch(OperationCanceledException)
+        catch(Exception e)
         {
-          throw;
-        }
-        catch(ObjectDisposedException)
-        {
-          throw;
-        }
-        catch(Office365.ServiceResponseException e)
-        {
-          switch(e.ErrorCode)
-          {
-            case Office365.ServiceError.ErrorMailboxStoreUnavailable:
-            case Office365.ServiceError.ErrorInternalServerError:
-            case Office365.ServiceError.ErrorInternalServerTransientError:
-            case Office365.ServiceError.ErrorNoRespondingCASInDestinationSite:
-            {
-              if (Log(name, email, e, e.ErrorCode, true, i, retryCount))
-              {
-                throw;
-              }
+          var warning = (i + 1 < retryCount) && IsRetryable(e);
 
-              break;
-            }
-            default:
-            {
-              Log(name, email, e, e.ErrorCode);
+          Log(warning, name, email, e);
 
-              throw;
-            }
-          }
-        }
-        catch(Office365.ServiceRequestException e)
-        {
-          var webException = e.InnerException as WebException;
-          var webResponse = webException == null ? null :
-            webException.Response as HttpWebResponse;
-
-          if (webResponse != null)
-          {
-            if (Log(
-              name, 
-              email, 
-              e, 
-              webResponse.StatusCode, 
-              webResponse.StatusCode != HttpStatusCode.Unauthorized, 
-              i, 
-              retryCount))
-            {
-              throw;
-            }
-          }
-          else
-          {
-            if (Log(name, email, e, null, true, i, retryCount))
-            {
-              throw;
-            }
-          }
-        }
-        catch(AutodiscoverResponseException e)
-        {
-          if (Log(
-            name, 
-            email, 
-            e, 
-            e.ErrorCode, 
-            (e.ErrorCode == AutodiscoverErrorCode.ServerBusy) ||
-              (e.ErrorCode == AutodiscoverErrorCode.InternalServerError), 
-            i, 
-            retryCount))
+          if (!warning)
           {
             throw;
           }
-        }
-        catch(Exception e)
-        {
-          Log(name, email, e, null);
-
-          throw;
         }
 
         await Task.Delay(Random(500, 2000), cancellationToken);
@@ -203,36 +133,147 @@
     }
 
     /// <summary>
+    /// Tests whether an error is retryable.
+    /// </summary>
+    /// <param name="exception">An exception instance.</param>
+    /// <returns>True if error is retryable, and false otherwise.</returns>
+    public static bool IsRetryable(Exception exception)
+    { 
+      var serviceResponseException = 
+        exception as Office365.ServiceResponseException;
+
+      if (serviceResponseException != null)
+      {
+        switch(serviceResponseException.ErrorCode)
+        {
+          case Office365.ServiceError.ErrorMailboxStoreUnavailable:
+          case Office365.ServiceError.ErrorInternalServerError:
+          case Office365.ServiceError.ErrorInternalServerTransientError:
+          case Office365.ServiceError.ErrorNoRespondingCASInDestinationSite:
+          {
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      var serviceRequestException = 
+        exception as Office365.ServiceRequestException;
+
+      if (serviceRequestException != null)
+      {
+        var webException = 
+          serviceRequestException.InnerException as WebException;
+        var webResponse = webException == null ? null :
+          webException.Response as HttpWebResponse;
+
+        if (webResponse != null)
+        {
+          return webResponse.StatusCode != HttpStatusCode.Unauthorized;
+        }
+
+        return true;
+      }
+
+      var autodiscoverResponseException = 
+        exception as AutodiscoverResponseException;
+
+      if (autodiscoverResponseException != null)
+      {
+        switch(autodiscoverResponseException.ErrorCode)
+        {
+          case AutodiscoverErrorCode.ServerBusy:
+          case AutodiscoverErrorCode.InternalServerError:
+          {
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      return false;
+    }
+
+    /// <summary>
+    /// Gets an error code for an exception, if available.
+    /// </summary>
+    /// <param name="exception">An exception instance.</param>
+    /// <returns>
+    /// An error code, or null if no error code is available.
+    /// </returns>
+    public static object GetErrorCode(Exception exception)
+    {
+      var serviceResponseException = 
+        exception as Office365.ServiceResponseException;
+
+      if (serviceResponseException != null)
+      {
+        return serviceResponseException.ErrorCode;
+      }
+
+      var serviceRequestException = 
+        exception as Office365.ServiceRequestException;
+
+      if (serviceRequestException != null)
+      {
+        var webException =
+          serviceRequestException.InnerException as WebException;
+        var webResponse = webException == null ? null :
+          webException.Response as HttpWebResponse;
+
+        if (webResponse != null)
+        {
+          return webResponse.StatusCode;
+        }
+
+        return null;
+      }
+
+      var autodiscoverResponseException = 
+        exception as AutodiscoverResponseException;
+
+      if (autodiscoverResponseException != null)
+      {
+        return autodiscoverResponseException.ErrorCode;
+      }
+
+      return null;
+    }
+
+    /// <summary>
     /// Logs an error.
     /// </summary>
+    /// <param name="warning">
+    /// Warning indicator.
+    /// </param>
     /// <param name="name">Action name.</param>
     /// <param name="email">A mailbox.</param>
     /// <param name="exception">An exception instance.</param>
-    /// <param name="errorCode">Optional error code.</param>
-    /// <param name="warning">
-    /// Optional warning indicator. Default is false.
-    /// </param>
-    /// <param name="attempt">Optional try attempt. Default is 0.</param>
-    /// <param name="retryCount">
-    /// Optional number of attempts. Default is 2.
-    /// </param>
-    /// <returns>
-    /// true to throw an error; and false to continue attempts.
-    /// </returns>
-    private static bool Log(
+    public static void Log(
+      bool warning,
       string name,
       string email,
-      Exception exception,
-      object errorCode,
-      bool warning = false,
-      int attempt = 0,
-      int retryCount = 1)
+      Exception exception)
     {
-      var message = errorCode == null ?
-        "{0} failed for a mailbox: {1}. {2}" :
-        "{0} failed for a mailbox: {1}, errorCode = {3}. {2}";
+      if ((exception is OperationCanceledException) ||
+        (exception is ObjectDisposedException) ||
+        (exception is ThreadAbortException))
+      {
+        return;
+      }
 
-      if (warning && (attempt + 1 < retryCount))
+      var errorCode = GetErrorCode(exception);
+      var message = email == null ?
+        errorCode == null ?
+          "{0} failed. {2}" :
+          "{0} failed, errorCode = {3}. {2}" :
+        errorCode == null ?
+          "{0} failed for a mailbox: {1}. {2}" :
+          "{0} failed for a mailbox: {1}, errorCode = {3}. {2}";
+
+      if (warning)
       {
         Trace.TraceWarning(
           message,
@@ -240,8 +281,6 @@
           email,
           exception,
           errorCode);
-
-        return false;
       }
       else
       {
@@ -251,8 +290,6 @@
           email,
           exception,
           errorCode);
-
-        return true;
       }
     }
 

@@ -886,8 +886,8 @@
       using(var model = new EWSQueueEntities())
       {
         var query = request.systemName == null ? 
-          model.BankNotifications.AsNoTracking() :
-          model.BankNotifications.AsNoTracking().Join(
+          model.MailboxNotifications.AsNoTracking() :
+          model.MailboxNotifications.AsNoTracking().Join(
             model.BankSystems.
               Where(item => item.Name == request.systemName).
               Join(
@@ -929,6 +929,7 @@
           {
             Timestamp = item.Timestamp,
             Email = item.Email,
+            FolderID = item.FolderID,
             ItemID = item.ItemID,
             ChangeType =  
               (ChangeType)Enum.Parse(typeof(ChangeType), item.ChangeType)
@@ -1223,6 +1224,7 @@
 
           item.Response = ToXmlString(result);
 
+          model.Entry(item).State = EntityState.Modified;
           model.SaveChanges();
         }
       }
@@ -1241,9 +1243,9 @@
         if (item != null)
         {
           item.Error = ToXmlString(error);
+          model.Entry(item).State = EntityState.Modified;
+          model.SaveChanges();
         }
-
-        model.SaveChanges();
       }
     }
 

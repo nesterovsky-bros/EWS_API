@@ -15,14 +15,18 @@ namespace Bnhp.Office365
 using System;
     using System.Collections.Generic;
     
-public partial class BankMailbox
+public partial class MailboxNotification
 {
+
+    public System.DateTime Timestamp { get; set; }
 
     public string Email { get; set; }
 
-    public string CalendarSyncState { get; set; }
+    public string FolderID { get; set; }
 
-    public string InboxSyncState { get; set; }
+    public string ItemID { get; set; }
+
+    public string ChangeType { get; set; }
 
 }
 

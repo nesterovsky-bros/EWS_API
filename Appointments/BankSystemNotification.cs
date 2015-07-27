@@ -15,30 +15,16 @@ namespace Bnhp.Office365
 using System;
     using System.Collections.Generic;
     
-public partial class BankSystem
+public partial class BankSystemNotification
 {
-
-    public BankSystem()
-    {
-
-        this.BankSystemMailboxes = new HashSet<BankSystemMailbox>();
-
-        this.BankSystemNotifications = new HashSet<BankSystemNotification>();
-
-    }
-
-
-    public string Name { get; set; }
 
     public int SystemID { get; set; }
 
-    public string Description { get; set; }
+    public string FolderID { get; set; }
 
 
 
-    public virtual ICollection<BankSystemMailbox> BankSystemMailboxes { get; set; }
-
-    public virtual ICollection<BankSystemNotification> BankSystemNotifications { get; set; }
+    public virtual BankSystem BankSystem { get; set; }
 
 }
 
