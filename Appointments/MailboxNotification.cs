@@ -28,6 +28,8 @@ public partial class MailboxNotification
 
     public string ChangeType { get; set; }
 
+    public int ID { get; set; }
+
 }
 
 }

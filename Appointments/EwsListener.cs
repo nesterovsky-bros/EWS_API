@@ -358,38 +358,48 @@
     /// <summary>
     /// Syncs and updates a mail box.
     /// </summary>
-    /// <param name="email">An email address to sync.</param>
+    /// <param name="service">A service instance.</param>
     /// <param name="events">A enumeration of events.</param>
     /// <param name="cancellation">A cancellation token source.</param>
     /// <returns>Task instance.</returns>
     private async Task SyncAndUpdateMailbox(
-      string email,
+      Office365.ExchangeService service,
       IEnumerable<Office365.NotificationEvent> events,
       CancellationTokenSource cancellation)
     {
       await Task.Yield();
 
+      var folders = new Dictionary<string, Office365.Folder>();
+
+      var notifications = events.OfType<Office365.ItemEvent>().
+        Select(
+          item =>
+          {
+            var parentID = item.ParentFolderId.UniqueId;
+
+            var folder = folders.Get(parentID) ??
+              (folders[parentID] = 
+                Office365.Folder.Bind(service, parentID, FolderProperties));
+
+            return new MailboxNotification
+            {
+              Timestamp = item.TimeStamp,
+              ItemID = item.ItemId.UniqueId,
+              FolderID = folder.WellKnownFolderName.ToString(),
+              Email = service.ImpersonatedUserId.Id,
+              ChangeType =
+                (item.EventType == Office365.EventType.NewMail) ||
+                (item.EventType == Office365.EventType.Created) ?
+                  Office365.ChangeType.Create.ToString() :
+                  item.EventType == Office365.EventType.Deleted ?
+                  Office365.ChangeType.Delete.ToString() :
+                  Office365.ChangeType.Update.ToString()
+            };
+          });
+
       using(var model = CreateModel())
       {
-        model.MailboxNotifications.AddRange(
-          events.
-            OfType<Office365.ItemEvent>().
-            Select(
-              item =>
-                new MailboxNotification
-                {
-                  Timestamp = item.TimeStamp,
-                  ItemID = item.ItemId.UniqueId,
-                  FolderID = item.ParentFolderId.FolderName.ToString(),
-                  Email = email,
-                  ChangeType = 
-                    (item.EventType == Office365.EventType.NewMail) ||
-                    (item.EventType == Office365.EventType.Created) ?
-                      Office365.ChangeType.Create.ToString() :
-                      item.EventType == Office365.EventType.Deleted ?
-                      Office365.ChangeType.Delete.ToString() :
-                      Office365.ChangeType.Update.ToString()
-                }));
+        model.MailboxNotifications.AddRange(notifications);
 
         await model.SaveChangesAsync(cancellation.Token);
       }
@@ -743,9 +753,11 @@
           return;
         }
 
-        var email = args.Subscription.Service.ImpersonatedUserId.Id;
         // Note: fire and forget task.
-        var syncTask = SyncAndUpdateMailbox(email, args.Events, cancellation);
+        var syncTask = SyncAndUpdateMailbox(
+          args.Subscription.Service, 
+          args.Events, 
+          cancellation);
       };
 
       connection.OnSubscriptionError += (sender, args) =>
@@ -911,5 +923,11 @@
       new Office365.PropertySet(
         Office365.ItemSchema.Id, 
         Office365.ItemSchema.LastModifiedTime);
+
+    /// <summary>
+    /// A properies to retrieve during notification.
+    /// </summary>
+    private static readonly Office365.PropertySet FolderProperties =
+      new Office365.PropertySet(Office365.FolderSchema.WellKnownFolderName);
   }
 }
