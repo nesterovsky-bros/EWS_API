@@ -973,10 +973,14 @@
           user,
           Settings.AutoDiscoveryUrl,
           new [] { impersonatedUserId }).
-          FirstOrDefault() ??
-          new MailboxAffinity { Email = impersonatedUserId };
+          FirstOrDefault();
 
-        SaveServiceUrl(mailbox);
+        if (mailbox != null)
+        {
+          SaveServiceUrl(mailbox);
+        }
+
+        throw new ArgumentException("Invalid user: " + impersonatedUserId);
       }
 
       service.Url = new Uri(url);

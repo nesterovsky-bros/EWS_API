@@ -18,6 +18,8 @@ using System;
 public partial class MailboxNotification
 {
 
+    public int ID { get; set; }
+
     public System.DateTime Timestamp { get; set; }
 
     public string Email { get; set; }
@@ -27,8 +29,6 @@ public partial class MailboxNotification
     public string ItemID { get; set; }
 
     public string ChangeType { get; set; }
-
-    public int ID { get; set; }
 
 }
 
