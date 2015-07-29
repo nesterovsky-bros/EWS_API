@@ -842,6 +842,8 @@
     public struct GetChangesRequest
     {
       public string systemName;
+      public string email;
+      public string folderID;
       public DateTime? startDate;
       public DateTime? endDate;
       public int? skip;
@@ -852,6 +854,8 @@
     /// Gets a set of changes.
     /// </summary>
     /// <param name="systemName">An optional system name.</param>
+    /// <param name="email">Optional email address.</param>
+    /// <param name="folderID">Optional filder id.</param>
     /// <param name="startDate">Optional start date.</param>
     /// <param name="endDate">Optional end date.</param>
     /// <param name="skip">
@@ -863,6 +867,8 @@
     /// <returns>A enumeration of changes.</returns>
     public IEnumerable<Change> GetChanges(
       string systemName,
+      string email,
+      string folderID,
       DateTime? startDate,
       DateTime? endDate,
       int? skip = 0,
@@ -873,6 +879,8 @@
         new GetChangesRequest
         {
           systemName = systemName,
+          email = email,
+          folderID = folderID,
           startDate = startDate,
           endDate = endDate,
           skip = skip,
@@ -898,6 +906,16 @@
             outer => outer.Email,
             inner => inner.Email,
             (outer, inner) => outer);
+
+        if (request.email != null)
+        {
+          query = query.Where(item => item.Email == request.email);
+        }
+
+        if (request.folderID != null)
+        {
+          query = query.Where(item => item.FolderID == request.folderID);
+        }
 
         if (request.startDate != null)
         {
