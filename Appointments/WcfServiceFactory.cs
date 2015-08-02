@@ -8,6 +8,7 @@ namespace Bnhp.Office365
   using Unity.Wcf;
   using System.Net;
   using System.Diagnostics;
+  using System.Threading.Tasks;
 
   public class WcfServiceFactory : UnityServiceHostFactory
   {
@@ -42,8 +43,8 @@ namespace Bnhp.Office365
           double.Parse(ConfigurationManager.AppSettings["RequestTimeout"]),
         AutoDiscoveryUrl =
           ConfigurationManager.AppSettings["AutoDiscoveryUrl"],
-        AttemptsToDiscoverUrl =
-          int.Parse(ConfigurationManager.AppSettings["AttemptsToDiscoverUrl"]),
+        UsersPerUsersSettins =
+          int.Parse(ConfigurationManager.AppSettings["UsersPerUsersSettins"]),
         ExchangeListenerRecyclePeriod =
           int.Parse(ConfigurationManager.AppSettings["ExchangeListenerRecyclePeriod"]),
         ApplicationUsers = users,
@@ -60,7 +61,7 @@ namespace Bnhp.Office365
 
       container.BuildUp(listener);
 
-      var startTask = listener.Start();
+      var startTask = Start(listener);
     }
 
     public static ApplicationUser[] GetApplicationUsers()
@@ -70,6 +71,20 @@ namespace Bnhp.Office365
         model.Configuration.ProxyCreationEnabled = false;
 
         return model.ApplicationUsers.AsNoTracking().ToArray();
+      }
+    }
+
+    private static async Task Start(EwsListener listener)
+    {
+      try
+      {
+        await listener.Start();
+      }
+      catch(Exception e)
+      {
+        Trace.TraceError("Listener failed. {0}", e);
+
+        throw;
       }
     }
   }

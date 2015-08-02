@@ -139,6 +139,11 @@
     {
       try
       {
+        if (message == null)
+        {
+          message = "";
+        }
+
         var details = message;
         var match = RetrieveCategoryNameFromErrorMessage.Match(message);
         var categoryGroup = match.Success ? match.Groups["category"] : null;
@@ -152,7 +157,7 @@
 
         var end = message.IndexOf(". ");
 
-        message = end != -1 ?  message.Substring(start, end - start + 1) :
+        message = end != -1 ? message.Substring(start, end - start + 1) :
           start > 0 ? message.Substring(start) :
           message;
 
@@ -163,7 +168,7 @@
 
         // NOTE: Run and forget the task.
         var task = 
-          TraceIntoDatabase(DateTime.Now, category, message, details);
+          TraceIntoDatabase(DateTime.Now, category, message.Trim(), details);
       }
       catch
       {

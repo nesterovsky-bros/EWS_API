@@ -114,16 +114,13 @@
     <Compile Include="ApplicationUser.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
-    <Compile Include="AutoDiscovery.cs" />
+    <Compile Include="BankSystemNotification.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
+    <Compile Include="EwsUtils.cs" />
     <Compile Include="Appointment.cs" />
     <Compile Include="Appointments.svc.cs">
       <DependentUpon>Appointments.svc</DependentUpon>
-    </Compile>
-    <Compile Include="BankMailbox.cs">
-      <DependentUpon>Model.tt</DependentUpon>
-    </Compile>
-    <Compile Include="BankNotification.cs">
-      <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="BankSystem.cs">
       <DependentUpon>Model.tt</DependentUpon>
@@ -143,6 +140,12 @@
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="MailboxAffinity.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
+    <Compile Include="MailboxNotification.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
+    <Compile Include="MailboxSync.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="Model.Context.cs">

@@ -17,10 +17,16 @@
     public DateTime Timestamp { get; set; }
 
     /// <summary>
-    /// Milbox address.
+    /// Mailbox address.
     /// </summary>
     [DataMember]
     public string Email { get; set; }
+
+    /// <summary>
+    /// A folder id.
+    /// </summary>
+    [DataMember]
+    public string FolderID { get; set; }
 
     /// <summary>
     /// Items ID.

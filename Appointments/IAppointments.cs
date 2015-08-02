@@ -329,7 +329,9 @@ namespace Bnhp.Office365
     /// <summary>
     /// Gets a set of changes.
     /// </summary>
-    /// <param name="systemID">An optional system ID</param>
+    /// <param name="systemName">An optional system name.</param>
+    /// <param name="email">Optional email address.</param>
+    /// <param name="folderID">Optional filder id.</param>
     /// <param name="startDate">Optional start date.</param>
     /// <param name="endDate">Optional end date.</param>
     /// <param name="skip">
@@ -341,7 +343,9 @@ namespace Bnhp.Office365
     /// <returns>A enumeration of changes.</returns>
     [OperationContract]
     IEnumerable<Change> GetChanges(
-      string systemID,
+      string systemName,
+      string email,
+      string folderID,
       DateTime? startDate,
       DateTime? endDate,
       int? skip = 0,

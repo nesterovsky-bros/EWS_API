@@ -13,6 +13,7 @@
   using System.Text.RegularExpressions;
   using System.Xml;
   using System.Threading.Tasks;
+  using System.Data.Entity;
   
   using Microsoft.Practices.Unity;
   using Microsoft.Exchange.WebServices.Autodiscover;
@@ -841,6 +842,8 @@
     public struct GetChangesRequest
     {
       public string systemName;
+      public string email;
+      public string folderID;
       public DateTime? startDate;
       public DateTime? endDate;
       public int? skip;
@@ -851,6 +854,8 @@
     /// Gets a set of changes.
     /// </summary>
     /// <param name="systemName">An optional system name.</param>
+    /// <param name="email">Optional email address.</param>
+    /// <param name="folderID">Optional filder id.</param>
     /// <param name="startDate">Optional start date.</param>
     /// <param name="endDate">Optional end date.</param>
     /// <param name="skip">
@@ -862,6 +867,8 @@
     /// <returns>A enumeration of changes.</returns>
     public IEnumerable<Change> GetChanges(
       string systemName,
+      string email,
+      string folderID,
       DateTime? startDate,
       DateTime? endDate,
       int? skip = 0,
@@ -872,6 +879,8 @@
         new GetChangesRequest
         {
           systemName = systemName,
+          email = email,
+          folderID = folderID,
           startDate = startDate,
           endDate = endDate,
           skip = skip,
@@ -885,8 +894,8 @@
       using(var model = new EWSQueueEntities())
       {
         var query = request.systemName == null ? 
-          model.BankNotifications.AsNoTracking() :
-          model.BankNotifications.AsNoTracking().Join(
+          model.MailboxNotifications.AsNoTracking() :
+          model.MailboxNotifications.AsNoTracking().Join(
             model.BankSystems.
               Where(item => item.Name == request.systemName).
               Join(
@@ -897,6 +906,16 @@
             outer => outer.Email,
             inner => inner.Email,
             (outer, inner) => outer);
+
+        if (request.email != null)
+        {
+          query = query.Where(item => item.Email == request.email);
+        }
+
+        if (request.folderID != null)
+        {
+          query = query.Where(item => item.FolderID == request.folderID);
+        }
 
         if (request.startDate != null)
         {
@@ -928,6 +947,7 @@
           {
             Timestamp = item.Timestamp,
             Email = item.Email,
+            FolderID = item.FolderID,
             ItemID = item.ItemID,
             ChangeType =  
               (ChangeType)Enum.Parse(typeof(ChangeType), item.ChangeType)
@@ -967,17 +987,18 @@
 
       if (url == null)
       {
-        var userInfo = AutoDiscovery.GetUserSettings(
+        var mailbox = EwsUtils.GetMailboxAffinities(
+          user,
           Settings.AutoDiscoveryUrl,
-          user.Email,
-          user.Password,
-          Settings.AttemptsToDiscoverUrl,
-          impersonatedUserId).Result;
+          new [] { impersonatedUserId }).
+          FirstOrDefault();
 
-        SaveServiceUrl(
-          impersonatedUserId, 
-          userInfo.Settings[UserSettingName.ExternalEwsUrl] as string, 
-          userInfo.Settings[UserSettingName.GroupingInformation] as string);
+        if (mailbox != null)
+        {
+          SaveServiceUrl(mailbox);
+        }
+
+        throw new ArgumentException("Invalid user: " + impersonatedUserId);
       }
 
       service.Url = new Uri(url);
@@ -1225,6 +1246,7 @@
 
           item.Response = ToXmlString(result);
 
+          model.Entry(item).State = EntityState.Modified;
           model.SaveChanges();
         }
       }
@@ -1243,9 +1265,9 @@
         if (item != null)
         {
           item.Error = ToXmlString(error);
+          model.Entry(item).State = EntityState.Modified;
+          model.SaveChanges();
         }
-
-        model.SaveChanges();
       }
     }
 
@@ -1310,28 +1332,15 @@
       }
     }
 
-    private static void SaveServiceUrl(string email, string url, string groupInfo = null)
+    private static void SaveServiceUrl(MailboxAffinity mailbox)
     {
-      using (var model = new EWSQueueEntities())
+      using(var model = new EWSQueueEntities())
       {
-        var affinity = model.MailboxAffinities.
-          Where(item => item.Email == email).
-          FirstOrDefault();
-
-        if (affinity == null)
-        {
-          model.MailboxAffinities.Add(
-            new MailboxAffinity
-            {
-              Email = email,
-              ExternalEwsUrl = url,
-              GroupingInformation = groupInfo
-            });
-        }
-        else
-        {
-          affinity.ExternalEwsUrl = url;
-        }
+        model.Entry(mailbox).State = 
+          mailbox.ExternalEwsUrl == null ?  EntityState.Deleted :
+          model.MailboxAffinities.AsNoTracking().
+            Any(item => item.Email == mailbox.Email) ? EntityState.Added :
+          EntityState.Modified;
 
         model.SaveChanges();
       }
