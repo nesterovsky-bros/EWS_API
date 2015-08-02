@@ -42,6 +42,25 @@
   }
 
   /// <summary>
+  /// Describes a change stats in the monitored mailbox.
+  /// </summary>
+  [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
+  public class ChangeStats
+  {
+    /// <summary>
+    /// Mailbox address.
+    /// </summary>
+    [DataMember]
+    public string Email { get; set; }
+
+    /// <summary>
+    /// Number of changes.
+    /// </summary>
+    [DataMember]
+    public int Count { get; set; }
+  }
+
+  /// <summary>
   /// A change type.
   /// </summary>
   /// <remarks>
