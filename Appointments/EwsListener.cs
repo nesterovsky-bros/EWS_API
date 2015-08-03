@@ -52,6 +52,15 @@
             var watch = new Stopwatch();
 
             Trace.TraceInformation("Starting EWS listener.");
+
+            //Trace.TraceInformation("Start expanding groups.");
+            //watch.Start();
+            //await ExpandGroups(cancellation);
+            //watch.Stop();
+            //Trace.TraceInformation(
+            //  "End expanding group; elasped: {0}.", 
+            //  watch.Elapsed);
+
             Trace.TraceInformation("Start discover mailboxes.");
             watch.Start();
             await DiscoverMailboxes(cancellation);
@@ -94,6 +103,102 @@
     }
 
     /// <summary>
+    /// Expand groups.
+    /// </summary>
+    /// <param name="cancellation">A cancellation token source.</param>
+    /// <returns>
+    /// A task that completes when expand groups completes.
+    /// </returns>
+    private async Task ExpandGroups(CancellationTokenSource cancellation)
+    {
+      // Discover application users.
+      var users = Settings.ApplicationUsers.Select(item => item.Email).ToArray();
+      var usersAffinities = null as MailboxAffinity[];
+
+      await DiscoverMailboxes(
+        users,
+        cancellation);
+
+      // Get their affinity.
+      using(var model = CreateModel())
+      {
+        usersAffinities = await model.MailboxAffinities.
+          Where(item => users.Contains(item.Email)).
+          ToArrayAsync(cancellation.Token);
+      }
+
+      if (usersAffinities.Length != users.Length)
+      {
+        throw new InvalidOperationException(
+          "No all application users are discovered.");
+      }
+
+      var groups = Enumerable.Range(1, 6).
+        Select(i => "Group" + 1 + "@poalimdev.onmicrosoft.com").
+        ToArray();
+
+      var parallelism = Settings.EWSMaxConcurrency;
+      var index = 0;
+
+      using(var semaphore = new SemaphoreSlim(parallelism))
+      {
+        Func<int, string, Task> expand = async (i, group) =>
+        {
+          try
+          {
+            var user = GetUser(i);
+            var service = 
+              GetService(user, usersAffinities[i % usersAffinities.Length]);
+
+            await EwsUtils.TryAction(
+              "ExpandGroup",
+              group,
+              async attempt =>
+              {
+                await Task.Yield();
+
+                var results = service.ExpandGroup(group);
+
+                Console.WriteLine("Group: " + group);
+
+                foreach(var item in results)
+                {
+                  Console.WriteLine("  " + item.Address);
+                }
+
+                return true;
+              },
+              cancellation.Token);
+          }
+          catch(Exception e)
+          {
+            EwsUtils.Log(true, "ExpandGroup", null, e);
+
+            throw;
+          }
+          finally
+          {
+            semaphore.Release();
+          }
+        };
+
+        foreach(var group in groups)
+        {
+          await semaphore.WaitAsync(cancellation.Token);
+
+          var task = expand(index++, group);
+        }
+
+        // Wait to complete pending tasks.
+        for (var i = 0; semaphore.CurrentCount + i < parallelism; ++i)
+        {
+          await semaphore.WaitAsync(cancellation.Token);
+        }
+      }
+
+    }
+
+    /// <summary>
     /// Discovers all mailboxes.
     /// </summary>
     /// <param name="cancellation">A cancellation token source.</param>
@@ -109,76 +214,6 @@
 
       using(var semaphore = new SemaphoreSlim(parallelism))
       {
-        Func<int, string[], Task> discover = async (i, emails) =>
-        {
-          try
-          {
-            var user = GetUser(i);
-
-            var mailboxes = (await EwsUtils.TryAction(
-              "Discover",
-              emails[0],
-              async attempt =>
-              {
-                await Task.Yield();
-
-                return EwsUtils.GetMailboxAffinities(user, Settings.AutoDiscoveryUrl, emails);
-              },
-              cancellation.Token)).
-              ToDictionary(item => item.Email);
-
-            using(var model = CreateModel())
-            {
-              foreach (var email in emails)
-              {
-                var mailbox = mailboxes.Get(email);
-
-                if (mailbox == null)
-                {
-                  var invalid = new InvalidMailbox { Email = mailbox.Email };
-
-                  model.Entry(invalid).State = EntityState.Added;
-                }
-                else
-                {
-                  var prev = await model.MailboxAffinities.AsNoTracking().
-                    Where(item => item.Email == email).
-                    FirstOrDefaultAsync(cancellation.Token);
-
-                  if (prev != null)
-                  {
-                    if ((prev.ExternalEwsUrl != mailbox.ExternalEwsUrl) ||
-                      (prev.GroupingInformation != mailbox.GroupingInformation))
-                    {
-                      model.Entry(mailbox).State = EntityState.Modified;
-
-                      Trace.TraceInformation(
-                        "Affinity has changed for a mailbox {0}.",
-                        mailbox.Email);
-                    }
-                  }
-                  else
-                  {
-                    model.Entry(mailbox).State = EntityState.Added;
-                  }
-                }
-
-                await model.SaveChangesAsync(cancellation.Token);
-              }
-            }
-          }
-          catch(Exception e)
-          {
-            EwsUtils.Log(true, "Discovery", null, e);
-
-            throw;
-          }
-          finally
-          {
-            semaphore.Release();
-          }
-        };
-
         using(var model = CreateModel())
         {
           await model.BankSystemMailboxes.
@@ -193,7 +228,11 @@
                 {
                   await semaphore.WaitAsync(cancellation.Token);
 
-                  var task = discover(index++, group.ToArray());
+                  var task = Discover(
+                    index++, 
+                    group.ToArray(),
+                    semaphore,
+                    cancellation);
 
                   group.Clear();
                 }
@@ -207,7 +246,11 @@
         {
           await semaphore.WaitAsync(cancellation.Token);
 
-          var task = discover(index++, group.ToArray());
+          var task = Discover(
+            index++, 
+            group.ToArray(),
+            semaphore,
+            cancellation);
         }
 
         // Wait to complete pending tasks.
@@ -215,6 +258,142 @@
         {
           await semaphore.WaitAsync(cancellation.Token);
         }
+      }
+    }
+
+    /// <summary>
+    /// Discovers all mailboxes.
+    /// </summary>
+    /// <param name="emails">A list of unique emails to autodiscover.</param>
+    /// <param name="cancellation">A cancellation token source.</param>
+    /// <returns>A task that completes after discovery.</returns>
+    private async Task DiscoverMailboxes(
+      IEnumerable<string> emails,
+      CancellationTokenSource cancellation)
+    {
+      var groupSize = Settings.UsersPerUsersSettins;
+      var group = new List<string>(groupSize);
+      var parallelism = Settings.EWSMaxConcurrency;
+      var index = 0;
+
+      using(var semaphore = new SemaphoreSlim(parallelism))
+      {
+        foreach(var email in emails)
+        {
+          if (group.Count >= groupSize)
+          {
+            await semaphore.WaitAsync(cancellation.Token);
+
+            var task = Discover(
+              index++, 
+              group.ToArray(), 
+              semaphore, 
+              cancellation);
+
+            group.Clear();
+          }
+
+          group.Add(email);
+        }
+
+        if (group.Count > 0)
+        {
+          await semaphore.WaitAsync(cancellation.Token);
+
+          var task = Discover(
+            index++, 
+            group.ToArray(), 
+            semaphore, 
+            cancellation);
+        }
+
+        // Wait to complete pending tasks.
+        for(var i = 0; semaphore.CurrentCount + i < parallelism; ++i)
+        {
+          await semaphore.WaitAsync(cancellation.Token);
+        }
+      }
+    }
+
+    /// <summary>
+    /// Disvocers an array of mailboxes.
+    /// </summary>
+    /// <param name="index">Iteration index.</param>
+    /// <param name="emails">Array of emails.</param>
+    /// <param name="semaphore">Async semaphore.</param>
+    /// <param name="cancellation">Cancellation source.</param>
+    /// <returns>Tasks that complete after discover.</returns>
+    private async Task Discover(
+      int index, 
+      string[] emails, 
+      SemaphoreSlim semaphore, 
+      CancellationTokenSource cancellation)
+    {
+      try
+      {
+        var user = GetUser(index);
+
+        var mailboxes = (await EwsUtils.TryAction(
+          "Discover",
+          emails[0],
+          async attempt =>
+          {
+            await Task.Yield();
+
+            return EwsUtils.GetMailboxAffinities(user, Settings.AutoDiscoveryUrl, emails);
+          },
+          cancellation.Token)).
+          ToDictionary(item => item.Email);
+
+        using(var model = CreateModel())
+        {
+          foreach(var email in emails)
+          {
+            var mailbox = mailboxes.Get(email);
+
+            if (mailbox == null)
+            {
+              var invalid = new InvalidMailbox { Email = mailbox.Email };
+
+              model.Entry(invalid).State = EntityState.Added;
+            }
+            else
+            {
+              var prev = await model.MailboxAffinities.AsNoTracking().
+                Where(item => item.Email == email).
+                FirstOrDefaultAsync(cancellation.Token);
+
+              if (prev != null)
+              {
+                if ((prev.ExternalEwsUrl != mailbox.ExternalEwsUrl) ||
+                  (prev.GroupingInformation != mailbox.GroupingInformation))
+                {
+                  model.Entry(mailbox).State = EntityState.Modified;
+
+                  Trace.TraceInformation(
+                    "Affinity has changed for a mailbox {0}.",
+                    mailbox.Email);
+                }
+              }
+              else
+              {
+                model.Entry(mailbox).State = EntityState.Added;
+              }
+            }
+
+            await model.SaveChangesAsync(cancellation.Token);
+          }
+        }
+      }
+      catch(Exception e)
+      {
+        EwsUtils.Log(true, "Discovery", null, e);
+
+        throw;
+      }
+      finally
+      {
+        semaphore.Release();
       }
     }
 
@@ -390,10 +569,10 @@
               ChangeType =
                 (item.EventType == Office365.EventType.NewMail) ||
                 (item.EventType == Office365.EventType.Created) ?
-                  Office365.ChangeType.Create.ToString() :
+                  ChangeType.Created.ToString() :
                   item.EventType == Office365.EventType.Deleted ?
-                  Office365.ChangeType.Delete.ToString() :
-                  Office365.ChangeType.Update.ToString()
+                  ChangeType.Deleted.ToString() :
+                  ChangeType.Updated.ToString()
             };
           });
 
@@ -479,7 +658,12 @@
                     Email = mailbox.Email,
                     FolderID = folderID.FolderName.ToString(),
                     ItemID = change.ItemId.UniqueId,
-                    ChangeType = change.ChangeType.ToString()
+                    ChangeType = 
+                      change.ChangeType == Office365.ChangeType.Create ?
+                        ChangeType.Created.ToString() :
+                      change.ChangeType == Office365.ChangeType.Delete ? 
+                        ChangeType.Deleted.ToString() :
+                        ChangeType.Updated.ToString()
                   }).
                 Where(
                   outer => !model.MailboxNotifications.

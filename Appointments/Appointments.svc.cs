@@ -952,17 +952,17 @@
           query = query.Take(request.take.Value);
         }
 
-        return query.Select(
-          item => new Change 
-          {
-            Timestamp = item.Timestamp,
-            Email = item.Email,
-            FolderID = item.FolderID,
-            ItemID = item.ItemID,
-            ChangeType =  
-              (ChangeType)Enum.Parse(typeof(ChangeType), item.ChangeType)
-          }).
-          ToList();
+        return query.ToList().
+          Select(
+            item => new Change 
+            {
+              Timestamp = item.Timestamp,
+              Email = item.Email,
+              FolderID = item.FolderID,
+              ItemID = item.ItemID,
+              ChangeType =  
+                (ChangeType)Enum.Parse(typeof(ChangeType), item.ChangeType)
+            });
       }
     }
 
