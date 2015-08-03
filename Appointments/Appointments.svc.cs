@@ -115,17 +115,17 @@
       meeting.ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart;
 
       if ((appointment.Recurrence != null) && 
-        (appointment.Recurrence.Type != RecurrenceType.Once))
+        (appointment.Recurrence.Type != RecurrenceType.Unknown))
       {
         var start = appointment.Recurrence.StartDate;
 
         switch (appointment.Recurrence.Type)
         {
-          case RecurrenceType.Dayly:
+          case RecurrenceType.Daily:
           {
             meeting.Recurrence = new Office365.Recurrence.DailyPattern(
               start,
-              appointment.Recurrence.NumberOfOccurrences);
+              appointment.Recurrence.Interval);
 
             break;
           }
@@ -133,7 +133,7 @@
           {
             meeting.Recurrence = new Office365.Recurrence.WeeklyPattern(
               start,
-              appointment.Recurrence.NumberOfOccurrences,
+              appointment.Recurrence.Interval,
               (Office365.DayOfTheWeek)start.DayOfWeek);
 
             break;
@@ -142,7 +142,7 @@
           {
             meeting.Recurrence = new Office365.Recurrence.MonthlyPattern(
               start,
-              appointment.Recurrence.NumberOfOccurrences,
+              appointment.Recurrence.Interval,
               start.Day);
 
             break;
@@ -162,6 +162,10 @@
         if (appointment.Recurrence.HasEnd)
         {
           meeting.Recurrence.EndDate = appointment.Recurrence.EndDate;
+        }
+        else
+        {
+          meeting.Recurrence.NumberOfOccurrences = appointment.Recurrence.NumberOfOccurrences;
         }
       }
 
@@ -1175,12 +1179,6 @@
         }
       }
 
-    //public OccurrenceInfo FirstOccurrence { get; internal set; }
-    //public OccurrenceInfo LastOccurrence { get; internal set; }
-    //public Attendee Organizer { get; internal set; }
-    //public Recurrence Recurrence { get; set; }
-
-
       var message = null as Office365.TextBody;
 
       if (appointment.TryGetProperty(
@@ -1202,36 +1200,68 @@
         appointment,
         Office365.AppointmentSchema.Resources);
 
-      //if (proxy.IsRecurring)
-      //{
-      //  if (appointment.Recurrence is Office365.Recurrence.DailyPattern)
-      //  {
-      //    proxy.RecurrenceType = RecurrenceType.Dayly;
-      //    proxy.RecurrenceInterval =
-      //      ((Office365.Recurrence.DailyPattern)appointment.Recurrence).Interval;
-      //  }
-      //  else if (appointment.Recurrence is Office365.Recurrence.WeeklyPattern)
-      //  {
-      //    proxy.RecurrenceType = RecurrenceType.Weekly;
-      //    proxy.RecurrenceInterval =
-      //      ((Office365.Recurrence.WeeklyPattern)appointment.Recurrence).Interval;
-      //  }
-      //  else if (appointment.Recurrence is Office365.Recurrence.MonthlyPattern)
-      //  {
-      //    proxy.RecurrenceType = RecurrenceType.Monthly;
-      //    proxy.RecurrenceInterval =
-      //      ((Office365.Recurrence.MonthlyPattern)appointment.Recurrence).Interval;
-      //  }
-      //  else if (appointment.Recurrence is Office365.Recurrence.YearlyPattern)
-      //  {
-      //    proxy.RecurrenceType = RecurrenceType.Yearly;
-      //    proxy.RecurrenceInterval =
-      //      (int)((Office365.Recurrence.YearlyPattern)appointment.Recurrence).Month;
-      //  }
+      var emailAddress = null as Office365.EmailAddress;
 
-      //  proxy.StartRecurrence = appointment.Recurrence.StartDate;
-      //  proxy.EndRecurrence = appointment.Recurrence.EndDate;         
-      //}
+      if (appointment.TryGetProperty(
+        Office365.AppointmentSchema.Organizer,
+        out emailAddress))
+      {
+        proxy.Organizer = new Attendee 
+        {
+          Address = emailAddress.Address,
+          Name = emailAddress.Name
+        };
+      }
+
+      if (appointment.IsRecurring)
+      {
+        Office365.Recurrence recurrence;
+
+        if (appointment.TryGetProperty(
+          Office365.AppointmentSchema.Recurrence,
+          out recurrence))
+        {
+          proxy.Recurrence = new Recurrence
+          {
+            StartDate = recurrence.StartDate,
+            EndDate = recurrence.EndDate,
+            NumberOfOccurrences = recurrence.NumberOfOccurrences,
+            OriginalTypeName = recurrence.GetType().FullName
+          };
+
+          if (recurrence is Office365.Recurrence.IntervalPattern)
+          {
+            proxy.Recurrence.Interval = 
+              ((Office365.Recurrence.IntervalPattern)recurrence).Interval;
+
+            if ((recurrence is Office365.Recurrence.DailyPattern) ||
+              (recurrence is Office365.Recurrence.DailyRegenerationPattern))
+            {
+              proxy.Recurrence.Type = RecurrenceType.Daily;
+            }
+            else if ((recurrence is Office365.Recurrence.MonthlyPattern) ||
+              (recurrence is Office365.Recurrence.MonthlyRegenerationPattern))
+            {
+              proxy.Recurrence.Type = RecurrenceType.Monthly;
+            }
+            else if ((recurrence is Office365.Recurrence.WeeklyPattern) ||
+              (recurrence is Office365.Recurrence.WeeklyRegenerationPattern))
+            {
+              proxy.Recurrence.Type = RecurrenceType.Weekly;
+            }
+            else if ((recurrence is Office365.Recurrence.YearlyPattern) ||
+              (recurrence is Office365.Recurrence.YearlyRegenerationPattern))
+            {
+              proxy.Recurrence.Type = RecurrenceType.Yearly;
+            }
+          }
+        }
+
+        //appointment.
+        //public OccurrenceInfo FirstOccurrence { get; internal set; }
+        //public OccurrenceInfo LastOccurrence { get; internal set; }
+
+      }
 
       return proxy;
     }
