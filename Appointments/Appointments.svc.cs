@@ -836,7 +836,7 @@
     }
     #endregion
 
-    #region GetChanges
+    #region GetChanges and GetChangeStats
 
     public struct GetChangesRequest
     {
@@ -888,43 +888,50 @@
         GetChangesImpl);
     }
 
+    /// <summary>
+    /// Gets change stats.
+    /// </summary>
+    /// <param name="systemName">An optional system name.</param>
+    /// <param name="email">Optional email address.</param>
+    /// <param name="folderID">Optional filder id.</param>
+    /// <param name="startDate">Optional start date.</param>
+    /// <param name="endDate">Optional end date.</param>
+    /// <param name="skip">
+    /// Optional number of record to skip in result.
+    /// </param>
+    /// <param name="take">
+    /// Optional number of records to return from result.
+    /// </param>
+    /// <returns>A enumeration of changes.</returns>
+    public IEnumerable<ChangeStats> GetChangeStats(
+      string systemName,
+      string email,
+      string folderID,
+      DateTime? startDate,
+      DateTime? endDate,
+      int? skip = 0,
+      int? take = 0)
+    {
+      return Call(
+        "GetChangeStats",
+        new GetChangesRequest
+        {
+          systemName = systemName,
+          email = email,
+          folderID = folderID,
+          startDate = startDate,
+          endDate = endDate,
+          skip = skip,
+          take = take
+        },
+        GetChangeStatsImpl);
+    }
+
     private IEnumerable<Change> GetChangesImpl(GetChangesRequest request)
     {
       using(var model = new EWSQueueEntities())
       {
-        var query = request.systemName == null ? 
-          model.MailboxNotifications.AsNoTracking() :
-          model.MailboxNotifications.AsNoTracking().Join(
-            model.BankSystems.
-              Where(item => item.Name == request.systemName).
-              Join(
-                model.BankSystemMailboxes, 
-                outer => outer.SystemID, 
-                inner => inner.SystemID,
-                (outer, inner) => inner),
-            outer => outer.Email,
-            inner => inner.Email,
-            (outer, inner) => outer);
-
-        if (request.email != null)
-        {
-          query = query.Where(item => item.Email == request.email);
-        }
-
-        if (request.folderID != null)
-        {
-          query = query.Where(item => item.FolderID == request.folderID);
-        }
-
-        if (request.startDate != null)
-        {
-          query = query.Where(item => item.Timestamp >= request.startDate);
-        }
-
-        if (request.endDate != null)
-        {
-          query = query.Where(item => item.Timestamp <= request.endDate);
-        }
+        var query = GetChangesQuery(model, request);
 
         query = query.
           OrderBy(item => item.Timestamp).
@@ -955,6 +962,73 @@
       }
     }
 
+    private IEnumerable<ChangeStats> GetChangeStatsImpl(
+      GetChangesRequest request)
+    {
+      using(var model = new EWSQueueEntities())
+      {
+        var query = GetChangesQuery(model, request);
+
+        var stats = query.GroupBy(item => item.Email).
+          Select(
+            item =>
+              new ChangeStats { Email = item.Key, Count = item.Count() }).
+          OrderBy(item => item.Email) as IQueryable<ChangeStats>;
+
+        if (request.skip != null)
+        {
+          stats = stats.Skip(request.skip.Value);
+        }
+
+        if (request.take != null)
+        {
+          stats = stats.Take(request.take.Value);
+        }
+
+        return stats.ToList();
+      }
+    }
+
+    private IQueryable<MailboxNotification> GetChangesQuery(
+      EWSQueueEntities model,
+      GetChangesRequest request)
+    {
+      var query = request.systemName == null ?
+        model.MailboxNotifications.AsNoTracking() :
+        model.MailboxNotifications.AsNoTracking().Join(
+          model.BankSystems.
+            Where(item => item.Name == request.systemName).
+            Join(
+              model.BankSystemMailboxes,
+              outer => outer.SystemID,
+              inner => inner.SystemID,
+              (outer, inner) => inner),
+          outer => outer.Email,
+          inner => inner.Email,
+          (outer, inner) => outer);
+
+      if (request.email != null)
+      {
+        query = query.Where(item => item.Email == request.email);
+      }
+
+      if (request.folderID != null)
+      {
+        query = query.Where(item => item.FolderID == request.folderID);
+      }
+
+      if (request.startDate != null)
+      {
+        query = query.Where(item => item.Timestamp >= request.startDate);
+      }
+
+      if (request.endDate != null)
+      {
+        query = query.Where(item => item.Timestamp <= request.endDate);
+      }
+
+      return query;
+    }
     #endregion
 
     #region Private methods

@@ -350,5 +350,30 @@ namespace Bnhp.Office365
       DateTime? endDate,
       int? skip = 0,
       int? take = 0);
+
+    /// <summary>
+    /// Gets change stats.
+    /// </summary>
+    /// <param name="systemName">An optional system name.</param>
+    /// <param name="email">Optional email address.</param>
+    /// <param name="folderID">Optional filder id.</param>
+    /// <param name="startDate">Optional start date.</param>
+    /// <param name="endDate">Optional end date.</param>
+    /// <param name="skip">
+    /// Optional number of record to skip in result.
+    /// </param>
+    /// <param name="take">
+    /// Optional number of records to return from result.
+    /// </param>
+    /// <returns>A enumeration of changes.</returns>
+    [OperationContract]
+    IEnumerable<ChangeStats> GetChangeStats(
+      string systemName,
+      string email,
+      string folderID,
+      DateTime? startDate,
+      DateTime? endDate,
+      int? skip = 0,
+      int? take = 0);
   }
 }
