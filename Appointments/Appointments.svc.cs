@@ -958,7 +958,8 @@
               ItemID = item.ItemID,
               ChangeType =  
                 (ChangeType)Enum.Parse(typeof(ChangeType), item.ChangeType)
-            });
+            }).
+          ToArray();
       }
     }
 
