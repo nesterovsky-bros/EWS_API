@@ -18,7 +18,7 @@ using System;
 public partial class BankSystemNotification
 {
 
-    public int SystemID { get; set; }
+    public string GroupName { get; set; }
 
     public string FolderID { get; set; }
 

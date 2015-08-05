@@ -53,13 +53,13 @@
 
             Trace.TraceInformation("Starting EWS listener.");
 
-            //Trace.TraceInformation("Start expanding groups.");
-            //watch.Start();
-            //await ExpandGroups(cancellation);
-            //watch.Stop();
-            //Trace.TraceInformation(
-            //  "End expanding group; elasped: {0}.", 
-            //  watch.Elapsed);
+            Trace.TraceInformation("Start expanding groups.");
+            watch.Start();
+            await ExpandGroups(cancellation);
+            watch.Stop();
+            Trace.TraceInformation(
+              "End expanding group; elasped: {0}.",
+              watch.Elapsed);
 
             Trace.TraceInformation("Start discover mailboxes.");
             watch.Start();
@@ -133,16 +133,12 @@
           "No all application users are discovered.");
       }
 
-      var groups = Enumerable.Range(1, 6).
-        Select(i => "Group" + 1 + "@poalimdev.onmicrosoft.com").
-        ToArray();
-
       var parallelism = Settings.EWSMaxConcurrency;
       var index = 0;
 
       using(var semaphore = new SemaphoreSlim(parallelism))
       {
-        Func<int, string, Task> expand = async (i, group) =>
+        Func<int, BankSystem, Task> expand = async (i, bankSystem) =>
         {
           try
           {
@@ -152,18 +148,37 @@
 
             await EwsUtils.TryAction(
               "ExpandGroup",
-              group,
+              bankSystem.GroupName,
               async attempt =>
               {
                 await Task.Yield();
 
-                var results = service.ExpandGroup(group);
+                var results = service.ExpandGroup(bankSystem.GroupName).
+                  Select(item => item.Address).
+                  ToDictionary(item => item);
 
-                Console.WriteLine("Group: " + group);
-
-                foreach(var item in results)
+                using(var model = CreateModel())
                 {
-                  Console.WriteLine("  " + item.Address);
+                  var existing = model.BankSystemMailboxes.
+                    Where(item => item.GroupName == bankSystem.GroupName).
+                    ToDictionary(item => item.Email);
+
+                  model.BankSystemMailboxes.RemoveRange(
+                    existing.Values.
+                      Where(item => !results.ContainsKey(item.Email)));
+
+                  model.BankSystemMailboxes.AddRange(
+                    results.Values.
+                      Where(email => !existing.ContainsKey(email)).
+                      Select(
+                        email => 
+                          new BankSystemMailbox 
+                          {
+                            GroupName = bankSystem.GroupName, 
+                            Email = email 
+                          }));
+
+                  await model.SaveChangesAsync(cancellation.Token);
                 }
 
                 return true;
@@ -182,11 +197,20 @@
           }
         };
 
-        foreach(var group in groups)
+        var bankSystems = null as BankSystem[];
+
+        using(var model = CreateModel())
+        {
+          bankSystems = await model.BankSystems.
+            Where(item => !item.Local).
+            ToArrayAsync(cancellation.Token);
+        }
+
+        foreach(var bankSystem in bankSystems)
         {
           await semaphore.WaitAsync(cancellation.Token);
 
-          var task = expand(index++, group);
+          var task = expand(index++, bankSystem);
         }
 
         // Wait to complete pending tasks.
@@ -1078,8 +1102,8 @@
           Join(
             model.BankSystemMailboxes.
               Where(item => item.Email == email),
-            outer => outer.SystemID,
-            inner => inner.SystemID,
+            outer => outer.GroupName,
+            inner => inner.GroupName,
             (outer, inner) => outer.FolderID).
           Distinct().
           ToArrayAsync(cancellation.Token);

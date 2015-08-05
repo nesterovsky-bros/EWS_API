@@ -28,11 +28,11 @@ public partial class BankSystem
     }
 
 
-    public string Name { get; set; }
-
-    public int SystemID { get; set; }
+    public string GroupName { get; set; }
 
     public string Description { get; set; }
+
+    public bool Local { get; set; }
 
 
 

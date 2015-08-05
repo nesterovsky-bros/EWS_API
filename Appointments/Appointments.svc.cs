@@ -998,11 +998,11 @@
         model.MailboxNotifications.AsNoTracking() :
         model.MailboxNotifications.AsNoTracking().Join(
           model.BankSystems.
-            Where(item => item.Name == request.systemName).
+            Where(item => item.GroupName == request.systemName).
             Join(
               model.BankSystemMailboxes,
-              outer => outer.SystemID,
-              inner => inner.SystemID,
+              outer => outer.GroupName,
+              inner => inner.GroupName,
               (outer, inner) => inner),
           outer => outer.Email,
           inner => inner.Email,
