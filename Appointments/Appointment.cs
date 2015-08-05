@@ -495,6 +495,12 @@ namespace Bnhp.Office365
     public string Address { get; set; }
 
     /// <summary>
+    /// Gets the type of response given to a meeting request.
+    /// </summary>
+    [DataMember]
+    public MeetingResponseType? ResponseType { get; internal set; }
+
+    /// <summary>
     /// Converts Attendee instance to a string value.
     /// </summary>
     /// <returns>a string value that represents this Attendee instance.</returns>

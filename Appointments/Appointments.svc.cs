@@ -1100,26 +1100,6 @@
     /// </returns>
     private Office365.Appointment GetAppointment(string email, string ID)
     {
-      //var filter = 
-      //  new Office365.SearchFilter.IsEqualTo(Office365.ItemSchema.Id, ID);
-
-      //Office365.ItemView view = new Office365.ItemView(1);
-
-      //view.Traversal = Office365.ItemTraversal.Shallow;
-
-      //var service = GetService(email);
-      //var appointments = service.FindItems(
-      //  Office365.WellKnownFolderName.Calendar,
-      //  filter,
-      //  view);
-
-      //if (appointments != null)
-      //{
-      //  return appointments.FirstOrDefault() as Office365.Appointment;
-      //}
-
-      //return null;
-
       var service = GetService(email);
 
       return Office365.Appointment.Bind(service, new Office365.ItemId(ID));
@@ -1257,10 +1237,29 @@
           }
         }
 
-        //appointment.
-        //public OccurrenceInfo FirstOccurrence { get; internal set; }
-        //public OccurrenceInfo LastOccurrence { get; internal set; }
+        Office365.OccurrenceInfo occurence;
 
+        if (appointment.TryGetProperty(
+          Office365.AppointmentSchema.FirstOccurrence, 
+          out occurence))
+        {
+          proxy.FirstOccurrence = new OccurrenceInfo
+          {
+            Start = occurence.Start,
+            End = occurence.End
+          };
+        }
+
+        if (appointment.TryGetProperty(
+          Office365.AppointmentSchema.LastOccurrence,
+          out occurence))
+        {
+          proxy.LastOccurrence = new OccurrenceInfo
+          {
+            Start = occurence.Start,
+            End = occurence.End
+          };
+        }
       }
 
       return proxy;
@@ -1281,7 +1280,8 @@
             new Attendee
             {
               Address = attendee.Address,
-              Name = attendee.Name
+              Name = attendee.Name,
+              ResponseType = (MeetingResponseType)attendee.ResponseType
             });
         }
       }

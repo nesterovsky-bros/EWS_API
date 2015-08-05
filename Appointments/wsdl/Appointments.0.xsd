@@ -100,9 +100,10 @@
     <xs:sequence>
       <xs:element minOccurs="0" name="Address" nillable="true" type="xs:string"/>
       <xs:element minOccurs="0" name="Name" nillable="true" type="xs:string"/>
+      <xs:element minOccurs="0" name="ResponseType" nillable="true" type="q18:MeetingResponseType" xmlns:q18="https://www.bankhapoalim.co.il/"/>
     </xs:sequence>
   </xs:complexType>
-  <xs:element name="Attendee" nillable="true" type="q18:Attendee" xmlns:q18="https://www.bankhapoalim.co.il/"/>
+  <xs:element name="Attendee" nillable="true" type="q19:Attendee" xmlns:q19="https://www.bankhapoalim.co.il/"/>
   <xs:complexType name="Recurrence">
     <xs:sequence>
       <xs:element minOccurs="0" name="EndDate" nillable="true" type="xs:dateTime"/>
@@ -110,10 +111,10 @@
       <xs:element minOccurs="0" name="NumberOfOccurrences" nillable="true" type="xs:int"/>
       <xs:element minOccurs="0" name="OriginalTypeName" nillable="true" type="xs:string"/>
       <xs:element minOccurs="0" name="StartDate" type="xs:dateTime"/>
-      <xs:element minOccurs="0" name="Type" type="q19:RecurrenceType" xmlns:q19="https://www.bankhapoalim.co.il/"/>
+      <xs:element minOccurs="0" name="Type" type="q20:RecurrenceType" xmlns:q20="https://www.bankhapoalim.co.il/"/>
     </xs:sequence>
   </xs:complexType>
-  <xs:element name="Recurrence" nillable="true" type="q20:Recurrence" xmlns:q20="https://www.bankhapoalim.co.il/"/>
+  <xs:element name="Recurrence" nillable="true" type="q21:Recurrence" xmlns:q21="https://www.bankhapoalim.co.il/"/>
   <xs:simpleType name="RecurrenceType">
     <xs:restriction base="xs:string">
       <xs:enumeration value="Unknown"/>
@@ -123,7 +124,7 @@
       <xs:enumeration value="Yearly"/>
     </xs:restriction>
   </xs:simpleType>
-  <xs:element name="RecurrenceType" nillable="true" type="q21:RecurrenceType" xmlns:q21="https://www.bankhapoalim.co.il/"/>
+  <xs:element name="RecurrenceType" nillable="true" type="q22:RecurrenceType" xmlns:q22="https://www.bankhapoalim.co.il/"/>
   <xs:simpleType name="Sensitivity">
     <xs:restriction base="xs:string">
       <xs:enumeration value="Normal"/>
@@ -132,7 +133,7 @@
       <xs:enumeration value="Confidential"/>
     </xs:restriction>
   </xs:simpleType>
-  <xs:element name="Sensitivity" nillable="true" type="q22:Sensitivity" xmlns:q22="https://www.bankhapoalim.co.il/"/>
+  <xs:element name="Sensitivity" nillable="true" type="q23:Sensitivity" xmlns:q23="https://www.bankhapoalim.co.il/"/>
   <xs:element name="CreateResponse">
     <xs:complexType>
       <xs:sequence>
@@ -144,7 +145,7 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element minOccurs="0" name="email" nillable="true" type="xs:string"/>
-        <xs:element minOccurs="0" name="appointment" nillable="true" type="q23:Appointment" xmlns:q23="https://www.bankhapoalim.co.il/"/>
+        <xs:element minOccurs="0" name="appointment" nillable="true" type="q24:Appointment" xmlns:q24="https://www.bankhapoalim.co.il/"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -182,16 +183,16 @@
   <xs:element name="GetResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element minOccurs="0" name="GetResult" nillable="true" type="q24:ArrayOfAppointment" xmlns:q24="https://www.bankhapoalim.co.il/"/>
+        <xs:element minOccurs="0" name="GetResult" nillable="true" type="q25:ArrayOfAppointment" xmlns:q25="https://www.bankhapoalim.co.il/"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:complexType name="ArrayOfAppointment">
     <xs:sequence>
-      <xs:element minOccurs="0" maxOccurs="unbounded" name="Appointment" nillable="true" type="q25:Appointment" xmlns:q25="https://www.bankhapoalim.co.il/"/>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="Appointment" nillable="true" type="q26:Appointment" xmlns:q26="https://www.bankhapoalim.co.il/"/>
     </xs:sequence>
   </xs:complexType>
-  <xs:element name="ArrayOfAppointment" nillable="true" type="q26:ArrayOfAppointment" xmlns:q26="https://www.bankhapoalim.co.il/"/>
+  <xs:element name="ArrayOfAppointment" nillable="true" type="q27:ArrayOfAppointment" xmlns:q27="https://www.bankhapoalim.co.il/"/>
   <xs:element name="GetBegin">
     <xs:complexType>
       <xs:sequence>
@@ -219,7 +220,7 @@
   <xs:element name="GetEndResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element minOccurs="0" name="GetEndResult" nillable="true" type="q27:ArrayOfAppointment" xmlns:q27="https://www.bankhapoalim.co.il/"/>
+        <xs:element minOccurs="0" name="GetEndResult" nillable="true" type="q28:ArrayOfAppointment" xmlns:q28="https://www.bankhapoalim.co.il/"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -234,7 +235,7 @@
   <xs:element name="FindResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element minOccurs="0" name="FindResult" nillable="true" type="q28:Appointment" xmlns:q28="https://www.bankhapoalim.co.il/"/>
+        <xs:element minOccurs="0" name="FindResult" nillable="true" type="q29:Appointment" xmlns:q29="https://www.bankhapoalim.co.il/"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -263,7 +264,7 @@
   <xs:element name="FindEndResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element minOccurs="0" name="FindEndResult" nillable="true" type="q29:Appointment" xmlns:q29="https://www.bankhapoalim.co.il/"/>
+        <xs:element minOccurs="0" name="FindEndResult" nillable="true" type="q30:Appointment" xmlns:q30="https://www.bankhapoalim.co.il/"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -271,7 +272,7 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element minOccurs="0" name="email" nillable="true" type="xs:string"/>
-        <xs:element minOccurs="0" name="appointment" nillable="true" type="q30:Appointment" xmlns:q30="https://www.bankhapoalim.co.il/"/>
+        <xs:element minOccurs="0" name="appointment" nillable="true" type="q31:Appointment" xmlns:q31="https://www.bankhapoalim.co.il/"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -286,7 +287,7 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element minOccurs="0" name="email" nillable="true" type="xs:string"/>
-        <xs:element minOccurs="0" name="appointment" nillable="true" type="q31:Appointment" xmlns:q31="https://www.bankhapoalim.co.il/"/>
+        <xs:element minOccurs="0" name="appointment" nillable="true" type="q32:Appointment" xmlns:q32="https://www.bankhapoalim.co.il/"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -521,26 +522,26 @@
   <xs:element name="GetChangesResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element minOccurs="0" name="GetChangesResult" nillable="true" type="q32:ArrayOfChange" xmlns:q32="https://www.bankhapoalim.co.il/"/>
+        <xs:element minOccurs="0" name="GetChangesResult" nillable="true" type="q33:ArrayOfChange" xmlns:q33="https://www.bankhapoalim.co.il/"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:complexType name="ArrayOfChange">
     <xs:sequence>
-      <xs:element minOccurs="0" maxOccurs="unbounded" name="Change" nillable="true" type="q33:Change" xmlns:q33="https://www.bankhapoalim.co.il/"/>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="Change" nillable="true" type="q34:Change" xmlns:q34="https://www.bankhapoalim.co.il/"/>
     </xs:sequence>
   </xs:complexType>
-  <xs:element name="ArrayOfChange" nillable="true" type="q34:ArrayOfChange" xmlns:q34="https://www.bankhapoalim.co.il/"/>
+  <xs:element name="ArrayOfChange" nillable="true" type="q35:ArrayOfChange" xmlns:q35="https://www.bankhapoalim.co.il/"/>
   <xs:complexType name="Change">
     <xs:sequence>
-      <xs:element minOccurs="0" name="ChangeType" type="q35:ChangeType" xmlns:q35="https://www.bankhapoalim.co.il/"/>
+      <xs:element minOccurs="0" name="ChangeType" type="q36:ChangeType" xmlns:q36="https://www.bankhapoalim.co.il/"/>
       <xs:element minOccurs="0" name="Email" nillable="true" type="xs:string"/>
       <xs:element minOccurs="0" name="FolderID" nillable="true" type="xs:string"/>
       <xs:element minOccurs="0" name="ItemID" nillable="true" type="xs:string"/>
       <xs:element minOccurs="0" name="Timestamp" type="xs:dateTime"/>
     </xs:sequence>
   </xs:complexType>
-  <xs:element name="Change" nillable="true" type="q36:Change" xmlns:q36="https://www.bankhapoalim.co.il/"/>
+  <xs:element name="Change" nillable="true" type="q37:Change" xmlns:q37="https://www.bankhapoalim.co.il/"/>
   <xs:simpleType name="ChangeType">
     <xs:restriction base="xs:string">
       <xs:enumeration value="Created"/>
@@ -548,7 +549,7 @@
       <xs:enumeration value="Deleted"/>
     </xs:restriction>
   </xs:simpleType>
-  <xs:element name="ChangeType" nillable="true" type="q37:ChangeType" xmlns:q37="https://www.bankhapoalim.co.il/"/>
+  <xs:element name="ChangeType" nillable="true" type="q38:ChangeType" xmlns:q38="https://www.bankhapoalim.co.il/"/>
   <xs:element name="GetChangeStats">
     <xs:complexType>
       <xs:sequence>
@@ -565,21 +566,21 @@
   <xs:element name="GetChangeStatsResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element minOccurs="0" name="GetChangeStatsResult" nillable="true" type="q38:ArrayOfChangeStats" xmlns:q38="https://www.bankhapoalim.co.il/"/>
+        <xs:element minOccurs="0" name="GetChangeStatsResult" nillable="true" type="q39:ArrayOfChangeStats" xmlns:q39="https://www.bankhapoalim.co.il/"/>
       </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:complexType name="ArrayOfChangeStats">
     <xs:sequence>
-      <xs:element minOccurs="0" maxOccurs="unbounded" name="ChangeStats" nillable="true" type="q39:ChangeStats" xmlns:q39="https://www.bankhapoalim.co.il/"/>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="ChangeStats" nillable="true" type="q40:ChangeStats" xmlns:q40="https://www.bankhapoalim.co.il/"/>
     </xs:sequence>
   </xs:complexType>
-  <xs:element name="ArrayOfChangeStats" nillable="true" type="q40:ArrayOfChangeStats" xmlns:q40="https://www.bankhapoalim.co.il/"/>
+  <xs:element name="ArrayOfChangeStats" nillable="true" type="q41:ArrayOfChangeStats" xmlns:q41="https://www.bankhapoalim.co.il/"/>
   <xs:complexType name="ChangeStats">
     <xs:sequence>
       <xs:element minOccurs="0" name="Count" type="xs:int"/>
       <xs:element minOccurs="0" name="Email" nillable="true" type="xs:string"/>
     </xs:sequence>
   </xs:complexType>
-  <xs:element name="ChangeStats" nillable="true" type="q41:ChangeStats" xmlns:q41="https://www.bankhapoalim.co.il/"/>
+  <xs:element name="ChangeStats" nillable="true" type="q42:ChangeStats" xmlns:q42="https://www.bankhapoalim.co.il/"/>
 </xs:schema>
