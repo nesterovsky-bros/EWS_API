@@ -221,9 +221,6 @@
     <None Include="wsdl\Appointments.1.xsd">
       <SubType>Designer</SubType>
     </None>
-    <None Include="wsdl\Appointments.2.xsd">
-      <SubType>Designer</SubType>
-    </None>
     <None Include="wsdl\Appointments.wsdl" />
   </ItemGroup>
   <ItemGroup>

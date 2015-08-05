@@ -408,9 +408,9 @@ namespace Bnhp.Office365
   public enum RecurrenceType
   {
     [EnumMember]
-    Once,
+    Unknown,
     [EnumMember]
-    Dayly,
+    Daily,
     [EnumMember]
     Weekly,
     [EnumMember]
@@ -495,6 +495,12 @@ namespace Bnhp.Office365
     public string Address { get; set; }
 
     /// <summary>
+    /// Gets the type of response given to a meeting request.
+    /// </summary>
+    [DataMember]
+    public MeetingResponseType? ResponseType { get; internal set; }
+
+    /// <summary>
     /// Converts Attendee instance to a string value.
     /// </summary>
     /// <returns>a string value that represents this Attendee instance.</returns>
@@ -528,16 +534,28 @@ namespace Bnhp.Office365
     /// <summary>
     /// Gets or sets the number of occurrences after which the recurrence ends. 
     /// </summary>
-    [DefaultValue(0)]
     [DataMember]
-    public int NumberOfOccurrences { get; set; }
+    public int? NumberOfOccurrences { get; set; }
 
     /// <summary>
     /// Gets or sets recurrence type.
     /// </summary>
-    [DefaultValue(RecurrenceType.Once)]
+    [DefaultValue(RecurrenceType.Unknown)]
     [DataMember]
     public RecurrenceType Type { get; set; }
+
+    /// <summary>
+    /// Gets recurrence type name.
+    /// </summary>
+    [DataMember]
+    public string OriginalTypeName { get; internal set; }
+
+    /// <summary>
+    /// Gets or sets the interval between occurrences.
+    /// </summary>
+    [DefaultValue(0)]
+    [DataMember]
+    public int Interval { get; set; }
   }
 
   /// <summary>
