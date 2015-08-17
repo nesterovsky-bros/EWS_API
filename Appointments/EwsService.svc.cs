@@ -989,7 +989,7 @@
       using (var model = new EWSQueueEntities())
       {
         var query = GetChangesQuery(model, request);
-
+        
         var stats = query.GroupBy(item => new { item.Email, item.FolderID }).
           Select(
             item =>
