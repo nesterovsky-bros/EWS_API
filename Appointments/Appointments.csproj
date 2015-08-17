@@ -100,6 +100,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="EwsService.svc" />
     <Content Include="Appointments.svc" />
     <Content Include="App_Data\EWSQueue.mdf" />
     <Content Include="App_Data\EWSQueue_log.ldf">
@@ -114,6 +115,11 @@
     <Compile Include="ApplicationUser.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
+    <Compile Include="Item.cs" />
+    <Compile Include="EwsService.svc.cs">
+      <DependentUpon>EwsService.svc</DependentUpon>
+    </Compile>
+    <Compile Include="EMailMessage.cs" />
     <Compile Include="BankSystemNotification.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
@@ -136,6 +142,7 @@
     <Compile Include="EwsListener.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="IAppointments.cs" />
+    <Compile Include="IEwsService.cs" />
     <Compile Include="InvalidMailbox.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>

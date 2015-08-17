@@ -10,5 +10,6 @@ namespace Bnhp.Office365
     public string AutoDiscoveryUrl { get; set; }
     public int UsersPerUsersSettins { get; set; }
     public int ExchangeListenerRecyclePeriod { get; set; }
+    public string EWSSharedFolderForAttachments { get; set; }
   }
 }
