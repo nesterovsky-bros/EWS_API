@@ -1061,15 +1061,21 @@
     private IEnumerable<ChangeStats> GetChangeStatsImpl(
       GetChangesRequest request)
     {
-      using(var model = new EWSQueueEntities())
+      using (var model = new EWSQueueEntities())
       {
         var query = GetChangesQuery(model, request);
-
-        var stats = query.GroupBy(item => item.Email).
+        
+        var stats = query.GroupBy(item => new { item.Email, item.FolderID }).
           Select(
             item =>
-              new ChangeStats { Email = item.Key, Count = item.Count() }).
-          OrderBy(item => item.Email) as IQueryable<ChangeStats>;
+              new ChangeStats
+              {
+                Email = item.Key.Email,
+                FolderID = item.Key.FolderID,
+                Count = item.Count()
+              }).
+          OrderBy(item => item.Email).
+          ThenBy(item => item.FolderID) as IQueryable<ChangeStats>;
 
         if (request.skip != null)
         {

@@ -48,6 +48,11 @@
   public class ChangeStats
   {
     /// <summary>
+    /// A folder ID.
+    /// </summary>
+    public string FolderID { get; set; }
+
+    /// <summary>
     /// Mailbox address.
     /// </summary>
     [DataMember]
