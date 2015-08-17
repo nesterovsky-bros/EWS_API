@@ -12,14 +12,8 @@ namespace Bnhp.Office365
   /// </summary>
   /// <seealso cref="https://msdn.microsoft.com/en-us/library/microsoft.exchange.webservices.data.appointment_properties(v=exchg.80).aspx"/>
   [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
-  public class Appointment
+  public class Appointment: Item
   {
-    /// <summary>
-    /// Gets the ID of this item. 
-    /// </summary>
-    [DataMember]
-    public string Id { get; internal set; }
-
     /// <summary>
     /// Gets and sets a value that indicates whether the associated object is an appointment, 
     /// a meeting, a response to a meeting, or a cancelled meeting.
@@ -39,13 +33,6 @@ namespace Bnhp.Office365
     [DefaultValue(0)]
     [DataMember]
     public int AppointmentState { get; internal set; }
-
-    ///// <summary>
-    ///// Gets a list of meetings that conflict with this appointment in the authenticated
-    ////  user's calendar.
-    ///// </summary>
-    //[DataMember]
-    //public List<Appointment> AdjacentMeetings { get; internal set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether new time proposals are allowed for
@@ -85,43 +72,6 @@ namespace Bnhp.Office365
     [DataMember]
     public int ConferenceType { get; set; }
 
-    ///// <summary>
-    ///// Gets a list of meetings that conflict with this appointment in the authenticated
-    ///// user's calendar.
-    ///// </summary>
-    //[DataMember]
-    //public List<Appointment> ConflictingMeetings { get; internal set; }
-
-    /// <summary>
-    /// Gets a text summarizing the To recipients of this item.
-    /// </summary>
-    [DataMember]
-    public string DisplayTo { get; internal set; }
-  
-    /// <summary>
-    /// Gets the date and time this item was created.
-    /// </summary>
-    [DataMember]
-    public DateTime? DateTimeCreated { get; internal set; }
-
-    /// <summary>
-    /// Gets the time when this item was received.
-    /// </summary>
-    [DataMember]
-    public DateTime? DateTimeReceived { get; internal set; }
-    
-    /// <summary>
-    /// Gets the date and time this item was sent.
-    /// </summary>
-    [DataMember]
-    public DateTime? DateTimeSent { get; internal set; }
-    
-    /// <summary>
-    /// Gets a text summarizing the Cc receipients of this item.
-    /// </summary>
-    [DataMember]
-    public string DisplayCc { get; internal set; }
-
     /// <summary>
     /// Gets the duration of this appointment.
     /// </summary>
@@ -133,12 +83,6 @@ namespace Bnhp.Office365
     /// </summary>
     [DataMember]
     public DateTime End { get; set; }
-    
-    ///// <summary>
-    ///// Gets or sets time zone of the end property of this appointment.
-    ///// </summary>
-    //[DataMember]
-    //public TimeZoneInfo EndTimeZone { get; set; }
     
     /// <summary>
     /// Gets or sets the Enhanced location object.
@@ -169,20 +113,6 @@ namespace Bnhp.Office365
     /// </summary>
     [DataMember]
     public string ICalUid { get; set; }
-
-    /// <summary>
-    /// Gets a value indicating whether the item has been modified since it was created.
-    /// </summary>
-    [DefaultValue(false)]
-    [DataMember]
-    public bool IsUnmodified { get; internal set;  }
-
-    /// <summary>
-    /// Gets and sets importance of the appointment.
-    /// </summary>
-    [DefaultValue(Importance.Normal)]
-    [DataMember]
-    public Importance Importance { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether this appointment is an all day event.
@@ -220,8 +150,7 @@ namespace Bnhp.Office365
     public bool IsRecurring { get; set; }
        
     /// <summary>
-    /// Gets or sets a value indicating whether responses are requested when invitations
-    /// are sent for this meeting.
+    /// Gets or sets a value indicating whether responses are requested.
     /// </summary>
     [DefaultValue(false)]
     [DataMember]
@@ -239,30 +168,11 @@ namespace Bnhp.Office365
     [DataMember]
     public OccurrenceInfo LastOccurrence { get; internal set; }
     
-    ////
-    //// Summary:
-    ////     Gets or sets a value indicating the free/busy status of the owner of this
-    ////     appointment.
-    //[DataMember]
-    //public LegacyFreeBusyStatus LegacyFreeBusyStatus { get; set; }
-    
     /// <summary>
     /// Gets or sets the location of this appointment.
     /// </summary>
     [DataMember]
     public string Location { get; set; }
-
-    /// <summary>
-    /// Gets the name of the user who last modified this item.
-    /// </summary>
-    [DataMember]
-    public string LastModifiedName { get; internal set; }
-
-    /// <summary>
-    /// Gets the date and time this item was last modified.
-    /// </summary>
-    [DataMember]
-    public DateTime LastModifiedTime { get; internal set; }
 
     /// <summary>
     /// Gets a value indicating whether the meeting request has already been sent.
@@ -295,12 +205,6 @@ namespace Bnhp.Office365
     /// </summary>
     [DataMember]
     public string NetShowUrl { get; set; }
-    
-    ///// <summary>
-    ///// Gets the Online Meeting Settings
-    ///// </summary>
-    //[DataMember]
-    //public OnlineMeetingSettings OnlineMeetingSettings { get; internal set; }
     
     /// <summary>
     /// Gets a list of optional attendeed for this meeting.
@@ -360,18 +264,6 @@ namespace Bnhp.Office365
     /// </summary>
     [DataMember]
     public DateTime Start { get; set; }
-
-    /// <summary>
-    /// Gets or sets the subject of this item.
-    /// </summary>
-    [DataMember]
-    public string Subject { get; set; }
-
-    /// <summary>
-    /// Gets the sensitivity of this item.
-    /// </summary>
-    [DataMember]
-    public Sensitivity Sensitivity { get; set; }
 
     ///// <summary>
     ///// Gets or sets time zone of the start property of this appointment.
@@ -480,34 +372,13 @@ namespace Bnhp.Office365
   /// Represents a meeting attendee.
   /// </summary>
   [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
-  public class Attendee
+  public class Attendee: EMailAddress
   {
-    /// <summary>
-    /// Gets or sets the name that is associated with the email address. 
-    /// </summary>
-    [DataMember]
-    public string Name { get; set; }
-
-    /// <summary>
-    /// Gets or sets the email address.
-    /// </summary>
-    [DataMember]
-    public string Address { get; set; }
-
     /// <summary>
     /// Gets the type of response given to a meeting request.
     /// </summary>
     [DataMember]
     public MeetingResponseType? ResponseType { get; internal set; }
-
-    /// <summary>
-    /// Converts Attendee instance to a string value.
-    /// </summary>
-    /// <returns>a string value that represents this Attendee instance.</returns>
-    public override string ToString()
-    {
-      return Name + " <" + Address + ">";
-    }
   }
 
   [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
@@ -556,61 +427,5 @@ namespace Bnhp.Office365
     [DefaultValue(0)]
     [DataMember]
     public int Interval { get; set; }
-  }
-
-  /// <summary>
-  /// Defines an appointment sensitivity.
-  /// </summary>
-  [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
-  public enum Sensitivity
-  {
-    /// <summary>
-    /// The item has a normal sensitivity.
-    /// </summary>
-    [EnumMember]
-    Normal,
-
-    /// <summary>
-    /// The item is personal.
-    /// </summary>
-    [EnumMember]
-    Personal,
-
-    /// <summary>
-    /// The item is private.
-    /// </summary>
-    [EnumMember]
-    Private,
-
-    /// <summary>
-    /// The item is confidential.
-    /// </summary>
-    [EnumMember]
-    Confidential
-  }
-
-  /// <summary>
-  /// 
-  /// </summary>
-  [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
-  public enum Importance
-  {
-    /// <summary>
-    /// Low importance.
-    /// </summary>
-    [EnumMember]
-    Low,
-
-    /// <summary>
-    /// Normal importance.
-    /// </summary>
-    [EnumMember]
-    Normal,
-
-    /// <summary>
-    /// High importance.
-    /// </summary>
-    [EnumMember]
-    High
   }
 }
