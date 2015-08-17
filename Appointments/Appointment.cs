@@ -278,12 +278,6 @@ namespace Bnhp.Office365
     public string TimeZone { get; internal set; }
 
     /// <summary>
-    /// Gets the text body of the item as a string value.
-    /// </summary>
-    [DataMember]
-    public string TextBody { get; set; }
-
-    /// <summary>
     /// Gets a text indicating when this appointment occurs. The text returned by
     /// When is localized using the Exchange Server culture or using the culture
     /// specified in the PreferredCulture property of the ExchangeService object
