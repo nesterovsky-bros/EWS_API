@@ -29,7 +29,7 @@
     /// A service instance.
     /// </summary>
     [Dependency]
-    public IAppointments Service { get; set; }
+    public IEwsService Service { get; set; }
 
     /// <summary>
     /// Starts the listener.

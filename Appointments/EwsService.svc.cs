@@ -754,6 +754,81 @@
     }
     #endregion
 
+    #region GetFileAttachment
+    /// <summary>
+    /// Gets a file attachment by an e-mail ID and the attachment's name.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="ID">an e-mail message's unique ID.</param>
+    /// <param name="name">an attachment's name to get.</param>
+    /// <returns>
+    /// an Attachment instance or null when there is no an attachment with such name.
+    /// </returns>
+    public Attachment GetFileAttachment(string email, string ID, string name)
+    {
+      return Call(
+          "GetFileAttachment",
+          new GetFileAttachmentRequest
+          {
+            email = email,
+            ID = ID,
+            name = name
+          },
+          GetFileAttachmentImpl);
+    }
+
+    public struct GetFileAttachmentRequest
+    {
+      public string email;
+      public string ID;
+      public string name;
+    }
+
+    private Attachment GetFileAttachmentImpl(GetFileAttachmentRequest request)
+    {
+      var service = GetService(request.email);
+      var message = Office365.EmailMessage.Bind(service, request.ID);
+      var result = null as Attachment;
+
+      if (message.HasAttachments)
+      {
+        foreach (var attachment in message.Attachments)
+        {
+          if (attachment.IsInline)
+          {
+            continue;
+          }
+
+          var fileAttachment = attachment as Office365.FileAttachment;
+
+          if ((fileAttachment == null) || fileAttachment.IsContactPhoto)
+          {
+            continue;
+          }
+
+          if (fileAttachment.Name != request.name)
+          {
+            continue;
+          }
+
+          result = new Attachment();
+
+          result.ContentType = fileAttachment.ContentType;
+          result.Name = fileAttachment.Name;
+
+          using (var stream = new MemoryStream())
+          {
+            fileAttachment.Load(stream);
+
+            result.Content = stream.ToArray();
+          }
+        }
+      }
+
+      return result;
+    }
+    #endregion
+
     #region DeleteMessage
     /// <summary>
     /// Deletes an e-mail message specified by unique ID.
@@ -1363,10 +1438,6 @@
 
       if (message.HasAttachments)
       {
-        var root = Path.Combine(
-          Settings.EWSSharedFolderForAttachments, 
-          Guid.NewGuid().ToString());
-
         foreach (var attachment in message.Attachments)
         {
           if (attachment.IsInline)
@@ -1381,16 +1452,7 @@
             continue;
           }
 
-          var path = Path.Combine(root, fileAttachment.Name);
-
-          if (!Directory.Exists(root))
-          {
-            Directory.CreateDirectory(root);
-          }
-
-          fileAttachment.Load(path);
-
-          result.Attachments.Add(path);
+          result.Attachments.Add(fileAttachment.Name);
         }
       }
 

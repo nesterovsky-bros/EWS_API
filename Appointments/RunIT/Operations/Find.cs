@@ -13,13 +13,19 @@ namespace Bnhp.Office365.RunIT.Operations
     public string email {get; set;}
 
     [DataMember]
-    public string UID { get; set; }
+    public DateTime start { get; set; }
+
+    [DataMember]
+    public DateTime? end { get; set; }
+
+    [DataMember]
+    public int? maxResults { get; set; }
   }
 
   [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
   public class FindResponse
   {
     [DataMember]
-    public Appointment FindResult { get; set; }
+    public List<string> FindResult { get; set; }
   }
 }

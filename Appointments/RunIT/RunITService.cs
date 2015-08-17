@@ -58,12 +58,12 @@
 
           return ToXmlString(response);
         }
-        case "Get":
+        case "Find":
         {
-          var request = FromXmlString<Get>(message.OperationArgument);
-          var response = new GetResponse
+          var request = FromXmlString<Find>(message.OperationArgument);
+          var response = new FindResponse
           {
-            GetResult = service.Get(
+            FindResult = service.Find(
               request.email, 
               request.start, 
               request.end, 
@@ -72,12 +72,12 @@
 
           return ToXmlString(response);
         }
-        case "Find":
+        case "Get":
         {
-          var request = FromXmlString<Find>(message.OperationArgument);
-          var response = new FindResponse
+          var request = FromXmlString<Get>(message.OperationArgument);
+          var response = new GetResponse
           {
-            FindResult = service.Find(
+            GetResult = service.Get(
               request.email,
               request.UID)
           };
@@ -179,9 +179,9 @@
       return (T)serializer.ReadObject(XmlReader.Create(reader));
     }
 
-    private IAppointments GetService()
+    private IEwsService GetService()
     {
-      return container.Resolve<IAppointments>();
+      return container.Resolve<IEwsService>();
     }
 
     private UnityContainer container = new UnityContainer();

@@ -59,7 +59,7 @@ namespace Bnhp.Office365
         RegisterInstance(settings).
         RegisterInstance<IResponseNotifier>(new ResponseNotifier()).
         RegisterInstance(listener).
-        RegisterType<IAppointments, Appointments>();
+        RegisterType<IEwsService, EwsService>();
 
       container.BuildUp(listener);
 

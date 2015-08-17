@@ -12,7 +12,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Bnhp.Office365</RootNamespace>
-    <AssemblyName>Bnhp.Office365.Appointments</AssemblyName>
+    <AssemblyName>Bnhp.Office365.EwsService</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <WcfConfigValidationEnabled>True</WcfConfigValidationEnabled>
     <UseIISExpress>true</UseIISExpress>
@@ -100,8 +100,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="EwsService.svc" />
     <Content Include="Appointments.svc" />
+    <Content Include="EwsService.svc" />
     <Content Include="App_Data\EWSQueue.mdf" />
     <Content Include="App_Data\EWSQueue_log.ldf">
       <DependentUpon>EWSQueue.mdf</DependentUpon>
@@ -115,6 +115,13 @@
     <Compile Include="ApplicationUser.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
+    <Compile Include="Appointments.svc.cs">
+      <DependentUpon>Appointments.svc</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="IAppointments.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Item.cs" />
     <Compile Include="EwsService.svc.cs">
       <DependentUpon>EwsService.svc</DependentUpon>
@@ -125,9 +132,6 @@
     </Compile>
     <Compile Include="EwsUtils.cs" />
     <Compile Include="Appointment.cs" />
-    <Compile Include="Appointments.svc.cs">
-      <DependentUpon>Appointments.svc</DependentUpon>
-    </Compile>
     <Compile Include="BankSystem.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
@@ -141,7 +145,6 @@
     <Compile Include="DatabaseTraceListener.cs" />
     <Compile Include="EwsListener.cs" />
     <Compile Include="Extensions.cs" />
-    <Compile Include="IAppointments.cs" />
     <Compile Include="IEwsService.cs" />
     <Compile Include="InvalidMailbox.cs">
       <DependentUpon>Model.tt</DependentUpon>
@@ -184,8 +187,8 @@
     <Compile Include="RunIT\Operations\Delete.cs" />
     <Compile Include="RunIT\Operations\Cancel.cs" />
     <Compile Include="RunIT\Operations\Update.cs" />
-    <Compile Include="RunIT\Operations\Find.cs" />
     <Compile Include="RunIT\Operations\Get.cs" />
+    <Compile Include="RunIT\Operations\Find.cs" />
     <Compile Include="RunIT\Operations\Create.cs" />
     <Compile Include="RunIT\RunITService.cs" />
     <Compile Include="Settings.cs" />

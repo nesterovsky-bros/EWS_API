@@ -169,6 +169,18 @@ namespace Bnhp.Office365
     EMailMessage GetMessage(string email, string ID);
 
     /// <summary>
+    /// Gets a file attachment by an e-mail ID and the attachment's name.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="ID">an e-mail message's unique ID.</param>
+    /// <param name="name">an attachment's name to get.</param>
+    /// <returns>
+    /// an Attachment instance or null when there is no an attachment with such name.
+    /// </returns>
+    [OperationContract]
+    Attachment GetFileAttachment(string email, string ID, string name);
+
+    /// <summary>
     /// Deletes an e-mail message specified by unique ID.
     /// </summary>
     /// <param name="email">an user's e-mail box.</param>

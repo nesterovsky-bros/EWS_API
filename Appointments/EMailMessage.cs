@@ -78,4 +78,26 @@ namespace Bnhp.Office365
     [DataMember]
     public List<string> Attachments { get; set; }
   }
+
+  [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
+  public class Attachment
+  {
+    /// <summary>
+    /// Gets or sets a name of the attachment.
+    /// </summary>
+    [DataMember]
+    public string Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets a content type of the attachment.
+    /// </summary>
+    [DataMember]
+    public string ContentType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the attachment's content.
+    /// </summary>
+    [DataMember]
+    public byte[] Content { get; set; }
+  }
 }
