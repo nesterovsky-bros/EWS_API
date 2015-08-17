@@ -575,6 +575,8 @@
       var folders = new Dictionary<string, Office365.Folder>();
 
       var notifications = events.OfType<Office365.ItemEvent>().
+        GroupBy(item => item.ParentFolderId).
+        Select(group => group.First()).
         Select(
           item =>
           {
