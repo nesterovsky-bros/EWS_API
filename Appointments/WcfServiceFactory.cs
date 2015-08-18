@@ -47,8 +47,6 @@ namespace Bnhp.Office365
           int.Parse(ConfigurationManager.AppSettings["UsersPerUsersSettins"]),
         ExchangeListenerRecyclePeriod =
           int.Parse(ConfigurationManager.AppSettings["ExchangeListenerRecyclePeriod"]),
-        EWSSharedFolderForAttachments = 
-          ConfigurationManager.AppSettings["EWSSharedFolderForAttachments"],
         ApplicationUsers = users,
         DefaultApplicationUser = users[0]
       };

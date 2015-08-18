@@ -129,17 +129,47 @@ namespace Bnhp.Office365
     #endregion
 
     #region E-Mail
-   /// <summary>
-    /// Sends the specified e-mail message to receivers.
+    /// <summary>
+    /// Creates a new e-mail message and stores it to Draft folder.
+    /// Later this message may be sent by the Send method.
     /// </summary>
     /// <param name="email">An e-mail address of the sender.</param>
     /// <param name="message">
-    /// an EMailMessage instance with data to send.
+    /// an EMailMessage instance with data (subject, recipients, body etc.).
     /// </param>
-    /// <returns>An unique ID of the sent e-mail message.</returns>
+    /// <returns>An unique ID of the stored e-mail message.</returns>
     /// <exception cref="IOException">in case of error.</exception>
     [OperationContract]
-    string Send(string email, EMailMessage message);
+    string CreateMessage(string email, EMailMessage message);
+
+    /// <summary>
+    /// Add a file attachment that to the specified e-mail message.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="ID">an e-mail message's unique ID.</param>
+    /// <param name="name">an attachment's name to add.</param>
+    /// <param name="content">the attachment's content itself.</param>
+    /// <returns>
+    /// true when the attachment was added successfully, and false otherwise.
+    /// </returns>
+    [OperationContract]
+    bool AddAttachment(
+      string email, 
+      string ID, 
+      string name, 
+      byte[] content);
+
+    /// <summary>
+    /// Sends the specified e-mail message to receivers.
+    /// </summary>
+    /// <param name="email">An e-mail address of the sender.</param>
+    /// <param name="ID">an e-mail message's unique ID to send.</param>
+    /// <returns>
+    /// true when the message was successfully sent, and false otherwise.
+    /// </returns>
+    /// <exception cref="IOException">in case of error.</exception>
+    [OperationContract]
+    bool Send(string email, string ID);
 
     /// <summary>
     /// Retrieves all e-mal messages' IDs from Inbox.
@@ -175,10 +205,23 @@ namespace Bnhp.Office365
     /// <param name="ID">an e-mail message's unique ID.</param>
     /// <param name="name">an attachment's name to get.</param>
     /// <returns>
-    /// an Attachment instance or null when there is no an attachment with such name.
+    /// the attachment's content or null when there is no 
+    /// an attachment with such name.
     /// </returns>
     [OperationContract]
-    Attachment GetFileAttachment(string email, string ID, string name);
+    byte[] GetAttachmentByName(string email, string ID, string name);
+
+    /// <summary>
+    /// Gets a file attachment by an e-mail ID and the attachment's index.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="ID">an e-mail message's unique ID.</param>
+    /// <param name="index">an attachment's index to get.</param>
+    /// <returns>
+    /// the attachment's content or null when there is no an attachment with such index.
+    /// </returns>
+    [OperationContract]
+    byte[] GetAttachmentByIndex(string email, string ID, int index);
 
     /// <summary>
     /// Deletes an e-mail message specified by unique ID.

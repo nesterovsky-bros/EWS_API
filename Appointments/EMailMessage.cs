@@ -76,7 +76,7 @@ namespace Bnhp.Office365
     /// Gets and sets list of the file attachments' pathes.
     /// </summary>
     [DataMember]
-    public List<string> Attachments { get; set; }
+    public List<Attachment> Attachments { get; internal set; }
   }
 
   [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
@@ -95,9 +95,9 @@ namespace Bnhp.Office365
     public string ContentType { get; set; }
 
     /// <summary>
-    /// Gets or sets the attachment's content.
+    /// Gets or sets the attachment's size.
     /// </summary>
     [DataMember]
-    public byte[] Content { get; set; }
+    public int? Size { get; internal set; }
   }
 }

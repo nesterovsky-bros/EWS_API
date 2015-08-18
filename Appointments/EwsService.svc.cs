@@ -554,35 +554,37 @@
     }
     #endregion
 
-    #region Send method
+    #region CreateMessage method
     /// <summary>
-    /// Creates and sends a new e-mail message to the recipients.
+    /// Creates a new e-mail message and stores it to Draft folder.
+    /// Later to this message one may add attachments and then send it 
+    /// to recipients by the Send method.
     /// </summary>
-    /// <param name="email">An e-mail address of the creator.</param>
+    /// <param name="email">An e-mail address of the sender.</param>
     /// <param name="message">
-    /// an EMailMessage instance with data to send.
+    /// an EMailMessage instance with data (subject, recipients, body etc.).
     /// </param>
-    /// <returns>An unique ID of the saved e-mail message.</returns>
+    /// <returns>An unique ID of the stored e-mail message.</returns>
     /// <exception cref="IOException">in case of error.</exception>
-    public string Send(string email, EMailMessage message)
+    public string CreateMessage(string email, EMailMessage message)
     {
       return Call(
-        "Send",
-        new SendRequest
+        "CreateMessage",
+        new CreateMessageRequest
         {
           email = email,
           message = message
         },
-        SendImpl);
+        CreateMessageImpl);
     }
 
-    public struct SendRequest
+    public struct CreateMessageRequest
     {
       public string email;
       public EMailMessage message;
     }
 
-    private string SendImpl(SendRequest request)
+    private string CreateMessageImpl(CreateMessageRequest request)
     {
       if (request.message == null)
       {
@@ -593,17 +595,6 @@
       var service = GetService(email);
       var emailMessage = new Office365.EmailMessage(service);
       var message = request.message;
-
-      if (message.Attachments != null)
-      {
-        foreach (var path in message.Attachments)
-        {
-          if (File.Exists(path))
-          {
-            emailMessage.Attachments.AddFileAttachment(path);
-          }
-        }
-      }
 
       if (message.BccRecipients != null)
       {
@@ -646,13 +637,121 @@
       emailMessage.IsResponseRequested = message.IsResponseRequested;
       emailMessage.Subject = message.Subject;
 
-      emailMessage.SendAndSaveCopy();
+      emailMessage.Save(Office365.WellKnownFolderName.Drafts);
 
       return emailMessage.Id.ToString();
     }
     #endregion
 
-    #region FindMessages
+    #region AddAttachment method
+    /// <summary>
+    /// Add a file attachment that to the specified e-mail message.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="ID">an e-mail message's unique ID.</param>
+    /// <param name="name">an attachment's name to add.</param>
+    /// <param name="content">the attachment's content itself.</param>
+    /// <returns>
+    /// true when the attachment was added successfully, and false otherwise.
+    /// </returns>
+    public bool AddAttachment(
+      string email,
+      string ID,
+      string name,
+      byte[] content)
+    {
+      return Call(
+        "AddAttachment",
+        new AddAttachmentRequest
+        {
+          email = email,
+          ID = ID,
+          name = name,
+          content = content
+        },
+        AddAttachmentImpl).GetValueOrDefault(false);
+    }
+
+    public struct AddAttachmentRequest
+    {
+      public string email;
+      public string ID;
+      public string name;
+      public byte[] content;
+    }
+
+    private bool? AddAttachmentImpl(AddAttachmentRequest request)
+    {
+      if (string.IsNullOrEmpty(request.ID))
+      {
+        throw new ArgumentNullException("request.ID");
+      }
+
+      var service = GetService(request.email);
+      var message = Office365.EmailMessage.Bind(service, request.ID);
+
+      if (message == null)
+      {
+        return false;
+      }
+
+      var attachment = 
+        message.Attachments.AddFileAttachment(request.name, request.content);
+
+      return attachment != null;
+    }
+    #endregion
+    
+    #region Send method
+    /// <summary>
+    /// Sends the specified e-mail message to receivers.
+    /// </summary>
+    /// <param name="email">An e-mail address of the sender.</param>
+    /// <param name="ID">an e-mail message's unique ID to send.</param>
+    /// <returns>
+    /// true when the message was successfully sent, and false otherwise.
+    /// </returns>
+    /// <exception cref="IOException">in case of error.</exception>
+    public bool Send(string email, string ID)
+    {
+      return Call(
+        "Send",
+        new SendRequest
+        {
+          email = email,
+          ID = ID
+        },
+        SendImpl).GetValueOrDefault(false);
+    }
+
+    public struct SendRequest
+    {
+      public string email;
+      public string ID;
+    }
+
+    private bool? SendImpl(SendRequest request)
+    {
+      if (string.IsNullOrEmpty(request.ID))
+      {
+        throw new ArgumentNullException("request.ID");
+      }
+
+      var service = GetService(request.email);
+      var message = Office365.EmailMessage.Bind(service, request.ID);
+
+      if (message == null)
+      {
+        return false;
+      }
+
+      message.SendAndSaveCopy();
+
+      return true;
+    }
+    #endregion
+
+    #region FindMessages method
     /// <summary>
     /// Retrieves all e-mal messages' IDs from Inbox.
     /// </summary>
@@ -717,7 +816,7 @@
     }
     #endregion
 
-    #region GetMessage
+    #region GetMessage method
     /// <summary>
     /// Gets an e-mail message by its ID.
     /// </summary>
@@ -754,7 +853,7 @@
     }
     #endregion
 
-    #region GetFileAttachment
+    #region GetAttachmentByName method
     /// <summary>
     /// Gets a file attachment by an e-mail ID and the attachment's name.
     /// </summary>
@@ -762,12 +861,13 @@
     /// <param name="ID">an e-mail message's unique ID.</param>
     /// <param name="name">an attachment's name to get.</param>
     /// <returns>
-    /// an Attachment instance or null when there is no an attachment with such name.
+    /// the attachment's content or null when there is no 
+    /// an attachment with such name.
     /// </returns>
-    public Attachment GetFileAttachment(string email, string ID, string name)
+    public byte[] GetAttachmentByName(string email, string ID, string name)
     {
       return Call(
-          "GetFileAttachment",
+          "GetAttachmentByName",
           new GetFileAttachmentRequest
           {
             email = email,
@@ -782,54 +882,91 @@
       public string email;
       public string ID;
       public string name;
+      public int? index;
     }
 
-    private Attachment GetFileAttachmentImpl(GetFileAttachmentRequest request)
+    private byte[] GetFileAttachmentImpl(GetFileAttachmentRequest request)
     {
+      if (string.IsNullOrEmpty(request.ID))
+      {
+        throw new ArgumentNullException("request.ID");
+      }
+
       var service = GetService(request.email);
       var message = Office365.EmailMessage.Bind(service, request.ID);
-      var result = null as Attachment;
+      var attachment = null as Office365.FileAttachment;
 
       if (message.HasAttachments)
       {
-        foreach (var attachment in message.Attachments)
+        if (request.index.HasValue)
         {
-          if (attachment.IsInline)
+          var index = request.index.Value;
+
+          if ((index >= 0) || (index < message.Attachments.Count))
           {
-            continue;
+            attachment = message.Attachments[index] as Office365.FileAttachment;
           }
-
-          var fileAttachment = attachment as Office365.FileAttachment;
-
-          if ((fileAttachment == null) || fileAttachment.IsContactPhoto)
+        }
+        else
+        {
+          foreach (var item in message.Attachments)
           {
-            continue;
-          }
+            attachment = item as Office365.FileAttachment;
 
-          if (fileAttachment.Name != request.name)
-          {
-            continue;
-          }
+            if ((attachment == null) || 
+              attachment.IsInline || 
+              attachment.IsContactPhoto ||
+              (attachment.Name != request.name))
+            {
+              attachment = null;
 
-          result = new Attachment();
+              continue;
+            }
 
-          result.ContentType = fileAttachment.ContentType;
-          result.Name = fileAttachment.Name;
-
-          using (var stream = new MemoryStream())
-          {
-            fileAttachment.Load(stream);
-
-            result.Content = stream.ToArray();
+            break;
           }
         }
       }
 
-      return result;
+      if (attachment != null)
+      {
+        using (var stream = new MemoryStream())
+        {
+          attachment.Load(stream);
+
+          return stream.ToArray();
+        }
+      }
+
+      return null;
     }
     #endregion
 
-    #region DeleteMessage
+    #region GetAttachmentByIndex method
+    /// <summary>
+    /// Gets a file attachment by an e-mail ID and the attachment's index.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="ID">an e-mail message's unique ID.</param>
+    /// <param name="index">an attachment's index to get.</param>
+    /// <returns>
+    /// the attachment's content or null when there is no an attachment with such index.
+    /// </returns>
+    public byte[] GetAttachmentByIndex(string email, string ID, int index)
+    {
+      return Call(
+          "GetAttachmentByIndex",
+          new GetFileAttachmentRequest
+          {
+            email = email,
+            ID = ID,
+            index = index
+          },
+          GetFileAttachmentImpl);
+    }
+    #endregion
+
+    #region DeleteMessage method
     /// <summary>
     /// Deletes an e-mail message specified by unique ID.
     /// </summary>
@@ -852,7 +989,7 @@
     }
     #endregion
 
-    #region MoveTo
+    #region MoveTo method
     /// <summary>
     /// Moves the specified e-mail message to a folder.
     /// </summary>
@@ -877,7 +1014,7 @@
     }
     #endregion
 
-    #region CopyTo
+    #region CopyTo method
     /// <summary>
     /// Copies the specified e-mail message to a folder.
     /// </summary>
@@ -1440,25 +1577,19 @@
       result.CcRecipients = GetRecipients(message, "CcRecipients");
       result.ToRecipients = GetRecipients(message, "ToRecipients");
 
-      result.Attachments = new List<string>();
+      result.Attachments = new List<Attachment>();
 
       if (message.HasAttachments)
       {
         foreach (var attachment in message.Attachments)
         {
-          if (attachment.IsInline)
-          {
-            continue;
-          }
-
-          var fileAttachment = attachment as Office365.FileAttachment;
-
-          if ((fileAttachment == null) || fileAttachment.IsContactPhoto)
-          {
-            continue;
-          }
-
-          result.Attachments.Add(fileAttachment.Name);
+          result.Attachments.Add(
+            new Attachment 
+            {
+              Name = attachment.Name,
+              ContentType = attachment.ContentType,
+              Size = attachment.Size
+            });
         }
       }
 
