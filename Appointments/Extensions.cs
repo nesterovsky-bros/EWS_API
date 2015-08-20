@@ -55,7 +55,7 @@
     /// <summary>
     /// Adds range to the collection.
     /// </summary>
-    /// <typeparam name="T">An item type.</typeparam>
+    /// <typeparam name="T">An proxy type.</typeparam>
     /// <param name="collection">A collection to add items to.</param>
     /// <param name="items">Items to add.</param>
     public static void AddRange<T>(
@@ -171,7 +171,7 @@
     /// <summary>
     /// Returns an empty enumeration if items is null.
     /// </summary>
-    /// <typeparam name="T">An item type.</typeparam>
+    /// <typeparam name="T">An proxy type.</typeparam>
     /// <param name="items">Items to check.</param>
     /// <returns>A non null enumeration.</returns>
     public static IEnumerable<T> EmptyIfNull<T>(this IEnumerable<T> items)
@@ -192,7 +192,7 @@
     /// <summary>
     /// Returns null if array is empty.
     /// </summary>
-    /// <typeparam name="T">An item type.</typeparam>
+    /// <typeparam name="T">An proxy type.</typeparam>
     /// <param name="items">Items to check.</param>
     /// <returns>Null or not empty array.</returns>
     public static T[] NullIfEmpty<T>(this T[] items)
@@ -238,8 +238,8 @@
     /// <summary>
     /// Performs a binary search on the specified collection.
     /// </summary>
-    /// <typeparam name="T">The type of the item.</typeparam>
-    /// <typeparam name="S">The type of the searched item.</typeparam>
+    /// <typeparam name="T">The type of the proxy.</typeparam>
+    /// <typeparam name="S">The type of the searched proxy.</typeparam>
     /// <param name="list">The list to be searched.</param>
     /// <param name="value">The value to search for.</param>
     /// <param name="comparer">
@@ -287,7 +287,7 @@
     /// <summary>
     /// Performs a binary search on the specified collection.
     /// </summary>
-    /// <typeparam name="T">The type of the item.</typeparam>
+    /// <typeparam name="T">The type of the proxy.</typeparam>
     /// <param name="list">The list to be searched.</param>
     /// <param name="value">The value to search for.</param>
     /// <returns>
@@ -307,7 +307,7 @@
     /// <summary>
     /// Performs a binary search on the specified collection.
     /// </summary>
-    /// <typeparam name="T">The type of the item.</typeparam>
+    /// <typeparam name="T">The type of the proxy.</typeparam>
     /// <param name="list">The list to be searched.</param>
     /// <param name="value">The value to search for.</param>
     /// <param name="comparer">

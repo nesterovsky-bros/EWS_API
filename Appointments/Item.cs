@@ -8,91 +8,97 @@ using System.Web;
 namespace Bnhp.Office365
 {
   /// <summary>
-  /// A proxy class for Office 365 item (e-mail or appointment).
+  /// A proxy class for Office 365 proxy (e-mail or proxy).
   /// </summary>
   /// <seealso cref="https://msdn.microsoft.com/en-us/library/microsoft.exchange.webservices.data.appointment_properties(v=exchg.80).aspx"/>
   [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
   public class Item
   {
     /// <summary>
-    /// Gets the ID of this item. 
+    /// Gets the ID of this proxy. 
     /// </summary>
     [DataMember]
     public string Id { get; internal set; }
 
     /// <summary>
-    /// Gets a text summarizing the To recipients of this item.
+    /// Gets a text summarizing the To recipients of this proxy.
     /// </summary>
     [DataMember]
     public string DisplayTo { get; internal set; }
   
     /// <summary>
-    /// Gets the date and time this item was created.
+    /// Gets the date and time this proxy was created.
     /// </summary>
     [DataMember]
     public DateTime? DateTimeCreated { get; internal set; }
 
     /// <summary>
-    /// Gets the time when this item was received.
+    /// Gets the time when this proxy was received.
     /// </summary>
     [DataMember]
     public DateTime? DateTimeReceived { get; internal set; }
     
     /// <summary>
-    /// Gets the date and time this item was sent.
+    /// Gets the date and time this proxy was sent.
     /// </summary>
     [DataMember]
     public DateTime? DateTimeSent { get; internal set; }
     
     /// <summary>
-    /// Gets a text summarizing the Cc receipients of this item.
+    /// Gets a text summarizing the Cc receipients of this proxy.
     /// </summary>
     [DataMember]
     public string DisplayCc { get; internal set; }
 
     /// <summary>
-    /// Gets a value indicating whether the item has been modified since it was created.
+    /// Gets a value indicating whether the proxy has been modified since it was created.
     /// </summary>
     [DefaultValue(false)]
     [DataMember]
     public bool IsUnmodified { get; internal set;  }
 
     /// <summary>
-    /// Gets and sets importance of the appointment.
+    /// Gets and sets importance of the proxy.
     /// </summary>
     [DefaultValue(Importance.Normal)]
     [DataMember]
     public Importance Importance { get; set; }
 
     /// <summary>
-    /// Gets the name of the user who last modified this item.
+    /// Gets the name of the user who last modified this proxy.
     /// </summary>
     [DataMember]
     public string LastModifiedName { get; internal set; }
 
     /// <summary>
-    /// Gets the date and time this item was last modified.
+    /// Gets the date and time this proxy was last modified.
     /// </summary>
     [DataMember]
     public DateTime LastModifiedTime { get; internal set; }
 
     /// <summary>
-    /// Gets or sets the subject of this item.
+    /// Gets or sets the subject of this proxy.
     /// </summary>
     [DataMember]
     public string Subject { get; set; }
 
     /// <summary>
-    /// Gets the sensitivity of this item.
+    /// Gets the sensitivity of this proxy.
     /// </summary>
     [DataMember]
     public Sensitivity Sensitivity { get; set; }
 
     /// <summary>
-    /// Gets the text body of the item as a string value.
+    /// Gets and sets the text body of the proxy as a string value.
     /// </summary>
     [DataMember]
     public string TextBody { get; set; }
+
+    /// <summary>
+    /// Gets and sets extended properties of the proxy.
+    /// </summary>
+    [DataMember]
+    public List<ExtendedProperty> ExtendedProperties { get; set; }
   }
 
   /// <summary>
@@ -124,31 +130,31 @@ namespace Bnhp.Office365
   }
 
   /// <summary>
-  /// Defines an appointment sensitivity.
+  /// Defines an proxy sensitivity.
   /// </summary>
   [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
   public enum Sensitivity
   {
     /// <summary>
-    /// The item has a normal sensitivity.
+    /// The proxy has a normal sensitivity.
     /// </summary>
     [EnumMember]
     Normal,
 
     /// <summary>
-    /// The item is personal.
+    /// The proxy is personal.
     /// </summary>
     [EnumMember]
     Personal,
 
     /// <summary>
-    /// The item is private.
+    /// The proxy is private.
     /// </summary>
     [EnumMember]
     Private,
 
     /// <summary>
-    /// The item is confidential.
+    /// The proxy is confidential.
     /// </summary>
     [EnumMember]
     Confidential
@@ -177,5 +183,21 @@ namespace Bnhp.Office365
     /// </summary>
     [EnumMember]
     High
+  }
+
+  [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
+  public class ExtendedProperty
+  {
+    /// <summary>
+    /// Gets and sets the name of the extended property.
+    /// </summary>
+    [DataMember]
+    public string Name { get; set; }
+
+    /// <summary>
+    /// Gets and sets the extended property's value.
+    /// </summary>
+    [DataMember]
+    public string Value { get; set; }
   }
 }

@@ -19,6 +19,7 @@
   using Microsoft.Exchange.WebServices.Autodiscover;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
+  using Microsoft.Exchange.WebServices.Data;
   
   /// <summary>
   /// An implementation of IAppointments interface for CRUD operations with
@@ -39,9 +40,9 @@
     [Dependency]
     public IResponseNotifier ResponseNotifier { get; set; }
 
-    #region Create method
+    #region CreateAppointment method
     /// <summary>
-    /// Creates a new appointment/meeting and sends notifications to attendees.
+    /// Creates a new appointment and sends notifications to attendees.
     /// </summary>
     /// <param name="email">An e-mail address of the organizer.</param>
     /// <param name="appointment">
@@ -49,90 +50,90 @@
     /// </param>
     /// <returns>An unique ID of the new appointment.</returns>
     /// <exception cref="Exception">in case of error.</exception>
-    public string Create(string email, Appointment appointment)
+    public string CreateAppointment(string email, Appointment appointment)
     {
       return Call(
-        "Create",
-        new CreateRequest
+        "CreateAppointment",
+        new CreateAppointmentRequest
         {
           email = email,
           appointment = appointment
         },
-        CreateImpl);
+        CreateAppointmentImpl);
     }
 
-    public struct CreateRequest
+    public struct CreateAppointmentRequest
     {
       public string email;
       public Appointment appointment;
     }
 
-    private string CreateImpl(CreateRequest request)
+    private string CreateAppointmentImpl(CreateAppointmentRequest request)
     {
       if (request.appointment == null)
       {
-        throw new ArgumentNullException("request.appointment");
+        throw new ArgumentNullException("request.proxy");
       }
       
       var email = request.email;
       var service = GetService(email);
-      var meeting = new Office365.Appointment(service);
-      var appointment = request.appointment;
+      var appointment = new Office365.Appointment(service);
+      var proxy = request.appointment;
 
-      // Set the properties on the meeting object to create the meeting.
-      meeting.Subject = appointment.Subject;
+      // Set the properties on the proxy object to create the proxy.
+      appointment.Subject = proxy.Subject;
 
-      if (!string.IsNullOrEmpty(appointment.TextBody))
+      if (!string.IsNullOrEmpty(proxy.TextBody))
       {
-        meeting.Body = new Office365.MessageBody(
-          IsHtml.IsMatch(appointment.TextBody) ?
+        appointment.Body = new Office365.MessageBody(
+          IsHtml.IsMatch(proxy.TextBody) ?
             Office365.BodyType.HTML : Office365.BodyType.Text,
-          appointment.TextBody);
+          proxy.TextBody);
       }
 
-      meeting.Start = appointment.Start;
-      meeting.End = appointment.End;
-      meeting.Location = appointment.Location;
-      meeting.AllowNewTimeProposal = true;
-      meeting.Importance = (Office365.Importance)appointment.Importance;
-      meeting.ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart;
+      appointment.Start = proxy.Start;
+      appointment.End = proxy.End;
+      appointment.Location = proxy.Location;
+      appointment.AllowNewTimeProposal = true;
+      appointment.Importance = (Office365.Importance)proxy.Importance;
+      appointment.ReminderMinutesBeforeStart = proxy.ReminderMinutesBeforeStart;
 
-      if ((appointment.Recurrence != null) && 
-        (appointment.Recurrence.Type != RecurrenceType.Unknown))
+      if ((proxy.Recurrence != null) && 
+        (proxy.Recurrence.Type != RecurrenceType.Unknown))
       {
-        var start = appointment.Recurrence.StartDate;
+        var start = proxy.Recurrence.StartDate;
 
-        switch (appointment.Recurrence.Type)
+        switch (proxy.Recurrence.Type)
         {
           case RecurrenceType.Daily:
           {
-            meeting.Recurrence = new Office365.Recurrence.DailyPattern(
+            appointment.Recurrence = new Office365.Recurrence.DailyPattern(
               start,
-              appointment.Recurrence.Interval);
+              proxy.Recurrence.Interval);
 
             break;
           }
           case RecurrenceType.Weekly:
           {
-            meeting.Recurrence = new Office365.Recurrence.WeeklyPattern(
+            appointment.Recurrence = new Office365.Recurrence.WeeklyPattern(
               start,
-              appointment.Recurrence.Interval,
+              proxy.Recurrence.Interval,
               (Office365.DayOfTheWeek)start.DayOfWeek);
 
             break;
           }
           case RecurrenceType.Monthly:
           {
-            meeting.Recurrence = new Office365.Recurrence.MonthlyPattern(
+            appointment.Recurrence = new Office365.Recurrence.MonthlyPattern(
               start,
-              appointment.Recurrence.Interval,
+              proxy.Recurrence.Interval,
               start.Day);
 
             break;
           }
           case RecurrenceType.Yearly:
           {
-            meeting.Recurrence =
+            appointment.Recurrence =
               new Office365.Recurrence.YearlyPattern(
                 start,
                 (Office365.Month)start.Month,
@@ -142,51 +143,53 @@
           }
         }
 
-        if (appointment.Recurrence.HasEnd)
+        if (proxy.Recurrence.HasEnd)
         {
-          meeting.Recurrence.EndDate = appointment.Recurrence.EndDate;
+          appointment.Recurrence.EndDate = proxy.Recurrence.EndDate;
         }
         else
         {
-          meeting.Recurrence.NumberOfOccurrences = appointment.Recurrence.NumberOfOccurrences;
+          appointment.Recurrence.NumberOfOccurrences = proxy.Recurrence.NumberOfOccurrences;
         }
       }
 
-      if (appointment.RequiredAttendees != null)
+      if (proxy.RequiredAttendees != null)
       {
-        foreach (var attendee in appointment.RequiredAttendees)
+        foreach (var attendee in proxy.RequiredAttendees)
         {
-          meeting.RequiredAttendees.Add(attendee.Address);
+          appointment.RequiredAttendees.Add(attendee.Address);
         }
       }
 
-      if (appointment.OptionalAttendees != null)
+      if (proxy.OptionalAttendees != null)
       {
-        foreach (var attendee in appointment.OptionalAttendees)
+        foreach (var attendee in proxy.OptionalAttendees)
         {
-          meeting.OptionalAttendees.Add(attendee.Address);
+          appointment.OptionalAttendees.Add(attendee.Address);
         }
       }
 
-      if (appointment.Resources != null)
+      if (proxy.Resources != null)
       {
-        foreach (var resource in appointment.Resources)
+        foreach (var resource in proxy.Resources)
         {
-          meeting.Resources.Add(resource.Address);
+          appointment.Resources.Add(resource.Address);
         }
       }
 
-      meeting.ICalUid = 
+      SetExtendedProperties(appointment, proxy.ExtendedProperties);
+
+      appointment.ICalUid = 
         Guid.NewGuid().ToString() + email.Substring(email.IndexOf('@'));
 
-      // Send the meeting request
-      meeting.Save(Office365.SendInvitationsMode.SendToAllAndSaveCopy);
+      // SendMessage the proxy request
+      appointment.Save(Office365.SendInvitationsMode.SendToAllAndSaveCopy);
 
-      return meeting.Id.ToString();
+      return appointment.Id.ToString();
     }
     #endregion
 
-    #region Find method
+    #region FindAppointments method
     /// <summary>
     /// Retrieves all appointments' IDs in the specified range of dates.
     /// </summary>
@@ -197,25 +200,25 @@
     /// an optional parameter, determines maximum results in resonse.
     /// </param>
     /// <returns>a collection of appointments' IDs.</returns>
-    public IEnumerable<string> Find(
+    public IEnumerable<string> FindAppointments(
       string email,
       DateTime start,
       DateTime? end,
       int? maxResults)
     {
       return Call(
-        "Find",
-        new FindRequest
+        "FindAppointments",
+        new FindAppointmentsRequest
         {
           email = email,
           start = start,
           end = end,
           maxResults = maxResults
         },
-        FindImpl);
+        FindAppointmentsImpl);
     }
 
-    public struct FindRequest
+    public struct FindAppointmentsRequest
     {
       public string email;
       public DateTime start;
@@ -223,7 +226,7 @@
       public int? maxResults;
     }
 
-    private IEnumerable<string> FindImpl(FindRequest request)
+    private IEnumerable<string> FindAppointmentsImpl(FindAppointmentsRequest request)
     {
       Office365.CalendarView view = new Office365.CalendarView(
         request.start,
@@ -252,44 +255,44 @@
     }
     #endregion
 
-    #region Get method
+    #region GetAppointment method
     /// <summary>
     /// Gets an appointment by its ID in the calendar of the specified user.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>
     /// <param name="ID">
-    /// the appointment unique ID received on successful Create method call.
+    /// the appointment unique ID received on successful CreateAppointment method call.
     /// </param>
     /// <returns>
     /// an Appointment instance or null if the appointment was not found.
     /// </returns>
-    public Appointment Get(string email, string ID)
+    public Appointment GetAppointment(string email, string ID)
     {
       return Call(
-        "Get",
-        new GetRequest
+        "GetAppointment",
+        new ProcessAppointmentRequest
         {
           email = email,
           ID = ID
         },
-        GetImpl);
+        GetAppointmentImpl);
     }
 
-    public struct GetRequest
+    public struct ProcessAppointmentRequest
     {
       public string email;
       public string ID;
     }
 
-    private Appointment GetImpl(GetRequest request)
+    private Appointment GetAppointmentImpl(ProcessAppointmentRequest request)
     {
-      var appointment = GetAppointment(request.email, request.ID);
+      var appointment = RetrieveAppointment(request.email, request.ID);
 
       return ConvertAppointment(appointment);
     }
     #endregion
 
-    #region Update method
+    #region UpdateAppointment method
     /// <summary>
     /// Updates the specified appointment.
     /// Note: 
@@ -297,7 +300,7 @@
     ///   appointment.
     /// </summary>
     /// <param name="email">
-    /// An e-mail address of an organizer or a participant of the meeting.
+    /// An e-mail address of an organizer or a participant of the appointment.
     /// </param>
     /// <param name="appointment">
     /// An appointment to update. 
@@ -309,68 +312,77 @@
     /// <remarks>
     /// Only organizer can update an appointment.
     /// </remarks>
-    public bool Update(string email, Appointment appointment)
+    public bool UpdateAppointment(string email, Appointment appointment)
     {
       return Call(
-        "Update",
-        new UpdateRequest
+        "UpdateAppointment",
+        new UpdateAppointmentRequest
         {
           email = email,
           appointment = appointment
         },
-        UpdateImpl).GetValueOrDefault(false);
+        UpdateAppointmentImpl).GetValueOrDefault(false);
     }
 
-    public struct UpdateRequest
+    public struct UpdateAppointmentRequest
     {
       public string email;
       public Appointment appointment;
     }
 
-    private bool? UpdateImpl(UpdateRequest request)
+    private bool? UpdateAppointmentImpl(UpdateAppointmentRequest request)
     { 
-      var appointment = request.appointment;
+      var proxy = request.appointment;
 
-      if (appointment == null)
+      if (proxy == null)
       {
         throw new ArgumentNullException("request.appointment");
       }
 
-      var item = GetAppointment(request.email, appointment.Id);
+      var appointment = RetrieveAppointment(request.email, proxy.Id);
 
-      // Note: only organizer may update the appointment.
-      if ((item != null) &&
-        (item.MyResponseType == Office365.MeetingResponseType.Organizer))
+      // Note: only organizer may update the proxy.
+      if ((appointment != null) &&
+        (appointment.MyResponseType == Office365.MeetingResponseType.Organizer))
       {
-        item.Start = appointment.Start;
-        item.End = appointment.End;
-
-        if (!string.IsNullOrEmpty(appointment.Location))
+        if (!proxy.Start.Equals(DateTime.MinValue))
         {
-          item.Location = appointment.Location;
+          appointment.Start = proxy.Start;
         }
 
-        if (!string.IsNullOrEmpty(appointment.Subject))
+        if (!proxy.End.Equals(DateTime.MinValue))
         {
-          item.Subject = appointment.Subject;
+          appointment.End = proxy.End;
+        }
+        
+        if (!string.IsNullOrEmpty(proxy.Location))
+        {
+          appointment.Location = proxy.Location;
         }
 
-        if ((appointment.ReminderMinutesBeforeStart > 0) && 
-          (item.ReminderMinutesBeforeStart != appointment.ReminderMinutesBeforeStart))
+        if (!string.IsNullOrEmpty(proxy.Subject))
         {
-          item.ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart;
+          appointment.Subject = proxy.Subject;
         }
 
-        // TODO: update more properties, e.g. external properties
+        if ((proxy.ReminderMinutesBeforeStart > 0) && 
+          (appointment.ReminderMinutesBeforeStart != proxy.ReminderMinutesBeforeStart))
+        {
+          appointment.ReminderMinutesBeforeStart = proxy.ReminderMinutesBeforeStart;
+        }
+
+        SetExtendedProperties(appointment, proxy.ExtendedProperties);
+
+        // TODO: update more properties
 
         // Unless explicitly specified, the default is to use SendToAllAndSaveCopy.
-        // This can convert an appointment into a meeting. To avoid this,
+        // This can convert an proxy into a proxy. To avoid this,
         // explicitly set SendToNone on non-meetings.
-        var mode = item.IsMeeting ?
+        var mode = appointment.IsMeeting ?
           Office365.SendInvitationsOrCancellationsMode.SendToAllAndSaveCopy :
           Office365.SendInvitationsOrCancellationsMode.SendToNone;
 
-        item.Update(Office365.ConflictResolutionMode.AlwaysOverwrite, mode);
+        appointment.Update(Office365.ConflictResolutionMode.AlwaysOverwrite, mode);
 
         return true;
       }
@@ -379,41 +391,41 @@
     } 
     #endregion
 
-    #region Cancel method
+    #region CancelAppointment method
     /// <summary>
     /// Cancels an appointment specified by unique ID.
     /// Sends corresponding notifications to all participants.
     /// </summary>
-    /// <param name="email">an e-mail of the organizer of the appointment.</param>
+    /// <param name="email">an e-mail of the organizer of the proxy.</param>
     /// <param name="ID">the appointment unique ID.</param>
     /// <param name="reason">a text message to be sent to all participants.</param>
     /// <returns>
     /// true when the appointment was canceled successfully, and false otherwise.
     /// </returns>
     /// <remarks>Only the appointment organizer may cancel it.</remarks>
-    public bool Cancel(string email, string ID, string reason)
+    public bool CancelAppointment(string email, string ID, string reason)
     {
       return Call(
-        "Cancel",
-        new CancelRequest
+        "CancelAppointment",
+        new CancelAppointmentRequest
         {
           email = email,
           ID = ID,
           reason = reason
         },
-        CancelImpl).GetValueOrDefault(false);
+        CancelAppointmentImpl).GetValueOrDefault(false);
     }
 
-    public struct CancelRequest
+    public struct CancelAppointmentRequest
     {
       public string email;
       public string ID;
       public string reason;
     }
 
-    private bool? CancelImpl(CancelRequest request)
+    private bool? CancelAppointmentImpl(CancelAppointmentRequest request)
     {
-      var appointment = GetAppointment(request.email, request.ID);
+      var appointment = RetrieveAppointment(request.email, request.ID);
 
       if (appointment != null)
       {
@@ -426,9 +438,9 @@
     }
     #endregion
 
-    #region Delete method
+    #region DeleteAppointment method
     /// <summary>
-    /// Delete an appointment specified by unique ID from organizer's e-mail box and
+    /// Deletes an appointment specified by unique ID from organizer's e-mail box and
     /// sends cancel notifications to all participants.
     /// </summary>
     /// <param name="email">an e-mail of the organizer of the appointment.</param>
@@ -437,27 +449,21 @@
     /// true when the appointment was successfully deleted, and false otherwise.
     /// </returns>
     /// <remarks>Only the appointment organizer may delete it.</remarks>
-    public bool Delete(string email, string ID)
+    public bool DeleteAppointment(string email, string ID)
     {
       return Call(
-        "Delete",
-        new DeleteRequest
+        "DeleteAppointment",
+        new ProcessAppointmentRequest
         {
           email = email,
           ID = ID
         },
-        DeleteImpl).GetValueOrDefault(false);
+        DeleteAppointmentImpl).GetValueOrDefault(false);
     }
 
-    public struct DeleteRequest
+    private bool? DeleteAppointmentImpl(ProcessAppointmentRequest request)
     {
-      public string email;
-      public string ID;
-    }
-
-    private bool? DeleteImpl(DeleteRequest request)
-    {
-      var appointment = GetAppointment(request.email, request.ID);
+      var appointment = RetrieveAppointment(request.email, request.ID);
 
       if (appointment != null)
       {
@@ -470,7 +476,7 @@
     }
     #endregion
 
-    #region Accept method
+    #region AcceptAppointment method
     /// <summary>
     /// Accepts the specified appointment.
     /// </summary>
@@ -479,27 +485,21 @@
     /// <returns>
     /// true when the operation succeseed, and false otherwise.
     /// </returns>
-    public bool Accept(string email, string ID)
+    public bool AcceptAppointment(string email, string ID)
     {
       return Call(
-        "Accept",
-        new AcceptRequest
+        "AcceptAppointment",
+        new ProcessAppointmentRequest
         {
           email = email,
           ID = ID
         },
-        AcceptImpl).GetValueOrDefault(false);
+        AcceptAppointmentImpl).GetValueOrDefault(false);
     }
 
-    public struct AcceptRequest
+    private bool? AcceptAppointmentImpl(ProcessAppointmentRequest request)
     {
-      public string email;
-      public string ID;
-    }
-
-    private bool? AcceptImpl(AcceptRequest request)
-    {
-      var appointment = GetAppointment(request.email, request.ID);
+      var appointment = RetrieveAppointment(request.email, request.ID);
 
       if (appointment != null)
       {
@@ -512,7 +512,7 @@
     }
     #endregion
 
-    #region Decline method
+    #region DeclineAppointment method
     /// <summary>
     /// Declines the specified appointment.
     /// </summary>
@@ -521,27 +521,21 @@
     /// <returns>
     /// true when the operation succeseed, and false otherwise.
     /// </returns>
-    public bool Decline(string email, string ID)
+    public bool DeclineAppointment(string email, string ID)
     {
       return Call(
-        "Decline",
-        new DeclineRequest
+        "DeclineAppointment",
+        new ProcessAppointmentRequest
         {
           email = email,
           ID = ID
         },
-        DeclineImpl).GetValueOrDefault(false);
+        DeclineAppointmentImpl).GetValueOrDefault(false);
     }
 
-    public struct DeclineRequest
+    private bool? DeclineAppointmentImpl(ProcessAppointmentRequest request)
     {
-      public string email;
-      public string ID;
-    }
-
-    private bool? DeclineImpl(DeclineRequest request)
-    {
-      var appointment = GetAppointment(request.email, request.ID);
+      var appointment = RetrieveAppointment(request.email, request.ID);
 
       if (appointment != null)
       {
@@ -558,7 +552,7 @@
     /// <summary>
     /// Creates a new e-mail message and stores it to Draft folder.
     /// Later to this message one may add attachments and then send it 
-    /// to recipients by the Send method.
+    /// to recipients by the SendMessage method.
     /// </summary>
     /// <param name="email">An e-mail address of the sender.</param>
     /// <param name="message">
@@ -702,7 +696,7 @@
     }
     #endregion
     
-    #region Send method
+    #region SendMessage method
     /// <summary>
     /// Sends the specified e-mail message to receivers.
     /// </summary>
@@ -712,42 +706,17 @@
     /// true when the message was successfully sent, and false otherwise.
     /// </returns>
     /// <exception cref="IOException">in case of error.</exception>
-    public bool Send(string email, string ID)
+    public bool SendMessage(string email, string ID)
     {
       return Call(
-        "Send",
-        new SendRequest
+        "SendMessage",
+        new EMailProcessRequest
         {
           email = email,
-          ID = ID
+          ID = ID,
+          action = "send"
         },
-        SendImpl).GetValueOrDefault(false);
-    }
-
-    public struct SendRequest
-    {
-      public string email;
-      public string ID;
-    }
-
-    private bool? SendImpl(SendRequest request)
-    {
-      if (string.IsNullOrEmpty(request.ID))
-      {
-        throw new ArgumentNullException("request.ID");
-      }
-
-      var service = GetService(request.email);
-      var message = Office365.EmailMessage.Bind(service, request.ID);
-
-      if (message == null)
-      {
-        return false;
-      }
-
-      message.SendAndSaveCopy();
-
-      return true;
+        ProcessEMailImpl).GetValueOrDefault(false);
     }
     #endregion
 
@@ -830,7 +799,7 @@
     {
       return Call(
         "GetMessage",
-        new GetMessageRequest
+        new EMailProcessRequest
         {
           email = email,
           ID = ID
@@ -838,17 +807,11 @@
         GetMessageImpl);
     }
 
-    public struct GetMessageRequest
-    {
-      public string email;
-      public string ID;
-    }
-
-    private EMailMessage GetMessageImpl(GetMessageRequest request)
+    private EMailMessage GetMessageImpl(EMailProcessRequest request)
     {
       var service = GetService(request.email);
       var message = Office365.EmailMessage.Bind(service, request.ID);
-
+      
       return ConvertMessage(message);
     }
     #endregion
@@ -966,6 +929,42 @@
     }
     #endregion
 
+    #region GetMessageContent method
+    /// <summary>
+    /// Gets an e-mail message content by its ID.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="ID">an e-mail message's unique ID.</param>
+    /// <returns>
+    /// an MimeContent instance or null if the e-mail with 
+    /// the specified ID was not found.
+    /// </returns>
+    public MimeContent GetMessageContent(string email, string ID)
+    {
+      return Call(
+        "GetMessageContent",
+        new EMailProcessRequest
+        {
+          email = email,
+          ID = ID
+        },
+        GetMessageContentImpl);
+    }
+
+    private MimeContent GetMessageContentImpl(EMailProcessRequest request)
+    {
+      var service = GetService(request.email);
+      var message = Office365.EmailMessage.Bind(service, request.ID);
+      var mimeContent = message.MimeContent;
+
+      return new MimeContent 
+      {
+        CharacterSet = mimeContent.CharacterSet,
+        Content = mimeContent.Content
+      };
+    }
+    #endregion
+
     #region DeleteMessage method
     /// <summary>
     /// Deletes an e-mail message specified by unique ID.
@@ -1052,7 +1051,7 @@
     /// Notifies about a change in a specified mail box.
     /// </summary>
     /// <param name="email">A mail box where change has occured.</param>
-    /// <param name="ID">An ID of item changed.</param>
+    /// <param name="ID">An ID of proxy changed.</param>
     /// <param name="changeType">A change type: delete, create, modify.</param>
     public bool Notification(string email, string ID, string changeType)
     {
@@ -1319,16 +1318,16 @@
     }
 
     /// <summary>
-    /// Gets the specified appointment. 
+    /// Gets the specified proxy. 
     /// </summary>
     /// <param name="email">
-    /// an e-mail address of an organizer or a participant of the appointment.
+    /// an e-mail address of an organizer or a participant of the proxy.
     /// </param>
-    /// <param name="ID">an unique appointment ID to search.</param>
+    /// <param name="ID">an unique proxy ID to search.</param>
     /// <returns>
-    /// an Appointment instance or null when the appointment was not found.
+    /// an Appointment instance or null when the proxy was not found.
     /// </returns>
-    private Office365.Appointment GetAppointment(string email, string ID)
+    private Office365.Appointment RetrieveAppointment(string email, string ID)
     {
       var service = GetService(email);
 
@@ -1492,7 +1491,63 @@
         }
       }
 
+      proxy.ExtendedProperties = GetExtendedProperties(appointment);
+
       return proxy;
+    }
+
+    private static List<ExtendedProperty> GetExtendedProperties(
+      Office365.Item item)
+    {
+      var properties = null as Office365.ExtendedPropertyCollection;
+      var result = null as List<ExtendedProperty>;
+
+      if (item.TryGetProperty(
+        Office365.ItemSchema.ExtendedProperties,
+        out properties))
+      {
+        foreach (var property in properties)
+        {
+          if (property.PropertyDefinition.PropertySetId !=
+            EwsService.ExtendedPropertySetId)
+          {
+            // not our extended property, skip it
+            continue;
+          }
+
+          if (result == null)
+          {
+            result = new List<ExtendedProperty>();
+          }
+
+          result.Add(
+            new ExtendedProperty
+            {
+              Name = property.PropertyDefinition.Name,
+              Value = property.Value as string
+            });
+        }
+      }
+
+      return result;
+    }
+
+    private static void SetExtendedProperties(
+      Office365.Item item,
+      List<ExtendedProperty> properties)
+    {
+      if (properties != null)
+      {
+        foreach (var property in properties)
+        {
+          item.SetExtendedProperty(
+            new Office365.ExtendedPropertyDefinition(
+              EwsService.ExtendedPropertySetId,
+              property.Name,
+              Office365.MapiPropertyType.String),
+            property.Value);
+        }
+      }
     }
 
     private static List<Attendee> GetAttendees(
@@ -1577,10 +1632,10 @@
       result.CcRecipients = GetRecipients(message, "CcRecipients");
       result.ToRecipients = GetRecipients(message, "ToRecipients");
 
-      result.Attachments = new List<Attachment>();
-
       if (message.HasAttachments)
       {
+        result.Attachments = new List<Attachment>();
+
         foreach (var attachment in message.Attachments)
         {
           result.Attachments.Add(
@@ -1592,6 +1647,8 @@
             });
         }
       }
+
+      result.ExtendedProperties = GetExtendedProperties(message);
 
       return result;
     }
@@ -1831,6 +1888,10 @@
         {
           message.Delete(Office365.DeleteMode.MoveToDeletedItems);
         }
+        else if (string.Compare(request.action, "send", true) == 0)
+        {
+          message.SendAndSaveCopy();
+        }
         else if (!string.IsNullOrEmpty(request.folder))
         {
           var folderID = FindFolder(service, request.folder);
@@ -1851,14 +1912,21 @@
       }
 
       return false;
-    }
-
-    
+    }  
     #endregion
 
     #region private fields
-    private static Regex IsHtml = new Regex(@"\<html\>.*\</html\>", 
+    /// <summary>
+    /// HTML pattern.
+    /// </summary>
+    private static Regex IsHtml = new Regex(@"\<html\>.*\</html\>",
       RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
+
+    /// <summary>
+    /// The GUID for the extended property set.
+    /// </summary>
+    private static Guid ExtendedPropertySetId =
+      new Guid("{DD12CD36-DB49-4002-A809-56B40E6B60E9}");
     #endregion
   }
 }

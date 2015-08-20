@@ -15,18 +15,18 @@ namespace Bnhp.Office365
   [ServiceContract(Namespace = "https://www.bankhapoalim.co.il/")]
   public interface IEwsService
   {
-    #region Appointment and meeting
+    #region Appointment and proxy
     /// <summary>
-    /// Creates a new appointment/meeting and sends notifications to attendees.
+    /// Creates a new appointment and sends notifications to attendees.
     /// </summary>
     /// <param name="email">An e-mail address of the organizer.</param>
     /// <param name="appointment">
-    /// an Appointment instance with data for the appointment.
+    /// an Appointment instance with data for the proxy.
     /// </param>
-    /// <returns>An unique ID of the new appointment.</returns>
+    /// <returns>An unique ID of the new proxy.</returns>
     /// <exception cref="IOException">in case of error.</exception>
     [OperationContract]
-    string Create(string email, Appointment appointment);
+    string CreateAppointment(string email, Appointment appointment);
 
     /// <summary>
     /// Retrieves all appointments' IDs that belongs to the specified range of dates.
@@ -39,50 +39,50 @@ namespace Bnhp.Office365
     /// </param>
     /// <returns>a list of appointments' IDs.</returns>
     [OperationContract]
-    IEnumerable<string> Find(string email,
+    IEnumerable<string> FindAppointments(string email,
       DateTime start,
       DateTime? end,
       int? maxResults);
 
     /// <summary>
-    /// Gets an appointment by its unique ID.
+    /// Gets an proxy by its unique ID.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>
     /// <param name="ID">an appointment's unique ID</param>
     /// <returns>
-    /// an Appointment instance or null if the appointment with the specified ID
+    /// an Appointment instance or null if the proxy with the specified ID
     /// was not found.
     /// </returns>
     [OperationContract]
-    Appointment Get(string email, string ID);
+    Appointment GetAppointment(string email, string ID);
 
     /// <summary>
     /// Updates the specified appointment.
     /// Note: 
     ///   All the specified properties will be overwritten in the origin 
-    ///   appointment.
+    ///   proxy.
     /// </summary>
     /// <param name="email">
-    /// An e-mail address of an organizer or a participant of the meeting.
+    /// An e-mail address of an organizer or a participant of the appointment.
     /// </param>
     /// <param name="appointment">
     /// An appointment to update. 
     /// The appointment ID must be not null.
     /// </param>
     /// <returns>
-    /// true when the appointment was modified successfully, and false otherwise.
+    /// true when the proxy was modified successfully, and false otherwise.
     /// </returns>
     /// <remarks>
-    /// Only organizer can update an appointment.
+    /// Only organizer can update an proxy.
     /// </remarks>
     [OperationContract]
-    bool Update(string email, Appointment appointment);
+    bool UpdateAppointment(string email, Appointment appointment);
 
     /// <summary>
     /// Cancels an appointment specified by unique ID.
     /// Sends corresponding notifications to all participants.
     /// </summary>
-    /// <param name="email">an e-mail of the organizer of the appointment.</param>
+    /// <param name="email">an e-mail of the organizer of the proxy.</param>
     /// <param name="ID">the appointment unique ID.</param>
     /// <param name="reason">a text message to be sent to all participants.</param>
     /// <returns>
@@ -90,20 +90,20 @@ namespace Bnhp.Office365
     /// </returns>
     /// <remarks>Only the appointment organizer may cancel it.</remarks>
     [OperationContract]
-    bool Cancel(string email, string ID, string reason);
+    bool CancelAppointment(string email, string ID, string reason);
 
     /// <summary>
-    /// Delete an appointment specified by unique ID from organizer's e-mail box and
+    /// Delets an appointment specified by unique ID from organizer's e-mail box and
     /// sends cancel notifications to all participants.
     /// </summary>
-    /// <param name="email">an e-mail of the organizer of the appointment.</param>
+    /// <param name="email">an e-mail of the organizer of the proxy.</param>
     /// <param name="ID">the appointment unique ID.</param>
     /// <returns>
     /// true when the appointment was successfully deleted, and false otherwise.
     /// </returns>
     /// <remarks>Only the appointment organizer may delete it.</remarks>
     [OperationContract]
-    bool Delete(string email, string ID);
+    bool DeleteAppointment(string email, string ID);
 
     /// <summary>
     /// Accepts the specified appointment.
@@ -114,7 +114,7 @@ namespace Bnhp.Office365
     /// true when the operation succeseed, and false otherwise.
     /// </returns>
     [OperationContract]
-    bool Accept(string email, string ID);
+    bool AcceptAppointment(string email, string ID);
 
     /// <summary>
     /// Declines the specified appointment.
@@ -125,13 +125,13 @@ namespace Bnhp.Office365
     /// true when the operation succeseed, and false otherwise.
     /// </returns>
     [OperationContract]
-    bool Decline(string email, string ID);
+    bool DeclineAppointment(string email, string ID);
     #endregion
 
     #region E-Mail
     /// <summary>
     /// Creates a new e-mail message and stores it to Draft folder.
-    /// Later this message may be sent by the Send method.
+    /// Later this message may be sent by the SendMessage method.
     /// </summary>
     /// <param name="email">An e-mail address of the sender.</param>
     /// <param name="message">
@@ -169,7 +169,7 @@ namespace Bnhp.Office365
     /// </returns>
     /// <exception cref="IOException">in case of error.</exception>
     [OperationContract]
-    bool Send(string email, string ID);
+    bool SendMessage(string email, string ID);
 
     /// <summary>
     /// Retrieves all e-mal messages' IDs from Inbox.
@@ -224,6 +224,18 @@ namespace Bnhp.Office365
     byte[] GetAttachmentByIndex(string email, string ID, int index);
 
     /// <summary>
+    /// Gets an e-mail message content by its ID.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="ID">an e-mail message's unique ID.</param>
+    /// <returns>
+    /// an MimeContent instance or null if the e-mail with 
+    /// the specified ID was not found.
+    /// </returns>
+    [OperationContract]
+    MimeContent GetMessageContent(string email, string ID);
+
+    /// <summary>
     /// Deletes an e-mail message specified by unique ID.
     /// </summary>
     /// <param name="email">an user's e-mail box.</param>
@@ -264,7 +276,7 @@ namespace Bnhp.Office365
     /// Notifies about a change in a specified mail box.
     /// </summary>
     /// <param name="email">A mail box where change has occured.</param>
-    /// <param name="ID">An ID of item changed.</param>
+    /// <param name="ID">An ID of proxy changed.</param>
     /// <param name="changeType">A change type: delete, create, modify.</param>
     [OperationContract]
     bool Notification(string email, string ID, string changeType);

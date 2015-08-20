@@ -180,17 +180,6 @@
     </Compile>
     <Compile Include="ResponseNotifier.cs" />
     <Compile Include="RunitService.cs" />
-    <Compile Include="RunIT\Operations\Accept.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="RunIT\Operations\Decline.cs" />
-    <Compile Include="RunIT\Operations\Delete.cs" />
-    <Compile Include="RunIT\Operations\Cancel.cs" />
-    <Compile Include="RunIT\Operations\Update.cs" />
-    <Compile Include="RunIT\Operations\Get.cs" />
-    <Compile Include="RunIT\Operations\Find.cs" />
-    <Compile Include="RunIT\Operations\Create.cs" />
-    <Compile Include="RunIT\RunITService.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="TraceMessage.cs">
       <DependentUpon>Model.tt</DependentUpon>

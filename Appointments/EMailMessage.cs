@@ -100,4 +100,20 @@ namespace Bnhp.Office365
     [DataMember]
     public int? Size { get; internal set; }
   }
+
+  [DataContract(Namespace = "https://www.bankhapoalim.co.il/")]
+  public class MimeContent
+  {
+    /// <summary>
+    /// Gets or sets the character set of the content.
+    /// </summary>
+    [DataMember]
+    public string CharacterSet { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the content.
+    /// </summary>
+    [DataMember]
+    public byte[] Content { get; set; }
+  }
 }

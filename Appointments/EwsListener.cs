@@ -119,7 +119,7 @@
         users,
         cancellation);
 
-      // Get their affinity.
+      // GetAppointment their affinity.
       using(var model = CreateModel())
       {
         usersAffinities = await model.MailboxAffinities.
