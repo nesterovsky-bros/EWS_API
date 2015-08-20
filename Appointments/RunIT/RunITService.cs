@@ -32,12 +32,12 @@
     /* 
      * A request example:
      
-        <Get xmlns="https://www.bankhapoalim.co.il/">
+        <GetAppointment xmlns="https://www.bankhapoalim.co.il/">
           <email>anesterovsky@bphx.com</email>
           <start>2015-06-30T12:38:00</start>
           <end>2015-06-30T12:38:00</end>
           <maxResults>1000</maxResults>
-        </Get>
+        </GetAppointment>
      
      */
     public override string Request(IBeanRequestMessage message)
@@ -51,7 +51,7 @@
           var request = FromXmlString<Create>(message.OperationArgument);
           var response = new CreateResponse
           {
-            CreateResult = service.Create(
+            CreateResult = service.CreateAppointment(
               request.email,
               request.appointment)
           };
@@ -63,7 +63,7 @@
           var request = FromXmlString<Find>(message.OperationArgument);
           var response = new FindResponse
           {
-            FindResult = service.Find(
+            FindResult = service.FindAppointments(
               request.email, 
               request.start, 
               request.end, 
@@ -77,7 +77,7 @@
           var request = FromXmlString<Get>(message.OperationArgument);
           var response = new GetResponse
           {
-            GetResult = service.Get(
+            GetResult = service.GetAppointment(
               request.email,
               request.UID)
           };
