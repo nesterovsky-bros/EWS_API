@@ -41,13 +41,13 @@
 
     #region Create method
     /// <summary>
-    /// Creates a new appointment/meeting and sends notifications to attendees.
+    /// Creates a new proxy/proxy and sends notifications to attendees.
     /// </summary>
     /// <param name="email">An e-mail address of the organizer.</param>
-    /// <param name="appointment">
-    /// an AppointmentProxy instance with data for the appointment.
+    /// <param name="proxy">
+    /// an AppointmentProxy instance with data for the proxy.
     /// </param>
-    /// <returns>An unique ID of the new appointment.</returns>
+    /// <returns>An unique ID of the new proxy.</returns>
     /// <exception cref="Exception">in case of error.</exception>
     public string Create(string email, Appointment appointment)
     {
@@ -88,68 +88,68 @@
     {
       if (request.appointment == null)
       {
-        throw new ArgumentNullException("request.appointment");
+        throw new ArgumentNullException("request.proxy");
       }
       
       var email = request.email;
       var service = GetService(email);
-      var meeting = new Office365.Appointment(service);
-      var appointment = request.appointment;
+      var appointment = new Office365.Appointment(service);
+      var proxy = request.appointment;
 
-      // Set the properties on the meeting object to create the meeting.
-      meeting.Subject = appointment.Subject;
+      // Set the properties on the proxy object to create the proxy.
+      appointment.Subject = proxy.Subject;
 
-      if (!string.IsNullOrEmpty(appointment.TextBody))
+      if (!string.IsNullOrEmpty(proxy.TextBody))
       {
-        meeting.Body = new Office365.MessageBody(
-          IsHtml.IsMatch(appointment.TextBody) ?
+        appointment.Body = new Office365.MessageBody(
+          IsHtml.IsMatch(proxy.TextBody) ?
             Office365.BodyType.HTML : Office365.BodyType.Text,
-          appointment.TextBody);
+          proxy.TextBody);
       }
 
-      meeting.Start = appointment.Start;
-      meeting.End = appointment.End;
-      meeting.Location = appointment.Location;
-      meeting.AllowNewTimeProposal = true;
-      meeting.Importance = (Office365.Importance)appointment.Importance;
-      meeting.ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart;
+      appointment.Start = proxy.Start;
+      appointment.End = proxy.End;
+      appointment.Location = proxy.Location;
+      appointment.AllowNewTimeProposal = true;
+      appointment.Importance = (Office365.Importance)proxy.Importance;
+      appointment.ReminderMinutesBeforeStart = proxy.ReminderMinutesBeforeStart;
 
-      if ((appointment.Recurrence != null) && 
-        (appointment.Recurrence.Type != RecurrenceType.Unknown))
+      if ((proxy.Recurrence != null) && 
+        (proxy.Recurrence.Type != RecurrenceType.Unknown))
       {
-        var start = appointment.Recurrence.StartDate;
+        var start = proxy.Recurrence.StartDate;
 
-        switch (appointment.Recurrence.Type)
+        switch (proxy.Recurrence.Type)
         {
           case RecurrenceType.Daily:
           {
-            meeting.Recurrence = new Office365.Recurrence.DailyPattern(
+            appointment.Recurrence = new Office365.Recurrence.DailyPattern(
               start,
-              appointment.Recurrence.Interval);
+              proxy.Recurrence.Interval);
 
             break;
           }
           case RecurrenceType.Weekly:
           {
-            meeting.Recurrence = new Office365.Recurrence.WeeklyPattern(
+            appointment.Recurrence = new Office365.Recurrence.WeeklyPattern(
               start,
-              appointment.Recurrence.Interval,
+              proxy.Recurrence.Interval,
               (Office365.DayOfTheWeek)start.DayOfWeek);
 
             break;
           }
           case RecurrenceType.Monthly:
           {
-            meeting.Recurrence = new Office365.Recurrence.MonthlyPattern(
+            appointment.Recurrence = new Office365.Recurrence.MonthlyPattern(
               start,
-              appointment.Recurrence.Interval,
+              proxy.Recurrence.Interval,
               start.Day);
 
             break;
           }
           case RecurrenceType.Yearly:
           {
-            meeting.Recurrence =
+            appointment.Recurrence =
               new Office365.Recurrence.YearlyPattern(
                 start,
                 (Office365.Month)start.Month,
@@ -159,47 +159,49 @@
           }
         }
 
-        if (appointment.Recurrence.HasEnd)
+        if (proxy.Recurrence.HasEnd)
         {
-          meeting.Recurrence.EndDate = appointment.Recurrence.EndDate;
+          appointment.Recurrence.EndDate = proxy.Recurrence.EndDate;
         }
         else
         {
-          meeting.Recurrence.NumberOfOccurrences = appointment.Recurrence.NumberOfOccurrences;
+          appointment.Recurrence.NumberOfOccurrences = proxy.Recurrence.NumberOfOccurrences;
         }
       }
 
-      if (appointment.RequiredAttendees != null)
+      if (proxy.RequiredAttendees != null)
       {
-        foreach (var attendee in appointment.RequiredAttendees)
+        foreach (var attendee in proxy.RequiredAttendees)
         {
-          meeting.RequiredAttendees.Add(attendee.Address);
+          appointment.RequiredAttendees.Add(attendee.Address);
         }
       }
 
-      if (appointment.OptionalAttendees != null)
+      if (proxy.OptionalAttendees != null)
       {
-        foreach (var attendee in appointment.OptionalAttendees)
+        foreach (var attendee in proxy.OptionalAttendees)
         {
-          meeting.OptionalAttendees.Add(attendee.Address);
+          appointment.OptionalAttendees.Add(attendee.Address);
         }
       }
 
-      if (appointment.Resources != null)
+      if (proxy.Resources != null)
       {
-        foreach (var resource in appointment.Resources)
+        foreach (var resource in proxy.Resources)
         {
-          meeting.Resources.Add(resource.Address);
+          appointment.Resources.Add(resource.Address);
         }
       }
 
-      meeting.ICalUid = 
+      SetExtendedProperties(appointment, proxy.ExtendedProperties);
+
+      appointment.ICalUid = 
         Guid.NewGuid().ToString() + email.Substring(email.IndexOf('@'));
 
-      // Send the meeting request
-      meeting.Save(Office365.SendInvitationsMode.SendToAllAndSaveCopy);
+      // SendMessage the proxy request
+      appointment.Save(Office365.SendInvitationsMode.SendToAllAndSaveCopy);
 
-      return meeting.Id.ToString();
+      return appointment.Id.ToString();
     }
     #endregion
 
@@ -296,14 +298,14 @@
 
     #region Find method
     /// <summary>
-    /// Finds an appointment by its ID in the calendar of the specified user.
+    /// Finds an proxy by its ID in the calendar of the specified user.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>
     /// <param name="ID">
-    /// the appointment unique ID received on successful Create method call.
+    /// the proxy unique ID received on successful CreateAppointment method call.
     /// </param>
     /// <returns>
-    /// an AppointmentProxy instance or null if the appointment was not found.
+    /// an AppointmentProxy instance or null if the proxy was not found.
     /// </returns>
     public Appointment Find(string email, string ID)
     {
@@ -318,11 +320,11 @@
     }
 
     /// <summary>
-    /// Starts Find method asynchronously.
+    /// Starts FindAppointments method asynchronously.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>
     /// <param name="ID">
-    /// the appointment unique ID received on successful Create method call.
+    /// the proxy unique ID received on successful CreateAppointment method call.
     /// </param>
     /// <returns>a request ID.</returns>
     public long FindBegin(string email, string ID)
@@ -338,7 +340,7 @@
     }
 
     /// <summary>
-    /// Finishes asynchronous Find method call.
+    /// Finishes asynchronous FindAppointments method call.
     /// </summary>
     /// <param name="requestID">
     /// a request ID obtained in result of FindBegin call.
@@ -367,23 +369,23 @@
 
     #region Update method
     /// <summary>
-    /// Updates the specified appointment.
+    /// Updates the specified proxy.
     /// Note: 
     ///   All the specified properties will be overwritten in the origin 
-    ///   appointment.
+    ///   proxy.
     /// </summary>
     /// <param name="email">
-    /// An e-mail address of an organizer or a participant of the meeting.
+    /// An e-mail address of an organizer or a participant of the proxy.
     /// </param>
-    /// <param name="appointment">
-    /// An appointment to update. 
-    /// The appointment ID must be not null.
+    /// <param name="proxy">
+    /// An proxy to update. 
+    /// The proxy ID must be not null.
     /// </param>
     /// <returns>
-    /// true when the appointment was modified successfully, and false otherwise.
+    /// true when the proxy was modified successfully, and false otherwise.
     /// </returns>
     /// <remarks>
-    /// Only organizer can update an appointment.
+    /// Only organizer can update an proxy.
     /// </remarks>
     public bool Update(string email, Appointment appointment)
     {
@@ -401,8 +403,8 @@
     /// Starts Update method asynchronously.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>
-    /// <param name="appointment">
-    /// an Appointment instance with new data for the appointment.
+    /// <param name="proxy">
+    /// an Appointment instance with new data for the proxy.
     /// </param>
     /// <returns>a request ID.</returns>
     public long UpdateBegin(string email, Appointment appointment)
@@ -424,7 +426,7 @@
     /// a request ID obtained in result of UpdateBegin call.
     /// </param>
     /// <returns>
-    /// true when the appointment was modified successfully, false when appointment 
+    /// true when the proxy was modified successfully, false when proxy 
     /// wasn't modified, and null when task not finished yet.
     /// </returns>
     public bool? UpdateEnd(long requestID)
@@ -440,58 +442,60 @@
 
     private bool? UpdateImpl(UpdateRequest request)
     { 
-      var appointment = request.appointment;
+      var proxy = request.appointment;
 
-      if (appointment == null)
+      if (proxy == null)
       {
-        throw new ArgumentNullException("request.appointment");
+        throw new ArgumentNullException("request.proxy");
       }
 
-      var item = GetAppointment(request.email, appointment.Id);
+      var appointment = GetAppointment(request.email, proxy.Id);
 
-      // Note: only organizer may update the appointment.
-      if ((item != null) &&
-        (item.MyResponseType == Office365.MeetingResponseType.Organizer))
+      // Note: only organizer may update the proxy.
+      if ((appointment != null) &&
+        (appointment.MyResponseType == Office365.MeetingResponseType.Organizer))
       {
-        item.Start = appointment.Start;
-        item.End = appointment.End;
+        appointment.Start = proxy.Start;
+        appointment.End = proxy.End;
 
-        if (!string.IsNullOrEmpty(appointment.Location))
+        if (!string.IsNullOrEmpty(proxy.Location))
         {
-          item.Location = appointment.Location;
+          appointment.Location = proxy.Location;
         }
 
-        if (!string.IsNullOrEmpty(appointment.Subject))
+        if (!string.IsNullOrEmpty(proxy.Subject))
         {
-          item.Subject = appointment.Subject;
+          appointment.Subject = proxy.Subject;
         }
 
-        if (item.ReminderMinutesBeforeStart != appointment.ReminderMinutesBeforeStart)
+        if (appointment.ReminderMinutesBeforeStart != proxy.ReminderMinutesBeforeStart)
         {
-          item.ReminderMinutesBeforeStart = appointment.ReminderMinutesBeforeStart;
+          appointment.ReminderMinutesBeforeStart = proxy.ReminderMinutesBeforeStart;
         }
 
-        //if (item.IsRecurring)
+        //if (proxy.IsRecurring)
         //{
-        //  if (appointment.StartRecurrence.HasValue)
+        //  if (proxy.StartRecurrence.HasValue)
         //  {
-        //    item.Recurrence.StartDate = appointment.StartRecurrence.Value;
+        //    proxy.Recurrence.StartDate = proxy.StartRecurrence.Value;
         //  }
 
-        //  if (appointment.EndRecurrence.HasValue)
+        //  if (proxy.EndRecurrence.HasValue)
         //  {
-        //    item.Recurrence.EndDate = appointment.EndRecurrence.Value;
+        //    proxy.Recurrence.EndDate = proxy.EndRecurrence.Value;
         //  }
         //}
 
+        SetExtendedProperties(appointment, proxy.ExtendedProperties);
+
         // Unless explicitly specified, the default is to use SendToAllAndSaveCopy.
-        // This can convert an appointment into a meeting. To avoid this,
+        // This can convert an proxy into a proxy. To avoid this,
         // explicitly set SendToNone on non-meetings.
-        var mode = item.IsMeeting ?
+        var mode = appointment.IsMeeting ?
           Office365.SendInvitationsOrCancellationsMode.SendToAllAndSaveCopy :
           Office365.SendInvitationsOrCancellationsMode.SendToNone;
 
-        item.Update(Office365.ConflictResolutionMode.AlwaysOverwrite, mode);
+        appointment.Update(Office365.ConflictResolutionMode.AlwaysOverwrite, mode);
 
         return true;
       }
@@ -502,16 +506,16 @@
 
     #region Cancel method
     /// <summary>
-    /// Cancels an appointment specified by unique ID.
+    /// Cancels an proxy specified by unique ID.
     /// Sends corresponding notifications to all participants.
     /// </summary>
-    /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="ID">the appointment unique ID.</param>
+    /// <param name="email">an e-mail of the organizer of the proxy.</param>
+    /// <param name="ID">the proxy unique ID.</param>
     /// <param name="reason">a text message to be sent to all participants.</param>
     /// <returns>
-    /// true when the appointment was canceled successfully, and false otherwise.
+    /// true when the proxy was canceled successfully, and false otherwise.
     /// </returns>
-    /// <remarks>Only the appointment organizer may cancel it.</remarks>
+    /// <remarks>Only the proxy organizer may cancel it.</remarks>
     public bool Cancel(string email, string ID, string reason)
     {
       return Call(
@@ -528,8 +532,8 @@
     /// <summary>
     /// Starts Cancel method asynchronously.
     /// </summary>
-    /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="ID">the appointment unique ID.</param>
+    /// <param name="email">an e-mail of the organizer of the proxy.</param>
+    /// <param name="ID">the proxy unique ID.</param>
     /// <param name="reason">a text message to be sent to all participants.</param>
     /// <returns>a request ID.</returns>
     public long CancelBegin(string email, string ID, string reason)
@@ -552,7 +556,7 @@
     /// a request ID obtained in result of CancelBegin call.
     /// </param>
     /// <returns>
-    /// true when the appointment was canceled successfully, false when appointment 
+    /// true when the proxy was canceled successfully, false when proxy 
     /// wasn't canceled, and null when task not finished yet.
     /// </returns>
     public bool? CancelEnd(long requestID)
@@ -584,15 +588,15 @@
 
     #region Delete method
     /// <summary>
-    /// Delete an appointment specified by unique ID from organizer's e-mail box and
+    /// Delete an proxy specified by unique ID from organizer's e-mail box and
     /// sends cancel notifications to all participants.
     /// </summary>
-    /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="ID">the appointment unique ID.</param>
+    /// <param name="email">an e-mail of the organizer of the proxy.</param>
+    /// <param name="ID">the proxy unique ID.</param>
     /// <returns>
-    /// true when the appointment was successfully deleted, and false otherwise.
+    /// true when the proxy was successfully deleted, and false otherwise.
     /// </returns>
-    /// <remarks>Only the appointment organizer may delete it.</remarks>
+    /// <remarks>Only the proxy organizer may delete it.</remarks>
     public bool Delete(string email, string ID)
     {
       return Call(
@@ -608,10 +612,10 @@
     /// <summary>
     /// Starts Delete method asynchronously.
     /// </summary>
-    /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="ID">the appointment unique ID.</param>
+    /// <param name="email">an e-mail of the organizer of the proxy.</param>
+    /// <param name="ID">the proxy unique ID.</param>
     /// <returns>a request ID.</returns>
-    /// <remarks>Only the appointment organizer may delete it.</remarks>
+    /// <remarks>Only the proxy organizer may delete it.</remarks>
     public long DeleteBegin(string email, string ID)
     {
       return CallAsync(
@@ -634,7 +638,7 @@
     /// true when the operation succeeded, false when failed,
     /// and null when task not finished yet.
     /// </returns>
-    /// <remarks>Only the appointment organizer may delete it.</remarks>
+    /// <remarks>Only the proxy organizer may delete it.</remarks>
     public bool? DeleteEnd(long requestID)
     {
       return ReadResult<bool?>(requestID);
@@ -663,10 +667,10 @@
 
     #region Accept method
     /// <summary>
-    /// Accepts the specified appointment.
+    /// Accepts the specified proxy.
     /// </summary>
-    /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="ID">the appointment unique ID.</param>
+    /// <param name="email">an e-mail of the organizer of the proxy.</param>
+    /// <param name="ID">the proxy unique ID.</param>
     /// <returns>
     /// true when the operation succeseed, and false otherwise.
     /// </returns>
@@ -685,8 +689,8 @@
     /// <summary>
     /// Starts Accept method asynchronously.
     /// </summary>
-    /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="ID">the appointment unique ID.</param>
+    /// <param name="email">an e-mail of the organizer of the proxy.</param>
+    /// <param name="ID">the proxy unique ID.</param>
     /// <returns>a request ID.</returns>
     public long AcceptBegin(string email, string ID)
     {
@@ -738,10 +742,10 @@
 
     #region Decline method
     /// <summary>
-    /// Declines the specified appointment.
+    /// Declines the specified proxy.
     /// </summary>
-    /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="ID">the appointment unique ID.</param>
+    /// <param name="email">an e-mail of the organizer of the proxy.</param>
+    /// <param name="ID">the proxy unique ID.</param>
     /// <returns>
     /// true when the operation succeseed, and false otherwise.
     /// </returns>
@@ -760,8 +764,8 @@
     /// <summary>
     /// Starts Decline method asynchronously.
     /// </summary>
-    /// <param name="email">an e-mail of the organizer of the appointment.</param>
-    /// <param name="ID">the appointment unique ID.</param>
+    /// <param name="email">an e-mail of the organizer of the proxy.</param>
+    /// <param name="ID">the proxy unique ID.</param>
     /// <returns>a request ID.</returns>
     public long DeclineBegin(string email, string ID)
     {
@@ -824,7 +828,7 @@
     /// Notifies about a change in a specified mail box.
     /// </summary>
     /// <param name="email">A mail box where change has occured.</param>
-    /// <param name="ID">An ID of item changed.</param>
+    /// <param name="ID">An ID of proxy changed.</param>
     /// <param name="changeType">A change type: delete, create, modify.</param>
     public bool Notification(string email, string ID, string changeType)
     {
@@ -1096,14 +1100,14 @@
     }
 
     /// <summary>
-    /// Gets the specified appointment. 
+    /// Gets the specified proxy. 
     /// </summary>
     /// <param name="email">
-    /// an e-mail address of an organizer or a participant of the appointment.
+    /// an e-mail address of an organizer or a participant of the proxy.
     /// </param>
-    /// <param name="ID">an unique appointment ID to search.</param>
+    /// <param name="ID">an unique proxy ID to search.</param>
     /// <returns>
-    /// an Appointment instance or null when the appointment was not found.
+    /// an Appointment instance or null when the proxy was not found.
     /// </returns>
     private Office365.Appointment GetAppointment(string email, string ID)
     {
@@ -1127,7 +1131,7 @@
       var target = proxy.GetType();
       var source = appointment.GetType();
 
-      foreach (Office365.PropertyDefinition definition in 
+      foreach (Office365.PropertyDefinition definition in
         appointment.GetLoadedPropertyDefinitions())
       {
         var name = definition.Name;
@@ -1176,11 +1180,11 @@
       }
 
       proxy.RequiredAttendees = GetAttendees(
-        appointment, 
+        appointment,
         Office365.AppointmentSchema.RequiredAttendees);
 
       proxy.OptionalAttendees = GetAttendees(
-        appointment, 
+        appointment,
         Office365.AppointmentSchema.OptionalAttendees);
 
       proxy.Resources = GetAttendees(
@@ -1193,7 +1197,7 @@
         Office365.AppointmentSchema.Organizer,
         out emailAddress))
       {
-        proxy.Organizer = new Attendee 
+        proxy.Organizer = new Attendee
         {
           Address = emailAddress.Address,
           Name = emailAddress.Name
@@ -1218,7 +1222,7 @@
 
           if (recurrence is Office365.Recurrence.IntervalPattern)
           {
-            proxy.Recurrence.Interval = 
+            proxy.Recurrence.Interval =
               ((Office365.Recurrence.IntervalPattern)recurrence).Interval;
 
             if ((recurrence is Office365.Recurrence.DailyPattern) ||
@@ -1247,7 +1251,7 @@
         Office365.OccurrenceInfo occurence;
 
         if (appointment.TryGetProperty(
-          Office365.AppointmentSchema.FirstOccurrence, 
+          Office365.AppointmentSchema.FirstOccurrence,
           out occurence))
         {
           proxy.FirstOccurrence = new OccurrenceInfo
@@ -1268,6 +1272,8 @@
           };
         }
       }
+
+      proxy.ExtendedProperties = GetExtendedProperties(appointment);
 
       return proxy;
     }
@@ -1294,6 +1300,60 @@
       }
 
       return list;
+    }
+
+    private static List<ExtendedProperty> GetExtendedProperties(
+      Office365.Appointment appointment)
+    {
+      var properties = null as Office365.ExtendedPropertyCollection;
+      var result = null as List<ExtendedProperty>;
+
+      if (appointment.TryGetProperty(
+        Office365.ItemSchema.ExtendedProperties,
+        out properties))
+      {
+        foreach (var property in properties)
+        {
+          if (property.PropertyDefinition.PropertySetId !=
+            Appointments.ExtendedPropertySetId)
+          {
+            // not our extended property, skip it
+            continue;
+          }
+
+          if (result == null)
+          {
+            result = new List<ExtendedProperty>();
+          }
+
+          result.Add(
+            new ExtendedProperty
+            {
+              Name = property.PropertyDefinition.Name,
+              Value = property.Value as string
+            });
+        }
+      }
+
+      return result;
+    }
+
+    private static void SetExtendedProperties(
+      Office365.Appointment appointment,
+      List<ExtendedProperty> properties)
+    {
+      if (properties != null)
+      {
+        foreach (var property in properties)
+        {
+          appointment.SetExtendedProperty(
+            new Office365.ExtendedPropertyDefinition(
+              Appointments.ExtendedPropertySetId,
+              property.Name,
+              Office365.MapiPropertyType.String),
+            property.Value);
+        }
+      }
     }
 
     private O Call<I, O>(string actionName, I request, Func<I, O> action)
@@ -1524,8 +1584,17 @@
     #endregion
 
     #region private fields
+    /// <summary>
+    /// HTML pattern.
+    /// </summary>
     private static Regex IsHtml = new Regex(@"\<html\>.*\</html\>", 
       RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
+
+    /// <summary>
+    /// The GUID for the extended property set.
+    /// </summary>
+    private static Guid ExtendedPropertySetId = 
+      new Guid("{DD12CD36-DB49-4002-A809-56B40E6B60E9}");
     #endregion
   }
 }
