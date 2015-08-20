@@ -51,7 +51,7 @@
           var request = FromXmlString<Create>(message.OperationArgument);
           var response = new CreateResponse
           {
-            CreateResult = service.CreateAppointment(
+            CreateResult = service.Create(
               request.email,
               request.appointment)
           };
@@ -63,7 +63,7 @@
           var request = FromXmlString<Find>(message.OperationArgument);
           var response = new FindResponse
           {
-            FindResult = service.FindAppointments(
+            FindResult = service.Find(
               request.email, 
               request.start, 
               request.end, 
@@ -77,7 +77,7 @@
           var request = FromXmlString<Get>(message.OperationArgument);
           var response = new GetResponse
           {
-            GetResult = service.GetAppointment(
+            GetResult = service.Get(
               request.email,
               request.UID)
           };
@@ -179,9 +179,9 @@
       return (T)serializer.ReadObject(XmlReader.Create(reader));
     }
 
-    private IEwsService GetService()
+    private IAppointments GetService()
     {
-      return container.Resolve<IEwsService>();
+      return container.Resolve<IAppointments>();
     }
 
     private UnityContainer container = new UnityContainer();
