@@ -12,10 +12,10 @@ namespace Bnhp.Office365
     using System;
     using System.Collections.Generic;
     
-    public partial class MailboxAffinity
+    public partial class ChangeStateRequest
     {
-        public string Email { get; set; }
-        public string GroupingInformation { get; set; }
-        public string ExternalEwsUrl { get; set; }
+        public string ApplicationId { get; set; }
+        public string GroupName { get; set; }
+        public Nullable<System.DateTime> LastCheck { get; set; }
     }
 }

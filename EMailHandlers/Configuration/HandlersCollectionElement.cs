@@ -9,19 +9,12 @@ using System.ComponentModel;
 namespace Bnhp.Office365.Configuration
 {
   /// <summary>
-  /// Defines a &lt;handler&gt; configuration element.
+  /// Defines a collection of handlers' configuration elements.
   /// </summary>
   public class HandlersCollectionElement : ConfigurationElementCollection
   {
     /// <summary>
-    /// Default constructor.
-    /// </summary>
-    public HandlersCollectionElement()
-    {
-    }
-
-    /// <summary>
-    /// Gets the type of the System.Configuration.ConfigurationElementCollection.
+    /// Gets the type of the collection element.
     /// </summary>
     public override ConfigurationElementCollectionType CollectionType
     {
@@ -34,7 +27,7 @@ namespace Bnhp.Office365.Configuration
     /// <summary>
     /// Gets an HandlerElement at the specified index location.
     /// </summary>
-    /// <param name="index">
+    /// <param actionName="index">
     /// The index location of the HandlerElement to return.
     /// </param>
     /// <returns>A HandlerElement at the specified index.</returns>
@@ -53,12 +46,12 @@ namespace Bnhp.Office365.Configuration
     }
 
     /// <summary>
-    /// Gets the configuration element by the specified action name.
+    /// Gets the configuration element by the specified action actionName.
     /// </summary>
-    /// <param name="action">
-    /// An action name of an HandlerElement to return.
+    /// <param actionName="action">
+    /// An action actionName of an HandlerElement to return.
     /// </param>
-    /// <returns>A HandlerElement with the specified action name, if any.</returns>
+    /// <returns>A HandlerElement with the specified action actionName, if any.</returns>
     new public HandlerElement this[string action]
     {
       get { return (HandlerElement)BaseGet(action); }

@@ -178,6 +178,7 @@
       }
 
       SetExtendedProperties(appointment, proxy.ExtendedProperties);
+      SetCategories(appointment, proxy.Categories);
 
       appointment.ICalUid = 
         Guid.NewGuid().ToString() + email.Substring(email.IndexOf('@'));
@@ -372,6 +373,7 @@
         }
 
         SetExtendedProperties(appointment, proxy.ExtendedProperties);
+        SetCategories(appointment, proxy.Categories);
 
         // TODO: update more properties
 
@@ -630,6 +632,9 @@
       emailMessage.IsReadReceiptRequested = message.IsReadReceiptRequested;
       emailMessage.IsResponseRequested = message.IsResponseRequested;
       emailMessage.Subject = message.Subject;
+
+      SetCategories(emailMessage, message.Categories);
+      SetExtendedProperties(emailMessage, message.ExtendedProperties);
 
       emailMessage.Save(Office365.WellKnownFolderName.Drafts);
 
@@ -1492,6 +1497,7 @@
       }
 
       proxy.ExtendedProperties = GetExtendedProperties(appointment);
+      proxy.Categories = GetCategories(appointment);
 
       return proxy;
     }
@@ -1547,6 +1553,39 @@
               Office365.MapiPropertyType.String),
             property.Value);
         }
+      }
+    }
+
+    private static List<string> GetCategories(Office365.Item item)
+    {
+      var categories = null as Office365.StringList;
+      var result = null as List<string>;
+
+      if (item.TryGetProperty(
+        Office365.ItemSchema.Categories,
+        out categories))
+      {
+        foreach (var category in categories)
+        {
+          if (result == null)
+          {
+            result = new List<string>();
+          }
+
+          result.Add(category);
+        }
+      }
+
+      return result;
+    }
+
+    private static void SetCategories(
+      Office365.Item item,
+      List<string> categories)
+    {
+      if (categories != null)
+      {
+        item.Categories.AddRange(categories);
       }
     }
 
@@ -1649,6 +1688,7 @@
       }
 
       result.ExtendedProperties = GetExtendedProperties(message);
+      result.Categories = GetCategories(message);
 
       return result;
     }

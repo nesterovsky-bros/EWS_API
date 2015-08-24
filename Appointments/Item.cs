@@ -99,6 +99,12 @@ namespace Bnhp.Office365
     /// </summary>
     [DataMember]
     public List<ExtendedProperty> ExtendedProperties { get; set; }
+
+    /// <summary>
+    /// Gets and sets extended properties of the proxy.
+    /// </summary>
+    [DataMember]
+    public List<string> Categories { get; set; }
   }
 
   /// <summary>

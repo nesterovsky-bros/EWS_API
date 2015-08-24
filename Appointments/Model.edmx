@@ -5,6 +5,23 @@
     <!-- SSDL content -->
     <edmx:StorageModels>
     <Schema Namespace="EWSQueueModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="ChangeStateRequests">
+          <Key>
+            <PropertyRef Name="ApplicationId" />
+            <PropertyRef Name="GroupName" />
+          </Key>
+          <Property Name="ApplicationId" Type="nvarchar" MaxLength="64" Nullable="false" />
+          <Property Name="GroupName" Type="nvarchar" MaxLength="128" Nullable="false" />
+          <Property Name="LastCheck" Type="datetime2" Precision="7" />
+        </EntityType>
+        <EntityType Name="Rules">
+          <Key>
+            <PropertyRef Name="Email" />
+          </Key>
+          <Property Name="Email" Type="nvarchar" MaxLength="128" Nullable="false" />
+          <Property Name="RuleName" Type="nvarchar" MaxLength="128" Nullable="false" />
+          <Property Name="Params" Type="nvarchar" MaxLength="2048" />
+        </EntityType>
         <EntityType Name="ApplicationUser">
           <Key>
             <PropertyRef Name="Email" />
@@ -117,6 +134,8 @@
           </ReferentialConstraint>
         </Association>
         <EntityContainer Name="EWSQueueModelStoreContainer">
+          <EntitySet Name="ChangeStateRequests" EntityType="Self.ChangeStateRequests" Schema="App" store:Type="Tables" />
+          <EntitySet Name="Rules" EntityType="Self.Rules" Schema="App" store:Type="Tables" />
           <EntitySet Name="ApplicationUser" EntityType="Self.ApplicationUser" Schema="Data" store:Type="Tables" />
           <EntitySet Name="BankSystem" EntityType="Self.BankSystem" Schema="Data" store:Type="Tables" />
           <EntitySet Name="BankSystemMailbox" EntityType="Self.BankSystemMailbox" Schema="Data" store:Type="Tables" />
@@ -159,6 +178,8 @@
             <End Role="BankSystem" EntitySet="BankSystems" />
             <End Role="BankSystemNotification" EntitySet="BankSystemNotifications" />
           </AssociationSet>
+          <EntitySet Name="ChangeStateRequests" EntityType="EWSQueueModel.ChangeStateRequest" />
+          <EntitySet Name="Rules" EntityType="EWSQueueModel.Rule" />
         </EntityContainer>
         <EntityType Name="ApplicationUser">
           <Key>
@@ -275,6 +296,23 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <EntityType Name="ChangeStateRequest">
+          <Key>
+            <PropertyRef Name="ApplicationId" />
+            <PropertyRef Name="GroupName" />
+          </Key>
+          <Property Name="ApplicationId" Type="String" Nullable="false" MaxLength="64" FixedLength="false" Unicode="true" />
+          <Property Name="GroupName" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
+          <Property Name="LastCheck" Type="DateTime" Precision="7" />
+        </EntityType>
+        <EntityType Name="Rule">
+          <Key>
+            <PropertyRef Name="Email" />
+          </Key>
+          <Property Name="Email" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
+          <Property Name="RuleName" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
+          <Property Name="Params" Type="String" MaxLength="2048" FixedLength="false" Unicode="true" />
+        </EntityType>
         </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -372,6 +410,24 @@
                 <ScalarProperty Name="Type" ColumnName="Type" />
                 <ScalarProperty Name="Timestamp" ColumnName="Timestamp" />
                 <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ChangeStateRequests">
+            <EntityTypeMapping TypeName="EWSQueueModel.ChangeStateRequest">
+              <MappingFragment StoreEntitySet="ChangeStateRequests">
+                <ScalarProperty Name="LastCheck" ColumnName="LastCheck" />
+                <ScalarProperty Name="GroupName" ColumnName="GroupName" />
+                <ScalarProperty Name="ApplicationId" ColumnName="ApplicationId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Rules">
+            <EntityTypeMapping TypeName="EWSQueueModel.Rule">
+              <MappingFragment StoreEntitySet="Rules">
+                <ScalarProperty Name="Params" ColumnName="Params" />
+                <ScalarProperty Name="RuleName" ColumnName="RuleName" />
+                <ScalarProperty Name="Email" ColumnName="Email" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

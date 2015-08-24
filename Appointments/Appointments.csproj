@@ -101,6 +101,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Appointments.svc" />
+    <Content Include="RulesService.svc" />
     <Content Include="EwsService.svc" />
     <Content Include="App_Data\EWSQueue.mdf" />
     <Content Include="App_Data\EWSQueue_log.ldf">
@@ -119,9 +120,16 @@
       <DependentUpon>Appointments.svc</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ChangeStateRequest.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RulesService.svc.cs">
+      <DependentUpon>RulesService.svc</DependentUpon>
+    </Compile>
     <Compile Include="IAppointments.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="IRulesService.cs" />
     <Compile Include="Item.cs" />
     <Compile Include="EwsService.svc.cs">
       <DependentUpon>EwsService.svc</DependentUpon>
@@ -179,6 +187,9 @@
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="ResponseNotifier.cs" />
+    <Compile Include="Rule.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
     <Compile Include="RunitService.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="TraceMessage.cs">

@@ -17,6 +17,8 @@
         <EntityTypeShape EntityType="EWSQueueModel.TraceMessage" Width="1.5" PointX="7.75" PointY="0.75" />
         <AssociationConnector Association="EWSQueueModel.FK_BankSystemMailbox_BankSystem" />
         <AssociationConnector Association="EWSQueueModel.FK_BankSystemNotification_BankSystem" />
+        <EntityTypeShape EntityType="EWSQueueModel.ChangeStateRequest" Width="1.5" PointX="0.75" PointY="8.75" />
+        <EntityTypeShape EntityType="EWSQueueModel.Rule" Width="1.5" PointX="3" PointY="8.75" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

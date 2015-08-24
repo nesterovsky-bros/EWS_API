@@ -47,6 +47,12 @@ namespace Bnhp.Office365
           int.Parse(ConfigurationManager.AppSettings["UsersPerUsersSettins"]),
         ExchangeListenerRecyclePeriod =
           int.Parse(ConfigurationManager.AppSettings["ExchangeListenerRecyclePeriod"]),
+
+        RulesEngineApplicationId =
+          ConfigurationManager.AppSettings["RulesEngineApplicationId"],
+        RulesEngineGroupName =
+          ConfigurationManager.AppSettings["RulesEngineGroupName"],
+
         ApplicationUsers = users,
         DefaultApplicationUser = users[0]
       };
@@ -57,7 +63,8 @@ namespace Bnhp.Office365
         RegisterInstance(settings).
         RegisterInstance<IResponseNotifier>(new ResponseNotifier()).
         RegisterInstance(listener).
-        RegisterType<IEwsService, EwsService>();
+        RegisterType<IEwsService, EwsService>().
+        RegisterType<IRulesService, RulesService>();
 
       container.BuildUp(listener);
 

@@ -9,25 +9,13 @@ using System.ComponentModel;
 namespace Bnhp.Office365.Configuration
 {
   /// <summary>
-  /// Defines a &lt;handler&gt; configuration element.
+  /// Defines a configuration section for handlers.
   /// </summary>
   public class HandlersConfigurationSection : ConfigurationSection
   {
     /// <summary>
-    /// Default constructor.
+    /// Gets and sets a collection of handlers. 
     /// </summary>
-    public HandlersConfigurationSection()
-    {
-    }
-    
-    /// <summary>
-    /// Declare a collection element represented in the configuration file by the sub-section 
-    /// &lt;handlers&gt; &lt;add ...&gt; &lt;/handlers&gt;.
-    /// </summary>
-    /// <remarks>
-    /// the "IsDefaultCollection = false" instructs the .NET Framework to build 
-    /// a nested section like &lt;handlers&gt; ... &lt;/handlers&gt;.
-    /// </remarks>
     [ConfigurationProperty("handlers", IsDefaultCollection = true)]
     public HandlersCollectionElement Handlers
     {

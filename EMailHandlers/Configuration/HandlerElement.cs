@@ -9,35 +9,12 @@ using System.ComponentModel;
 namespace Bnhp.Office365.Configuration
 {
   /// <summary>
-  /// Defines a &lt;handler&gt; configuration element.
+  /// Defines handler configuration element.
   /// </summary>
   public class HandlerElement : ConfigurationElement
   {
     /// <summary>
-    /// Default constructor.
-    /// </summary>
-    public HandlerElement()
-    {
-    }
-
-    /// <summary>
-    /// Creates a HandlerElement instance.
-    /// </summary>
-    /// <param name="action">an action name.</param>
-    /// <param name="type">a handler type.</param>
-    public HandlerElement(string action, Type type)
-    {
-      if (!typeof(IEMailHandler).IsAssignableFrom(type))
-      {
-        throw new ArgumentException("type");
-      }
-
-      Action = action;
-      Type = type;
-    }
-
-    /// <summary>
-    /// Gets and sets an action name, processed by this handler.
+    /// Gets and sets an action actionName, processed by this handler.
     /// </summary>
     [ConfigurationProperty("action", IsRequired = true, IsKey = true)]
     public string Action
@@ -49,13 +26,13 @@ namespace Bnhp.Office365.Configuration
     /// <summary>
     /// Gets and sets the handler's type.
     /// </summary>
-    [ConfigurationProperty("type", IsRequired = true)]
+    [ConfigurationProperty("handler", IsRequired = true)]
     [TypeConverter(typeof(TypeNameConverter))]
     [SubclassTypeValidator(typeof(IEMailHandler))]
-    public Type Type
+    public Type Handler
     {
-      get { return this["type"] as Type; }
-      set { this["type"] = value; }
+      get { return this["handler"] as Type; }
+      set { this["handler"] = value; }
     }
   }
 }

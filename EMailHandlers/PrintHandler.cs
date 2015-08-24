@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-
-using Bnhp.Office365.References;
 using System.Diagnostics;
 using System.Threading;
+
+using Bnhp.Office365.EwsServiceReference;
 
 namespace Bnhp.Office365
 {
@@ -22,10 +22,10 @@ namespace Bnhp.Office365
     /// <summary>
     /// Handles the specified e-mail message.
     /// </summary>
-    /// <param name="client">An EwsService client.</param>
-    /// <param name="message">an EMailMessage instance to handle.</param>
-    /// <param name="recipient">a recipient of this message.</param>
-    /// <param name="args">optional params for this handler.</param>
+    /// <param actionName="client">An EwsService client.</param>
+    /// <param actionName="message">an EMailMessage instance to handle.</param>
+    /// <param actionName="recipient">a recipient of this message.</param>
+    /// <param actionName="args">optional params for this handler.</param>
     /// <returns>
     /// true when the message was successfully handled, and false otherwise.
     /// </returns>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy" xmlns:wsa10="http://www.w3.org/2005/08/addressing" xmlns:tns="http://tempuri.org/" xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:i0="https://www.bankhapoalim.co.il/" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" name="RulesService" targetNamespace="http://tempuri.org/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:import namespace="https://www.bankhapoalim.co.il/" location="http://localhost:54401/RulesService.svc?wsdl=wsdl0" />
+  <wsdl:types>
+    <xsd:schema targetNamespace="http://tempuri.org/Imports">
+      <xsd:import schemaLocation="http://localhost:54401/RulesService.svc?xsd=xsd0" namespace="http://tempuri.org/" />
+      <xsd:import schemaLocation="http://localhost:54401/RulesService.svc?xsd=xsd1" namespace="http://schemas.microsoft.com/2003/10/Serialization/" />
+      <xsd:import schemaLocation="http://localhost:54401/RulesService.svc?xsd=xsd2" namespace="http://schemas.datacontract.org/2004/07/Bnhp.Office365" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="IRulesService_GetRules_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetRules" />
+  </wsdl:message>
+  <wsdl:message name="IRulesService_GetRules_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetRulesResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRulesService_GetLastCheck_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetLastCheck" />
+  </wsdl:message>
+  <wsdl:message name="IRulesService_GetLastCheck_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetLastCheckResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRulesService_UpdateLastCheck_InputMessage">
+    <wsdl:part name="parameters" element="tns:UpdateLastCheck" />
+  </wsdl:message>
+  <wsdl:message name="IRulesService_UpdateLastCheck_OutputMessage">
+    <wsdl:part name="parameters" element="tns:UpdateLastCheckResponse" />
+  </wsdl:message>
+  <wsdl:message name="IRulesService_GetSystemName_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetSystemName" />
+  </wsdl:message>
+  <wsdl:message name="IRulesService_GetSystemName_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetSystemNameResponse" />
+  </wsdl:message>
+  <wsdl:portType name="IRulesService">
+    <wsdl:operation name="GetRules">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRulesService/GetRules" message="tns:IRulesService_GetRules_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRulesService/GetRulesResponse" message="tns:IRulesService_GetRules_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetLastCheck">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRulesService/GetLastCheck" message="tns:IRulesService_GetLastCheck_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRulesService/GetLastCheckResponse" message="tns:IRulesService_GetLastCheck_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="UpdateLastCheck">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRulesService/UpdateLastCheck" message="tns:IRulesService_UpdateLastCheck_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRulesService/UpdateLastCheckResponse" message="tns:IRulesService_UpdateLastCheck_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetSystemName">
+      <wsdl:input wsaw:Action="http://tempuri.org/IRulesService/GetSystemName" message="tns:IRulesService_GetSystemName_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IRulesService/GetSystemNameResponse" message="tns:IRulesService_GetSystemName_OutputMessage" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:service name="RulesService">
+    <wsdl:port name="BasicHttpBinding_IRulesService" binding="i0:BasicHttpBinding_IRulesService">
+      <soap:address location="http://localhost:54401/RulesService.svc" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

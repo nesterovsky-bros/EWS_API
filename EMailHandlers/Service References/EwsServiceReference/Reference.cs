@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Bnhp.Office365.References {
+namespace Bnhp.Office365.EwsServiceReference {
     using System.Runtime.Serialization;
     using System;
     
@@ -17,8 +17,8 @@ namespace Bnhp.Office365.References {
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="Item", Namespace="https://www.bankhapoalim.co.il/")]
     [System.SerializableAttribute()]
-    [System.Runtime.Serialization.KnownTypeAttribute(typeof(Bnhp.Office365.References.EMailMessage))]
-    [System.Runtime.Serialization.KnownTypeAttribute(typeof(Bnhp.Office365.References.Appointment))]
+    [System.Runtime.Serialization.KnownTypeAttribute(typeof(Bnhp.Office365.EwsServiceReference.EMailMessage))]
+    [System.Runtime.Serialization.KnownTypeAttribute(typeof(Bnhp.Office365.EwsServiceReference.Appointment))]
     public partial class Item : object, System.Runtime.Serialization.IExtensibleDataObject, System.ComponentModel.INotifyPropertyChanged {
         
         [System.NonSerializedAttribute()]
@@ -40,13 +40,13 @@ namespace Bnhp.Office365.References {
         private string DisplayToField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.ExtendedProperty[] ExtendedPropertiesField;
+        private Bnhp.Office365.EwsServiceReference.ExtendedProperty[] ExtendedPropertiesField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
         private string IdField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.Importance ImportanceField;
+        private Bnhp.Office365.EwsServiceReference.Importance ImportanceField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
         private bool IsUnmodifiedField;
@@ -58,7 +58,7 @@ namespace Bnhp.Office365.References {
         private System.DateTime LastModifiedTimeField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.Sensitivity SensitivityField;
+        private Bnhp.Office365.EwsServiceReference.Sensitivity SensitivityField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
         private string SubjectField;
@@ -142,7 +142,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.ExtendedProperty[] ExtendedProperties {
+        public Bnhp.Office365.EwsServiceReference.ExtendedProperty[] ExtendedProperties {
             get {
                 return this.ExtendedPropertiesField;
             }
@@ -168,7 +168,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.Importance Importance {
+        public Bnhp.Office365.EwsServiceReference.Importance Importance {
             get {
                 return this.ImportanceField;
             }
@@ -220,7 +220,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.Sensitivity Sensitivity {
+        public Bnhp.Office365.EwsServiceReference.Sensitivity Sensitivity {
             get {
                 return this.SensitivityField;
             }
@@ -272,19 +272,19 @@ namespace Bnhp.Office365.References {
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="EMailMessage", Namespace="https://www.bankhapoalim.co.il/")]
     [System.SerializableAttribute()]
-    public partial class EMailMessage : Bnhp.Office365.References.Item {
+    public partial class EMailMessage : Bnhp.Office365.EwsServiceReference.Item {
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.Attachment[] AttachmentsField;
+        private Bnhp.Office365.EwsServiceReference.Attachment[] AttachmentsField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.EMailAddress[] BccRecipientsField;
+        private Bnhp.Office365.EwsServiceReference.EMailAddress[] BccRecipientsField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.EMailAddress[] CcRecipientsField;
+        private Bnhp.Office365.EwsServiceReference.EMailAddress[] CcRecipientsField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.EMailAddress FromField;
+        private Bnhp.Office365.EwsServiceReference.EMailAddress FromField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
         private bool IsDeliveryReceiptRequestedField;
@@ -299,13 +299,13 @@ namespace Bnhp.Office365.References {
         private System.Nullable<bool> IsResponseRequestedField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.EMailAddress SenderField;
+        private Bnhp.Office365.EwsServiceReference.EMailAddress SenderField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.EMailAddress[] ToRecipientsField;
+        private Bnhp.Office365.EwsServiceReference.EMailAddress[] ToRecipientsField;
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.Attachment[] Attachments {
+        public Bnhp.Office365.EwsServiceReference.Attachment[] Attachments {
             get {
                 return this.AttachmentsField;
             }
@@ -318,7 +318,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.EMailAddress[] BccRecipients {
+        public Bnhp.Office365.EwsServiceReference.EMailAddress[] BccRecipients {
             get {
                 return this.BccRecipientsField;
             }
@@ -331,7 +331,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.EMailAddress[] CcRecipients {
+        public Bnhp.Office365.EwsServiceReference.EMailAddress[] CcRecipients {
             get {
                 return this.CcRecipientsField;
             }
@@ -344,7 +344,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.EMailAddress From {
+        public Bnhp.Office365.EwsServiceReference.EMailAddress From {
             get {
                 return this.FromField;
             }
@@ -409,7 +409,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.EMailAddress Sender {
+        public Bnhp.Office365.EwsServiceReference.EMailAddress Sender {
             get {
                 return this.SenderField;
             }
@@ -422,7 +422,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.EMailAddress[] ToRecipients {
+        public Bnhp.Office365.EwsServiceReference.EMailAddress[] ToRecipients {
             get {
                 return this.ToRecipientsField;
             }
@@ -439,7 +439,7 @@ namespace Bnhp.Office365.References {
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="Appointment", Namespace="https://www.bankhapoalim.co.il/")]
     [System.SerializableAttribute()]
-    public partial class Appointment : Bnhp.Office365.References.Item {
+    public partial class Appointment : Bnhp.Office365.EwsServiceReference.Item {
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
         private bool AllowNewTimeProposalField;
@@ -469,7 +469,7 @@ namespace Bnhp.Office365.References {
         private string EnhancedLocationField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.OccurrenceInfo FirstOccurrenceField;
+        private Bnhp.Office365.EwsServiceReference.OccurrenceInfo FirstOccurrenceField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
         private System.Nullable<System.DateTime> ICalDateTimeStampField;
@@ -502,7 +502,7 @@ namespace Bnhp.Office365.References {
         private string JoinOnlineMeetingUrlField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.OccurrenceInfo LastOccurrenceField;
+        private Bnhp.Office365.EwsServiceReference.OccurrenceInfo LastOccurrenceField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
         private string LocationField;
@@ -514,31 +514,31 @@ namespace Bnhp.Office365.References {
         private string MeetingWorkspaceUrlField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.MeetingResponseType MyResponseTypeField;
+        private Bnhp.Office365.EwsServiceReference.MeetingResponseType MyResponseTypeField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
         private string NetShowUrlField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.Attendee[] OptionalAttendeesField;
+        private Bnhp.Office365.EwsServiceReference.Attendee[] OptionalAttendeesField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.Attendee OrganizerField;
+        private Bnhp.Office365.EwsServiceReference.Attendee OrganizerField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
         private System.DateTime OriginalStartField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.Recurrence RecurrenceField;
+        private Bnhp.Office365.EwsServiceReference.Recurrence RecurrenceField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
         private int ReminderMinutesBeforeStartField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.Attendee[] RequiredAttendeesField;
+        private Bnhp.Office365.EwsServiceReference.Attendee[] RequiredAttendeesField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.Attendee[] ResourcesField;
+        private Bnhp.Office365.EwsServiceReference.Attendee[] ResourcesField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
         private System.Nullable<System.DateTime> RetentionDateField;
@@ -670,7 +670,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.OccurrenceInfo FirstOccurrence {
+        public Bnhp.Office365.EwsServiceReference.OccurrenceInfo FirstOccurrence {
             get {
                 return this.FirstOccurrenceField;
             }
@@ -813,7 +813,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.OccurrenceInfo LastOccurrence {
+        public Bnhp.Office365.EwsServiceReference.OccurrenceInfo LastOccurrence {
             get {
                 return this.LastOccurrenceField;
             }
@@ -865,7 +865,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.MeetingResponseType MyResponseType {
+        public Bnhp.Office365.EwsServiceReference.MeetingResponseType MyResponseType {
             get {
                 return this.MyResponseTypeField;
             }
@@ -891,7 +891,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.Attendee[] OptionalAttendees {
+        public Bnhp.Office365.EwsServiceReference.Attendee[] OptionalAttendees {
             get {
                 return this.OptionalAttendeesField;
             }
@@ -904,7 +904,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.Attendee Organizer {
+        public Bnhp.Office365.EwsServiceReference.Attendee Organizer {
             get {
                 return this.OrganizerField;
             }
@@ -930,7 +930,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.Recurrence Recurrence {
+        public Bnhp.Office365.EwsServiceReference.Recurrence Recurrence {
             get {
                 return this.RecurrenceField;
             }
@@ -956,7 +956,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.Attendee[] RequiredAttendees {
+        public Bnhp.Office365.EwsServiceReference.Attendee[] RequiredAttendees {
             get {
                 return this.RequiredAttendeesField;
             }
@@ -969,7 +969,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.Attendee[] Resources {
+        public Bnhp.Office365.EwsServiceReference.Attendee[] Resources {
             get {
                 return this.ResourcesField;
             }
@@ -1191,13 +1191,13 @@ namespace Bnhp.Office365.References {
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="Attendee", Namespace="https://www.bankhapoalim.co.il/")]
     [System.SerializableAttribute()]
-    public partial class Attendee : Bnhp.Office365.References.EMailAddress {
+    public partial class Attendee : Bnhp.Office365.EwsServiceReference.EMailAddress {
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private System.Nullable<Bnhp.Office365.References.MeetingResponseType> ResponseTypeField;
+        private System.Nullable<Bnhp.Office365.EwsServiceReference.MeetingResponseType> ResponseTypeField;
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public System.Nullable<Bnhp.Office365.References.MeetingResponseType> ResponseType {
+        public System.Nullable<Bnhp.Office365.EwsServiceReference.MeetingResponseType> ResponseType {
             get {
                 return this.ResponseTypeField;
             }
@@ -1235,7 +1235,7 @@ namespace Bnhp.Office365.References {
         private System.DateTime StartDateField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.RecurrenceType TypeField;
+        private Bnhp.Office365.EwsServiceReference.RecurrenceType TypeField;
         
         [global::System.ComponentModel.BrowsableAttribute(false)]
         public System.Runtime.Serialization.ExtensionDataObject ExtensionData {
@@ -1313,7 +1313,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.RecurrenceType Type {
+        public Bnhp.Office365.EwsServiceReference.RecurrenceType Type {
             get {
                 return this.TypeField;
             }
@@ -1362,7 +1362,7 @@ namespace Bnhp.Office365.References {
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="EMailAddress", Namespace="https://www.bankhapoalim.co.il/")]
     [System.SerializableAttribute()]
-    [System.Runtime.Serialization.KnownTypeAttribute(typeof(Bnhp.Office365.References.Attendee))]
+    [System.Runtime.Serialization.KnownTypeAttribute(typeof(Bnhp.Office365.EwsServiceReference.Attendee))]
     public partial class EMailAddress : object, System.Runtime.Serialization.IExtensibleDataObject, System.ComponentModel.INotifyPropertyChanged {
         
         [System.NonSerializedAttribute()]
@@ -1588,7 +1588,7 @@ namespace Bnhp.Office365.References {
         private System.Runtime.Serialization.ExtensionDataObject extensionDataField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private Bnhp.Office365.References.ChangeType ChangeTypeField;
+        private Bnhp.Office365.EwsServiceReference.ChangeType ChangeTypeField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
         private string EmailField;
@@ -1613,7 +1613,7 @@ namespace Bnhp.Office365.References {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
-        public Bnhp.Office365.References.ChangeType ChangeType {
+        public Bnhp.Office365.EwsServiceReference.ChangeType ChangeType {
             get {
                 return this.ChangeTypeField;
             }
@@ -1763,14 +1763,14 @@ namespace Bnhp.Office365.References {
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
-    [System.ServiceModel.ServiceContractAttribute(Namespace="https://www.bankhapoalim.co.il/", ConfigurationName="References.IEwsService")]
+    [System.ServiceModel.ServiceContractAttribute(Namespace="https://www.bankhapoalim.co.il/", ConfigurationName="EwsServiceReference.IEwsService")]
     public interface IEwsService {
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/CreateAppointment", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/CreateAppointmentResponse")]
-        string CreateAppointment(string email, Bnhp.Office365.References.Appointment appointment);
+        string CreateAppointment(string email, Bnhp.Office365.EwsServiceReference.Appointment appointment);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/CreateAppointment", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/CreateAppointmentResponse")]
-        System.Threading.Tasks.Task<string> CreateAppointmentAsync(string email, Bnhp.Office365.References.Appointment appointment);
+        System.Threading.Tasks.Task<string> CreateAppointmentAsync(string email, Bnhp.Office365.EwsServiceReference.Appointment appointment);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/FindAppointments", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsResponse")]
         string[] FindAppointments(string email, System.DateTime start, System.Nullable<System.DateTime> end, System.Nullable<int> maxResults);
@@ -1779,16 +1779,16 @@ namespace Bnhp.Office365.References {
         System.Threading.Tasks.Task<string[]> FindAppointmentsAsync(string email, System.DateTime start, System.Nullable<System.DateTime> end, System.Nullable<int> maxResults);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetAppointment", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetAppointmentResponse")]
-        Bnhp.Office365.References.Appointment GetAppointment(string email, string ID);
+        Bnhp.Office365.EwsServiceReference.Appointment GetAppointment(string email, string ID);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetAppointment", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetAppointmentResponse")]
-        System.Threading.Tasks.Task<Bnhp.Office365.References.Appointment> GetAppointmentAsync(string email, string ID);
+        System.Threading.Tasks.Task<Bnhp.Office365.EwsServiceReference.Appointment> GetAppointmentAsync(string email, string ID);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/UpdateAppointment", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/UpdateAppointmentResponse")]
-        bool UpdateAppointment(string email, Bnhp.Office365.References.Appointment appointment);
+        bool UpdateAppointment(string email, Bnhp.Office365.EwsServiceReference.Appointment appointment);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/UpdateAppointment", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/UpdateAppointmentResponse")]
-        System.Threading.Tasks.Task<bool> UpdateAppointmentAsync(string email, Bnhp.Office365.References.Appointment appointment);
+        System.Threading.Tasks.Task<bool> UpdateAppointmentAsync(string email, Bnhp.Office365.EwsServiceReference.Appointment appointment);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/CancelAppointment", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/CancelAppointmentResponse")]
         bool CancelAppointment(string email, string ID, string reason);
@@ -1815,10 +1815,10 @@ namespace Bnhp.Office365.References {
         System.Threading.Tasks.Task<bool> DeclineAppointmentAsync(string email, string ID);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/CreateMessage", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/CreateMessageResponse")]
-        string CreateMessage(string email, Bnhp.Office365.References.EMailMessage message);
+        string CreateMessage(string email, Bnhp.Office365.EwsServiceReference.EMailMessage message);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/CreateMessage", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/CreateMessageResponse")]
-        System.Threading.Tasks.Task<string> CreateMessageAsync(string email, Bnhp.Office365.References.EMailMessage message);
+        System.Threading.Tasks.Task<string> CreateMessageAsync(string email, Bnhp.Office365.EwsServiceReference.EMailMessage message);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/AddAttachment", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/AddAttachmentResponse")]
         bool AddAttachment(string email, string ID, string name, byte[] content);
@@ -1839,10 +1839,10 @@ namespace Bnhp.Office365.References {
         System.Threading.Tasks.Task<string[]> FindMessagesAsync(string email, System.Nullable<int> pageSize, System.Nullable<int> offset);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetMessage", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetMessageResponse")]
-        Bnhp.Office365.References.EMailMessage GetMessage(string email, string ID);
+        Bnhp.Office365.EwsServiceReference.EMailMessage GetMessage(string email, string ID);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetMessage", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetMessageResponse")]
-        System.Threading.Tasks.Task<Bnhp.Office365.References.EMailMessage> GetMessageAsync(string email, string ID);
+        System.Threading.Tasks.Task<Bnhp.Office365.EwsServiceReference.EMailMessage> GetMessageAsync(string email, string ID);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetAttachmentByName", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetAttachmentByNameResponse")]
         byte[] GetAttachmentByName(string email, string ID, string name);
@@ -1857,10 +1857,10 @@ namespace Bnhp.Office365.References {
         System.Threading.Tasks.Task<byte[]> GetAttachmentByIndexAsync(string email, string ID, int index);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetMessageContent", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetMessageContentResponse")]
-        Bnhp.Office365.References.MimeContent GetMessageContent(string email, string ID);
+        Bnhp.Office365.EwsServiceReference.MimeContent GetMessageContent(string email, string ID);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetMessageContent", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetMessageContentResponse")]
-        System.Threading.Tasks.Task<Bnhp.Office365.References.MimeContent> GetMessageContentAsync(string email, string ID);
+        System.Threading.Tasks.Task<Bnhp.Office365.EwsServiceReference.MimeContent> GetMessageContentAsync(string email, string ID);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/DeleteMessage", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/DeleteMessageResponse")]
         bool DeleteMessage(string email, string ID);
@@ -1887,25 +1887,25 @@ namespace Bnhp.Office365.References {
         System.Threading.Tasks.Task<bool> NotificationAsync(string email, string ID, string changeType);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetChanges", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetChangesResponse")]
-        Bnhp.Office365.References.Change[] GetChanges(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take);
+        Bnhp.Office365.EwsServiceReference.Change[] GetChanges(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetChanges", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetChangesResponse")]
-        System.Threading.Tasks.Task<Bnhp.Office365.References.Change[]> GetChangesAsync(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take);
+        System.Threading.Tasks.Task<Bnhp.Office365.EwsServiceReference.Change[]> GetChangesAsync(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetChangeStats", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetChangeStatsResponse")]
-        Bnhp.Office365.References.ChangeStats[] GetChangeStats(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take);
+        Bnhp.Office365.EwsServiceReference.ChangeStats[] GetChangeStats(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetChangeStats", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetChangeStatsResponse")]
-        System.Threading.Tasks.Task<Bnhp.Office365.References.ChangeStats[]> GetChangeStatsAsync(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take);
+        System.Threading.Tasks.Task<Bnhp.Office365.EwsServiceReference.ChangeStats[]> GetChangeStatsAsync(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
-    public interface IEwsServiceChannel : Bnhp.Office365.References.IEwsService, System.ServiceModel.IClientChannel {
+    public interface IEwsServiceChannel : Bnhp.Office365.EwsServiceReference.IEwsService, System.ServiceModel.IClientChannel {
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
-    public partial class EwsServiceClient : System.ServiceModel.ClientBase<Bnhp.Office365.References.IEwsService>, Bnhp.Office365.References.IEwsService {
+    public partial class EwsServiceClient : System.ServiceModel.ClientBase<Bnhp.Office365.EwsServiceReference.IEwsService>, Bnhp.Office365.EwsServiceReference.IEwsService {
         
         public EwsServiceClient() {
         }
@@ -1926,11 +1926,11 @@ namespace Bnhp.Office365.References {
                 base(binding, remoteAddress) {
         }
         
-        public string CreateAppointment(string email, Bnhp.Office365.References.Appointment appointment) {
+        public string CreateAppointment(string email, Bnhp.Office365.EwsServiceReference.Appointment appointment) {
             return base.Channel.CreateAppointment(email, appointment);
         }
         
-        public System.Threading.Tasks.Task<string> CreateAppointmentAsync(string email, Bnhp.Office365.References.Appointment appointment) {
+        public System.Threading.Tasks.Task<string> CreateAppointmentAsync(string email, Bnhp.Office365.EwsServiceReference.Appointment appointment) {
             return base.Channel.CreateAppointmentAsync(email, appointment);
         }
         
@@ -1942,19 +1942,19 @@ namespace Bnhp.Office365.References {
             return base.Channel.FindAppointmentsAsync(email, start, end, maxResults);
         }
         
-        public Bnhp.Office365.References.Appointment GetAppointment(string email, string ID) {
+        public Bnhp.Office365.EwsServiceReference.Appointment GetAppointment(string email, string ID) {
             return base.Channel.GetAppointment(email, ID);
         }
         
-        public System.Threading.Tasks.Task<Bnhp.Office365.References.Appointment> GetAppointmentAsync(string email, string ID) {
+        public System.Threading.Tasks.Task<Bnhp.Office365.EwsServiceReference.Appointment> GetAppointmentAsync(string email, string ID) {
             return base.Channel.GetAppointmentAsync(email, ID);
         }
         
-        public bool UpdateAppointment(string email, Bnhp.Office365.References.Appointment appointment) {
+        public bool UpdateAppointment(string email, Bnhp.Office365.EwsServiceReference.Appointment appointment) {
             return base.Channel.UpdateAppointment(email, appointment);
         }
         
-        public System.Threading.Tasks.Task<bool> UpdateAppointmentAsync(string email, Bnhp.Office365.References.Appointment appointment) {
+        public System.Threading.Tasks.Task<bool> UpdateAppointmentAsync(string email, Bnhp.Office365.EwsServiceReference.Appointment appointment) {
             return base.Channel.UpdateAppointmentAsync(email, appointment);
         }
         
@@ -1990,11 +1990,11 @@ namespace Bnhp.Office365.References {
             return base.Channel.DeclineAppointmentAsync(email, ID);
         }
         
-        public string CreateMessage(string email, Bnhp.Office365.References.EMailMessage message) {
+        public string CreateMessage(string email, Bnhp.Office365.EwsServiceReference.EMailMessage message) {
             return base.Channel.CreateMessage(email, message);
         }
         
-        public System.Threading.Tasks.Task<string> CreateMessageAsync(string email, Bnhp.Office365.References.EMailMessage message) {
+        public System.Threading.Tasks.Task<string> CreateMessageAsync(string email, Bnhp.Office365.EwsServiceReference.EMailMessage message) {
             return base.Channel.CreateMessageAsync(email, message);
         }
         
@@ -2022,11 +2022,11 @@ namespace Bnhp.Office365.References {
             return base.Channel.FindMessagesAsync(email, pageSize, offset);
         }
         
-        public Bnhp.Office365.References.EMailMessage GetMessage(string email, string ID) {
+        public Bnhp.Office365.EwsServiceReference.EMailMessage GetMessage(string email, string ID) {
             return base.Channel.GetMessage(email, ID);
         }
         
-        public System.Threading.Tasks.Task<Bnhp.Office365.References.EMailMessage> GetMessageAsync(string email, string ID) {
+        public System.Threading.Tasks.Task<Bnhp.Office365.EwsServiceReference.EMailMessage> GetMessageAsync(string email, string ID) {
             return base.Channel.GetMessageAsync(email, ID);
         }
         
@@ -2046,11 +2046,11 @@ namespace Bnhp.Office365.References {
             return base.Channel.GetAttachmentByIndexAsync(email, ID, index);
         }
         
-        public Bnhp.Office365.References.MimeContent GetMessageContent(string email, string ID) {
+        public Bnhp.Office365.EwsServiceReference.MimeContent GetMessageContent(string email, string ID) {
             return base.Channel.GetMessageContent(email, ID);
         }
         
-        public System.Threading.Tasks.Task<Bnhp.Office365.References.MimeContent> GetMessageContentAsync(string email, string ID) {
+        public System.Threading.Tasks.Task<Bnhp.Office365.EwsServiceReference.MimeContent> GetMessageContentAsync(string email, string ID) {
             return base.Channel.GetMessageContentAsync(email, ID);
         }
         
@@ -2086,19 +2086,19 @@ namespace Bnhp.Office365.References {
             return base.Channel.NotificationAsync(email, ID, changeType);
         }
         
-        public Bnhp.Office365.References.Change[] GetChanges(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take) {
+        public Bnhp.Office365.EwsServiceReference.Change[] GetChanges(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take) {
             return base.Channel.GetChanges(systemName, email, folderID, startDate, endDate, skip, take);
         }
         
-        public System.Threading.Tasks.Task<Bnhp.Office365.References.Change[]> GetChangesAsync(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take) {
+        public System.Threading.Tasks.Task<Bnhp.Office365.EwsServiceReference.Change[]> GetChangesAsync(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take) {
             return base.Channel.GetChangesAsync(systemName, email, folderID, startDate, endDate, skip, take);
         }
         
-        public Bnhp.Office365.References.ChangeStats[] GetChangeStats(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take) {
+        public Bnhp.Office365.EwsServiceReference.ChangeStats[] GetChangeStats(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take) {
             return base.Channel.GetChangeStats(systemName, email, folderID, startDate, endDate, skip, take);
         }
         
-        public System.Threading.Tasks.Task<Bnhp.Office365.References.ChangeStats[]> GetChangeStatsAsync(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take) {
+        public System.Threading.Tasks.Task<Bnhp.Office365.EwsServiceReference.ChangeStats[]> GetChangeStatsAsync(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take) {
             return base.Channel.GetChangeStatsAsync(systemName, email, folderID, startDate, endDate, skip, take);
         }
     }

@@ -1,0 +1,2 @@
+﻿<%@ ServiceHost Language="C#" Debug="true" 
+  Service="Bnhp.Office365.RulesService" CodeBehind="RulesService.svc.cs" %>
