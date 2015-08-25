@@ -8,9 +8,10 @@
   <xs:element name="ArrayOfRule" nillable="true" type="tns:ArrayOfRule" />
   <xs:complexType name="Rule">
     <xs:sequence>
+      <xs:element minOccurs="0" name="Action" nillable="true" type="xs:string" />
       <xs:element minOccurs="0" name="Email" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="GroupName" nillable="true" type="xs:string" />
       <xs:element minOccurs="0" name="Params" nillable="true" type="xs:string" />
-      <xs:element minOccurs="0" name="RuleName" nillable="true" type="xs:string" />
     </xs:sequence>
   </xs:complexType>
   <xs:element name="Rule" nillable="true" type="tns:Rule" />

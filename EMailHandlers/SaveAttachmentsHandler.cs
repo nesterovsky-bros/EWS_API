@@ -27,7 +27,7 @@ namespace Bnhp.Office365
     /// <returns>
     /// true when the message was successfully handled, and false otherwise.
     /// </returns>
-    public bool Handle(
+    public async Task<bool> Handle(
       EwsServiceClient client,
       EMailMessage message, 
       string recipient, 
@@ -53,34 +53,34 @@ namespace Bnhp.Office365
         throw new ArgumentNullException("args");
       }
 
-      if ((message.Attachments == null) || (message.Attachments.Length == 0))
-      {
-        return false;
-      }
-
       var result = false;
-      var dir = args[0];
 
-      if (!Directory.Exists(dir))
+      if ((message.Attachments != null) && (message.Attachments.Length > 0))
       {
-        Directory.CreateDirectory(dir);
-      }
+        var guid = Guid.NewGuid().ToString();
+        var dir = args[0].Replace("{guid}", guid);
 
-      foreach (var attachment in message.Attachments)
-      {
-        var content = client.GetAttachmentByName(
-          recipient, 
-          message.Id, 
-          attachment.Name);
-
-        if (content != null)
+        if (!Directory.Exists(dir))
         {
-          using (var file = File.Create(Path.Combine(dir, attachment.Name)))
-          {
-            file.Write(content, 0, content.Length);
-          }
+          Directory.CreateDirectory(dir);
+        }
 
-          result = true;
+        foreach (var attachment in message.Attachments)
+        {
+          var content = await client.GetAttachmentByNameAsync(
+            recipient,
+            message.Id,
+            attachment.Name);
+
+          if (content != null)
+          {
+            using (var file = File.Create(Path.Combine(dir, attachment.Name)))
+            {
+              await file.WriteAsync(content, 0, content.Length);
+            }
+
+            result = true;
+          }
         }
       }
       

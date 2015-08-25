@@ -26,12 +26,6 @@
   <wsdl:message name="IRulesService_UpdateLastCheck_OutputMessage">
     <wsdl:part name="parameters" element="tns:UpdateLastCheckResponse" />
   </wsdl:message>
-  <wsdl:message name="IRulesService_GetSystemName_InputMessage">
-    <wsdl:part name="parameters" element="tns:GetSystemName" />
-  </wsdl:message>
-  <wsdl:message name="IRulesService_GetSystemName_OutputMessage">
-    <wsdl:part name="parameters" element="tns:GetSystemNameResponse" />
-  </wsdl:message>
   <wsdl:portType name="IRulesService">
     <wsdl:operation name="GetRules">
       <wsdl:input wsaw:Action="http://tempuri.org/IRulesService/GetRules" message="tns:IRulesService_GetRules_InputMessage" />
@@ -44,10 +38,6 @@
     <wsdl:operation name="UpdateLastCheck">
       <wsdl:input wsaw:Action="http://tempuri.org/IRulesService/UpdateLastCheck" message="tns:IRulesService_UpdateLastCheck_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IRulesService/UpdateLastCheckResponse" message="tns:IRulesService_UpdateLastCheck_OutputMessage" />
-    </wsdl:operation>
-    <wsdl:operation name="GetSystemName">
-      <wsdl:input wsaw:Action="http://tempuri.org/IRulesService/GetSystemName" message="tns:IRulesService_GetSystemName_InputMessage" />
-      <wsdl:output wsaw:Action="http://tempuri.org/IRulesService/GetSystemNameResponse" message="tns:IRulesService_GetSystemName_OutputMessage" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:service name="RulesService">

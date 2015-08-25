@@ -11,6 +11,5 @@ namespace Bnhp.Office365
     public int UsersPerUsersSettins { get; set; }
     public int ExchangeListenerRecyclePeriod { get; set; }
     public string RulesEngineApplicationId { get; set; }
-    public string RulesEngineGroupName { get; set; }
   }
 }

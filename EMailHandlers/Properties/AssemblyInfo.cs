@@ -5,10 +5,10 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("EMailHandlers")]
-[assembly: AssemblyDescription("A WCF client that manages set of e-mail handlers.")]
+[assembly: AssemblyTitle("RulesEngine")]
+[assembly: AssemblyDescription("A EWS API client that manages e-mail boxes changes.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("ModernSystems International Ltd.")]
 [assembly: AssemblyProduct("EWS_API")]
 [assembly: AssemblyCopyright("Copyright ©  2015")]
 [assembly: AssemblyTrademark("")]

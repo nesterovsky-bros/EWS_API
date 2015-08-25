@@ -50,8 +50,6 @@ namespace Bnhp.Office365
 
         RulesEngineApplicationId =
           ConfigurationManager.AppSettings["RulesEngineApplicationId"],
-        RulesEngineGroupName =
-          ConfigurationManager.AppSettings["RulesEngineGroupName"],
 
         ApplicationUsers = users,
         DefaultApplicationUser = users[0]

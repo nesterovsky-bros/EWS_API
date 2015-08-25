@@ -16,10 +16,13 @@
         </EntityType>
         <EntityType Name="Rules">
           <Key>
+            <PropertyRef Name="GroupName" />
             <PropertyRef Name="Email" />
+            <PropertyRef Name="Action" />
           </Key>
+          <Property Name="GroupName" Type="nvarchar" MaxLength="128" Nullable="false" />
           <Property Name="Email" Type="nvarchar" MaxLength="128" Nullable="false" />
-          <Property Name="RuleName" Type="nvarchar" MaxLength="128" Nullable="false" />
+          <Property Name="Action" Type="nvarchar" MaxLength="128" Nullable="false" />
           <Property Name="Params" Type="nvarchar" MaxLength="2048" />
         </EntityType>
         <EntityType Name="ApplicationUser">
@@ -160,6 +163,8 @@
     <edmx:ConceptualModels>
       <Schema Namespace="EWSQueueModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
         <EntityContainer Name="EWSQueueEntities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="ChangeStateRequests" EntityType="EWSQueueModel.ChangeStateRequest" />
+          <EntitySet Name="Rules" EntityType="EWSQueueModel.Rule" />
           <EntitySet Name="ApplicationUsers" EntityType="EWSQueueModel.ApplicationUser" />
           <EntitySet Name="BankSystems" EntityType="EWSQueueModel.BankSystem" />
           <EntitySet Name="BankSystemMailboxes" EntityType="EWSQueueModel.BankSystemMailbox" />
@@ -178,9 +183,27 @@
             <End Role="BankSystem" EntitySet="BankSystems" />
             <End Role="BankSystemNotification" EntitySet="BankSystemNotifications" />
           </AssociationSet>
-          <EntitySet Name="ChangeStateRequests" EntityType="EWSQueueModel.ChangeStateRequest" />
-          <EntitySet Name="Rules" EntityType="EWSQueueModel.Rule" />
         </EntityContainer>
+        <EntityType Name="ChangeStateRequest">
+          <Key>
+            <PropertyRef Name="ApplicationId" />
+            <PropertyRef Name="GroupName" />
+          </Key>
+          <Property Name="ApplicationId" Type="String" Nullable="false" MaxLength="64" FixedLength="false" Unicode="true" />
+          <Property Name="GroupName" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
+          <Property Name="LastCheck" Type="DateTime" Precision="7" />
+        </EntityType>
+        <EntityType Name="Rule">
+          <Key>
+            <PropertyRef Name="GroupName" />
+            <PropertyRef Name="Email" />
+            <PropertyRef Name="Action" />
+          </Key>
+          <Property Name="GroupName" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
+          <Property Name="Email" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
+          <Property Name="Action" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
+          <Property Name="Params" Type="String" MaxLength="2048" FixedLength="false" Unicode="true" />
+        </EntityType>
         <EntityType Name="ApplicationUser">
           <Key>
             <PropertyRef Name="Email" />
@@ -296,29 +319,31 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <EntityType Name="ChangeStateRequest">
-          <Key>
-            <PropertyRef Name="ApplicationId" />
-            <PropertyRef Name="GroupName" />
-          </Key>
-          <Property Name="ApplicationId" Type="String" Nullable="false" MaxLength="64" FixedLength="false" Unicode="true" />
-          <Property Name="GroupName" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
-          <Property Name="LastCheck" Type="DateTime" Precision="7" />
-        </EntityType>
-        <EntityType Name="Rule">
-          <Key>
-            <PropertyRef Name="Email" />
-          </Key>
-          <Property Name="Email" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
-          <Property Name="RuleName" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
-          <Property Name="Params" Type="String" MaxLength="2048" FixedLength="false" Unicode="true" />
-        </EntityType>
         </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
     <edmx:Mappings>
       <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
         <EntityContainerMapping StorageEntityContainer="EWSQueueModelStoreContainer" CdmEntityContainer="EWSQueueEntities">
+          <EntitySetMapping Name="ChangeStateRequests">
+            <EntityTypeMapping TypeName="EWSQueueModel.ChangeStateRequest">
+              <MappingFragment StoreEntitySet="ChangeStateRequests">
+                <ScalarProperty Name="LastCheck" ColumnName="LastCheck" />
+                <ScalarProperty Name="GroupName" ColumnName="GroupName" />
+                <ScalarProperty Name="ApplicationId" ColumnName="ApplicationId" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Rules">
+            <EntityTypeMapping TypeName="EWSQueueModel.Rule">
+              <MappingFragment StoreEntitySet="Rules">
+                <ScalarProperty Name="Params" ColumnName="Params" />
+                <ScalarProperty Name="Action" ColumnName="Action" />
+                <ScalarProperty Name="Email" ColumnName="Email" />
+                <ScalarProperty Name="GroupName" ColumnName="GroupName" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
           <EntitySetMapping Name="ApplicationUsers">
             <EntityTypeMapping TypeName="EWSQueueModel.ApplicationUser">
               <MappingFragment StoreEntitySet="ApplicationUser">
@@ -410,24 +435,6 @@
                 <ScalarProperty Name="Type" ColumnName="Type" />
                 <ScalarProperty Name="Timestamp" ColumnName="Timestamp" />
                 <ScalarProperty Name="ID" ColumnName="ID" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="ChangeStateRequests">
-            <EntityTypeMapping TypeName="EWSQueueModel.ChangeStateRequest">
-              <MappingFragment StoreEntitySet="ChangeStateRequests">
-                <ScalarProperty Name="LastCheck" ColumnName="LastCheck" />
-                <ScalarProperty Name="GroupName" ColumnName="GroupName" />
-                <ScalarProperty Name="ApplicationId" ColumnName="ApplicationId" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="Rules">
-            <EntityTypeMapping TypeName="EWSQueueModel.Rule">
-              <MappingFragment StoreEntitySet="Rules">
-                <ScalarProperty Name="Params" ColumnName="Params" />
-                <ScalarProperty Name="RuleName" ColumnName="RuleName" />
-                <ScalarProperty Name="Email" ColumnName="Email" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

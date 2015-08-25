@@ -28,7 +28,7 @@ namespace Bnhp.Office365
     /// <returns>
     /// true when the message was successfully handled, and false otherwise.
     /// </returns>
-    public bool Handle(
+    public async Task<bool> Handle(
       EwsServiceClient client,
       EMailMessage message, 
       string recipient, 
@@ -54,7 +54,7 @@ namespace Bnhp.Office365
         throw new ArgumentNullException("args");
       }
 
-      return client.MoveTo(recipient, message.Id, args[0]);
+      return await client.MoveToAsync(recipient, message.Id, args[0]);
     }
     #endregion
   }

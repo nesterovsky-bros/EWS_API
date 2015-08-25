@@ -25,6 +25,8 @@ namespace Bnhp.Office365
             throw new UnintentionalCodeFirstException();
         }
     
+        public virtual DbSet<ChangeStateRequest> ChangeStateRequests { get; set; }
+        public virtual DbSet<Rule> Rules { get; set; }
         public virtual DbSet<ApplicationUser> ApplicationUsers { get; set; }
         public virtual DbSet<BankSystem> BankSystems { get; set; }
         public virtual DbSet<BankSystemMailbox> BankSystemMailboxes { get; set; }
@@ -35,7 +37,5 @@ namespace Bnhp.Office365
         public virtual DbSet<MailboxSync> MailboxSyncs { get; set; }
         public virtual DbSet<Queue> Queues { get; set; }
         public virtual DbSet<TraceMessage> TraceMessages { get; set; }
-        public virtual DbSet<ChangeStateRequest> ChangeStateRequests { get; set; }
-        public virtual DbSet<Rule> Rules { get; set; }
     }
 }

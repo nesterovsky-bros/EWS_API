@@ -29,7 +29,7 @@ namespace Bnhp.Office365
     /// <returns>
     /// true when the message was successfully handled, and false otherwise.
     /// </returns>
-    public bool Handle(
+    public async Task<bool> Handle(
       EwsServiceClient client,
       EMailMessage message, 
       string recipient, 
@@ -51,7 +51,7 @@ namespace Bnhp.Office365
       }
 
       // save e-mail content to a temporary file
-      var eml = client.GetMessageContent(recipient, message.Id);
+      var eml = await client.GetMessageContentAsync(recipient, message.Id);
       var tempFile = Path.GetTempFileName();
 
       File.Delete(tempFile);

@@ -27,7 +27,7 @@ namespace Bnhp.Office365
     /// <returns>
     /// true when the message was successfully handled, and false otherwise.
     /// </returns>
-    public bool Handle(
+    public async Task<bool> Handle(
       EwsServiceClient client,
       EMailMessage message, 
       string recipient, 
@@ -48,9 +48,12 @@ namespace Bnhp.Office365
         return false;
       }
 
-      using (var file = File.CreateText(args[0]))
+      var guid = Guid.NewGuid().ToString();
+      var fileName = args[0].Replace("{guid}", guid);
+
+      using (var file = File.CreateText(fileName))
       {
-        file.Write(message.TextBody);
+        await file.WriteAsync(message.TextBody);
       }
 
       return true;

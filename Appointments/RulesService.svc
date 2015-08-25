@@ -1,2 +1,4 @@
 ﻿<%@ ServiceHost Language="C#" Debug="true" 
-  Service="Bnhp.Office365.RulesService" CodeBehind="RulesService.svc.cs" %>
+  Service="Bnhp.Office365.RulesService"
+  CodeBehind="RulesService.svc.cs"
+  Factory="Bnhp.Office365.WcfServiceFactory" %>

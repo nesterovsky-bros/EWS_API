@@ -14,8 +14,9 @@ namespace Bnhp.Office365
     
     public partial class Rule
     {
+        public string GroupName { get; set; }
         public string Email { get; set; }
-        public string RuleName { get; set; }
+        public string Action { get; set; }
         public string Params { get; set; }
     }
 }

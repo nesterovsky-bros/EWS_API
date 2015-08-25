@@ -23,13 +23,16 @@ namespace Bnhp.Office365.RulesServiceReference {
         private System.Runtime.Serialization.ExtensionDataObject extensionDataField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private string ActionField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
         private string EmailField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private string ParamsField;
+        private string GroupNameField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private string RuleNameField;
+        private string ParamsField;
         
         [global::System.ComponentModel.BrowsableAttribute(false)]
         public System.Runtime.Serialization.ExtensionDataObject ExtensionData {
@@ -38,6 +41,19 @@ namespace Bnhp.Office365.RulesServiceReference {
             }
             set {
                 this.extensionDataField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string Action {
+            get {
+                return this.ActionField;
+            }
+            set {
+                if ((object.ReferenceEquals(this.ActionField, value) != true)) {
+                    this.ActionField = value;
+                    this.RaisePropertyChanged("Action");
+                }
             }
         }
         
@@ -55,6 +71,19 @@ namespace Bnhp.Office365.RulesServiceReference {
         }
         
         [System.Runtime.Serialization.DataMemberAttribute()]
+        public string GroupName {
+            get {
+                return this.GroupNameField;
+            }
+            set {
+                if ((object.ReferenceEquals(this.GroupNameField, value) != true)) {
+                    this.GroupNameField = value;
+                    this.RaisePropertyChanged("GroupName");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
         public string Params {
             get {
                 return this.ParamsField;
@@ -63,19 +92,6 @@ namespace Bnhp.Office365.RulesServiceReference {
                 if ((object.ReferenceEquals(this.ParamsField, value) != true)) {
                     this.ParamsField = value;
                     this.RaisePropertyChanged("Params");
-                }
-            }
-        }
-        
-        [System.Runtime.Serialization.DataMemberAttribute()]
-        public string RuleName {
-            get {
-                return this.RuleNameField;
-            }
-            set {
-                if ((object.ReferenceEquals(this.RuleNameField, value) != true)) {
-                    this.RuleNameField = value;
-                    this.RaisePropertyChanged("RuleName");
                 }
             }
         }
@@ -95,28 +111,22 @@ namespace Bnhp.Office365.RulesServiceReference {
     public interface IRulesService {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRulesService/GetRules", ReplyAction="http://tempuri.org/IRulesService/GetRulesResponse")]
-        Bnhp.Office365.RulesServiceReference.Rule[] GetRules(string mailbox);
+        Bnhp.Office365.RulesServiceReference.Rule[] GetRules(string systemName, string mailbox);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRulesService/GetRules", ReplyAction="http://tempuri.org/IRulesService/GetRulesResponse")]
-        System.Threading.Tasks.Task<Bnhp.Office365.RulesServiceReference.Rule[]> GetRulesAsync(string mailbox);
+        System.Threading.Tasks.Task<Bnhp.Office365.RulesServiceReference.Rule[]> GetRulesAsync(string systemName, string mailbox);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRulesService/GetLastCheck", ReplyAction="http://tempuri.org/IRulesService/GetLastCheckResponse")]
-        System.Nullable<System.DateTime> GetLastCheck();
+        System.Nullable<System.DateTime> GetLastCheck(string systemName);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRulesService/GetLastCheck", ReplyAction="http://tempuri.org/IRulesService/GetLastCheckResponse")]
-        System.Threading.Tasks.Task<System.Nullable<System.DateTime>> GetLastCheckAsync();
+        System.Threading.Tasks.Task<System.Nullable<System.DateTime>> GetLastCheckAsync(string systemName);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRulesService/UpdateLastCheck", ReplyAction="http://tempuri.org/IRulesService/UpdateLastCheckResponse")]
-        void UpdateLastCheck(System.DateTime timestamp);
+        void UpdateLastCheck(string systemName, System.DateTime timestamp);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRulesService/UpdateLastCheck", ReplyAction="http://tempuri.org/IRulesService/UpdateLastCheckResponse")]
-        System.Threading.Tasks.Task UpdateLastCheckAsync(System.DateTime timestamp);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRulesService/GetSystemName", ReplyAction="http://tempuri.org/IRulesService/GetSystemNameResponse")]
-        string GetSystemName();
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IRulesService/GetSystemName", ReplyAction="http://tempuri.org/IRulesService/GetSystemNameResponse")]
-        System.Threading.Tasks.Task<string> GetSystemNameAsync();
+        System.Threading.Tasks.Task UpdateLastCheckAsync(string systemName, System.DateTime timestamp);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -146,36 +156,28 @@ namespace Bnhp.Office365.RulesServiceReference {
                 base(binding, remoteAddress) {
         }
         
-        public Bnhp.Office365.RulesServiceReference.Rule[] GetRules(string mailbox) {
-            return base.Channel.GetRules(mailbox);
+        public Bnhp.Office365.RulesServiceReference.Rule[] GetRules(string systemName, string mailbox) {
+            return base.Channel.GetRules(systemName, mailbox);
         }
         
-        public System.Threading.Tasks.Task<Bnhp.Office365.RulesServiceReference.Rule[]> GetRulesAsync(string mailbox) {
-            return base.Channel.GetRulesAsync(mailbox);
+        public System.Threading.Tasks.Task<Bnhp.Office365.RulesServiceReference.Rule[]> GetRulesAsync(string systemName, string mailbox) {
+            return base.Channel.GetRulesAsync(systemName, mailbox);
         }
         
-        public System.Nullable<System.DateTime> GetLastCheck() {
-            return base.Channel.GetLastCheck();
+        public System.Nullable<System.DateTime> GetLastCheck(string systemName) {
+            return base.Channel.GetLastCheck(systemName);
         }
         
-        public System.Threading.Tasks.Task<System.Nullable<System.DateTime>> GetLastCheckAsync() {
-            return base.Channel.GetLastCheckAsync();
+        public System.Threading.Tasks.Task<System.Nullable<System.DateTime>> GetLastCheckAsync(string systemName) {
+            return base.Channel.GetLastCheckAsync(systemName);
         }
         
-        public void UpdateLastCheck(System.DateTime timestamp) {
-            base.Channel.UpdateLastCheck(timestamp);
+        public void UpdateLastCheck(string systemName, System.DateTime timestamp) {
+            base.Channel.UpdateLastCheck(systemName, timestamp);
         }
         
-        public System.Threading.Tasks.Task UpdateLastCheckAsync(System.DateTime timestamp) {
-            return base.Channel.UpdateLastCheckAsync(timestamp);
-        }
-        
-        public string GetSystemName() {
-            return base.Channel.GetSystemName();
-        }
-        
-        public System.Threading.Tasks.Task<string> GetSystemNameAsync() {
-            return base.Channel.GetSystemNameAsync();
+        public System.Threading.Tasks.Task UpdateLastCheckAsync(string systemName, System.DateTime timestamp) {
+            return base.Channel.UpdateLastCheckAsync(systemName, timestamp);
         }
     }
 }

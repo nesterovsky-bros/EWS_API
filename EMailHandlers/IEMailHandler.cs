@@ -23,7 +23,7 @@ namespace Bnhp.Office365
       /// <returns>
       /// true when the message was successfully handled, and false otherwise.
       /// </returns>
-      bool Handle(
+      Task<bool> Handle(
         EwsServiceClient client,
         EMailMessage message, 
         string recipient, 

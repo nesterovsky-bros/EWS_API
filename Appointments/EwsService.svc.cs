@@ -748,7 +748,8 @@
         new FindMessagesRequest
         {
           email = email,
-          pageSize = pageSize.HasValue ? pageSize.Value : 1000,
+          pageSize = 
+            pageSize.HasValue && (pageSize.Value > 0) ? pageSize.Value : 1000,
           offset = offset
         },
         FindMessagesImpl);

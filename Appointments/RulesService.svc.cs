@@ -20,23 +20,26 @@ namespace Bnhp.Office365
     /// <summary>
     /// Retrieves a collection of rules for the specified mailbox. 
     /// </summary>
+    /// <param name="systemName">a system name (group name) to check.</param>
     /// <param name="mailbox">a mailbox address.</param>
     /// <returns>a collection of Rule instances or null.</returns>
-    public IEnumerable<Rule> GetRules(string mailbox)
+    public IEnumerable<Rule> GetRules(string systemName, string mailbox)
     {
       using (var model = new EWSQueueEntities())
       {
-        return model.Rules.Where(rule => rule.Email == mailbox);
+        return model.Rules.
+          Where(rule => (rule.GroupName == systemName ) && (rule.Email == mailbox));
       }
     }
 
     /// <summary>
     /// Retrieve date and time when there was last change state check.
     /// </summary>
+    /// <param name="systemName">a name of system to check.</param>
     /// <returns>
     /// A date and time of the latest change state check or null.
     /// </returns>
-    public DateTime? GetLastCheck()
+    public DateTime? GetLastCheck(string systemName)
     {
       using (var model = new EWSQueueEntities())
       {
@@ -44,7 +47,7 @@ namespace Bnhp.Office365
           Where(
             request =>
               (request.ApplicationId == settings.RulesEngineApplicationId) &&
-              (request.GroupName == settings.RulesEngineGroupName)).
+              (request.GroupName == systemName)).
           Select(request => request.LastCheck).
           FirstOrDefault();
       }
@@ -53,10 +56,11 @@ namespace Bnhp.Office365
     /// <summary>
     /// Update date and time of the latest change state check.
     /// </summary>
+    /// <param name="systemName">a name of system to update.</param>
     /// <param name="timestamp">
     /// A new date and time of the latest change state check.
     /// </param>
-    public void UpdateLastCheck(DateTime timestamp)
+    public void UpdateLastCheck(string systemName, DateTime timestamp)
     {
       using (var model = new EWSQueueEntities())
       {
@@ -64,7 +68,7 @@ namespace Bnhp.Office365
           Where(
             request =>
               (request.ApplicationId == settings.RulesEngineApplicationId) &&
-              (request.GroupName == settings.RulesEngineGroupName)).
+              (request.GroupName == systemName)).
           FirstOrDefault();
 
         if (changeStateRequest == null)
@@ -72,7 +76,7 @@ namespace Bnhp.Office365
           changeStateRequest = new ChangeStateRequest
           {
             ApplicationId = settings.RulesEngineApplicationId,
-            GroupName = settings.RulesEngineGroupName,
+            GroupName = systemName,
             LastCheck = timestamp
           };
 
@@ -85,15 +89,6 @@ namespace Bnhp.Office365
 
         model.SaveChanges();
       }
-    }
-
-    /// <summary>
-    /// Retrieves the system name.
-    /// </summary>
-    /// <returns>a system name.</returns>
-    public string GetSystemName()
-    {
-      return settings.RulesEngineGroupName;
     }
     #endregion
   }
