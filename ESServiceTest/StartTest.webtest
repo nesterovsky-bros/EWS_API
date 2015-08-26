@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WebTest Name="StartTest" Id="d33be8f7-cb6c-4ced-b566-3823fa41e24d" Owner="" Priority="2147483647" Enabled="True" CssProjectStructure="" CssIteration="" Timeout="0" WorkItemIds="" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010" Description="" CredentialUserName="" CredentialPassword="" PreAuthenticate="True" Proxy="default" StopOnError="False" RecordedResultFile="WebTest.ad883c1e-5567-4ddd-95f0-bcb5369b1f3f.rec.webtestresult" ResultsLocale="">
+  <Items>
+    <IncludedWebTest Name="ESServiceTest.CreateAndUpdateAppointmentCoded" Path="bin\debug\esservicetest.dll" Id="845223d5-1732-9a97-9249-fe549c826f0e" IsCodedWebTest="True" InheritWebTestSettings="False" />
+  </Items>
+</WebTest>
