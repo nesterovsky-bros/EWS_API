@@ -63,7 +63,9 @@ namespace Bnhp.Office365
 
       File.Delete(tempFile);
 
-      using (var file = File.Create(tempFile + ".eml"))
+      tempFile = tempFile + ".eml";
+
+      using (var file = File.Create(tempFile))
       {
         file.Write(eml.Content, 0, eml.Content.Length);
       }
@@ -92,8 +94,10 @@ namespace Bnhp.Office365
           printer.Kill();
         }
       }
-      catch
+      catch(Exception e)
       {
+        Trace.TraceError(e.ToString());
+
         return false;
       }
       finally 
