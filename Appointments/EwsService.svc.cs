@@ -1340,23 +1340,25 @@
       return Office365.Appointment.Bind(service, new Office365.ItemId(ID));
     }
 
-    private Appointment ConvertAppointment(Office365.Appointment appointment)
+    private O ConvertItem<I, O>(I item)
+      where I : Office365.Item
+      where O : Item, new()
     {
-      if (appointment == null)
+      if (item == null)
       {
-        return null;
+        return default(O);
       }
 
-      var proxy = new Appointment
+      var result = new O()
       {
-        Id = appointment.Id.ToString()
+        Id = item.Id.ToString()
       };
 
-      var target = proxy.GetType();
-      var source = appointment.GetType();
+      var target = result.GetType();
+      var source = item.GetType();
 
-      foreach (Office365.PropertyDefinition definition in 
-        appointment.GetLoadedPropertyDefinitions())
+      foreach (Office365.PropertyDefinition definition in
+        item.GetLoadedPropertyDefinitions())
       {
         var name = definition.Name;
         var property = source.GetProperty(name);
@@ -1377,41 +1379,69 @@
             (property.PropertyType == typeof(TimeSpan?)) ||
             (property.PropertyType == typeof(bool)))
           {
-            targetProperty.SetValue(proxy, property.GetValue(appointment));
+            targetProperty.SetValue(result, property.GetValue(item));
           }
           else if (name == "Importance")
           {
-            targetProperty.SetValue(proxy, (Importance)property.GetValue(appointment));
+            targetProperty.SetValue(result, (Importance)property.GetValue(item));
           }
           else if (name == "MeetingResponseType")
           {
-            targetProperty.SetValue(proxy, (MeetingResponseType)property.GetValue(appointment));
+            targetProperty.SetValue(result, (MeetingResponseType)property.GetValue(item));
           }
           else if (name == "Sensitivity")
           {
-            targetProperty.SetValue(proxy, (Sensitivity)property.GetValue(appointment));
+            targetProperty.SetValue(result, (Sensitivity)property.GetValue(item));
           }
         }
       }
 
-      var message = null as Office365.TextBody;
+      var content = null as Office365.MessageBody;
 
-      if (appointment.TryGetProperty(
-        Office365.AppointmentSchema.TextBody,
-        out message))
+      if (item.TryGetProperty(Office365.ItemSchema.Body, out content))
       {
-        proxy.TextBody = message.ToString();
+        switch (content.BodyType)
+        {
+          case BodyType.HTML:
+          {
+            result.TextBody =
+              Encoding.UTF8.GetString(Convert.FromBase64String(content.Text));
+
+            break;
+          }
+          case BodyType.Text:
+          {
+            result.TextBody = content.Text;
+
+            break;
+          }
+        }
       }
 
-      proxy.RequiredAttendees = GetAttendees(
+      result.ExtendedProperties = GetExtendedProperties(item);
+      result.Categories = GetCategories(item);
+
+      return result;
+    }
+
+    private Appointment ConvertAppointment(Office365.Appointment appointment)
+    {
+      var result = ConvertItem<Office365.Appointment, Appointment>(appointment);
+
+      if (result == null)
+      {
+        return null;
+      }
+
+      result.RequiredAttendees = GetAttendees(
         appointment, 
         Office365.AppointmentSchema.RequiredAttendees);
 
-      proxy.OptionalAttendees = GetAttendees(
+      result.OptionalAttendees = GetAttendees(
         appointment, 
         Office365.AppointmentSchema.OptionalAttendees);
 
-      proxy.Resources = GetAttendees(
+      result.Resources = GetAttendees(
         appointment,
         Office365.AppointmentSchema.Resources);
 
@@ -1421,7 +1451,7 @@
         Office365.AppointmentSchema.Organizer,
         out emailAddress))
       {
-        proxy.Organizer = new Attendee 
+        result.Organizer = new Attendee 
         {
           Address = emailAddress.Address,
           Name = emailAddress.Name
@@ -1436,7 +1466,7 @@
           Office365.AppointmentSchema.Recurrence,
           out recurrence))
         {
-          proxy.Recurrence = new Recurrence
+          result.Recurrence = new Recurrence
           {
             StartDate = recurrence.StartDate,
             EndDate = recurrence.EndDate,
@@ -1446,28 +1476,28 @@
 
           if (recurrence is Office365.Recurrence.IntervalPattern)
           {
-            proxy.Recurrence.Interval = 
+            result.Recurrence.Interval = 
               ((Office365.Recurrence.IntervalPattern)recurrence).Interval;
 
             if ((recurrence is Office365.Recurrence.DailyPattern) ||
               (recurrence is Office365.Recurrence.DailyRegenerationPattern))
             {
-              proxy.Recurrence.Type = RecurrenceType.Daily;
+              result.Recurrence.Type = RecurrenceType.Daily;
             }
             else if ((recurrence is Office365.Recurrence.MonthlyPattern) ||
               (recurrence is Office365.Recurrence.MonthlyRegenerationPattern))
             {
-              proxy.Recurrence.Type = RecurrenceType.Monthly;
+              result.Recurrence.Type = RecurrenceType.Monthly;
             }
             else if ((recurrence is Office365.Recurrence.WeeklyPattern) ||
               (recurrence is Office365.Recurrence.WeeklyRegenerationPattern))
             {
-              proxy.Recurrence.Type = RecurrenceType.Weekly;
+              result.Recurrence.Type = RecurrenceType.Weekly;
             }
             else if ((recurrence is Office365.Recurrence.YearlyPattern) ||
               (recurrence is Office365.Recurrence.YearlyRegenerationPattern))
             {
-              proxy.Recurrence.Type = RecurrenceType.Yearly;
+              result.Recurrence.Type = RecurrenceType.Yearly;
             }
           }
         }
@@ -1478,7 +1508,7 @@
           Office365.AppointmentSchema.FirstOccurrence, 
           out occurence))
         {
-          proxy.FirstOccurrence = new OccurrenceInfo
+          result.FirstOccurrence = new OccurrenceInfo
           {
             Start = occurence.Start,
             End = occurence.End
@@ -1489,7 +1519,7 @@
           Office365.AppointmentSchema.LastOccurrence,
           out occurence))
         {
-          proxy.LastOccurrence = new OccurrenceInfo
+          result.LastOccurrence = new OccurrenceInfo
           {
             Start = occurence.Start,
             End = occurence.End
@@ -1497,10 +1527,39 @@
         }
       }
 
-      proxy.ExtendedProperties = GetExtendedProperties(appointment);
-      proxy.Categories = GetCategories(appointment);
+      return result;
+    }
 
-      return proxy;
+    private EMailMessage ConvertMessage(Office365.EmailMessage message)
+    {
+      var result = ConvertItem<Office365.EmailMessage, EMailMessage>(message);
+
+      if (result == null)
+      {
+        return null;
+      };
+
+      result.BccRecipients = GetRecipients(message, "BccRecipients");
+      result.CcRecipients = GetRecipients(message, "CcRecipients");
+      result.ToRecipients = GetRecipients(message, "ToRecipients");
+
+      if (message.HasAttachments)
+      {
+        result.Attachments = new List<Attachment>();
+
+        foreach (var attachment in message.Attachments)
+        {
+          result.Attachments.Add(
+            new Attachment
+            {
+              Name = attachment.Name,
+              ContentType = attachment.ContentType,
+              Size = attachment.Size
+            });
+        }
+      }
+
+      return result;
     }
 
     private static List<ExtendedProperty> GetExtendedProperties(
@@ -1612,86 +1671,6 @@
       }
 
       return list;
-    }
-
-    private EMailMessage ConvertMessage(Office365.EmailMessage message)
-    {
-      var result = new EMailMessage
-      {
-        Id = message.Id.ToString()
-      };
-
-      var target = result.GetType();
-      var source = message.GetType();
-
-      foreach (Office365.PropertyDefinition definition in
-        message.GetLoadedPropertyDefinitions())
-      {
-        var name = definition.Name;
-        var property = source.GetProperty(name);
-        var targetProperty = target.GetProperty(name);
-
-        if (targetProperty == null)
-        {
-          continue;
-        }
-
-        if (property.CanRead && targetProperty.CanWrite)
-        {
-          if ((property.PropertyType == typeof(string)) ||
-            (property.PropertyType == typeof(int)) ||
-            (property.PropertyType == typeof(DateTime)) ||
-            (property.PropertyType == typeof(DateTime?)) ||
-            (property.PropertyType == typeof(TimeSpan)) ||
-            (property.PropertyType == typeof(TimeSpan?)) ||
-            (property.PropertyType == typeof(bool)))
-          {
-            targetProperty.SetValue(result, property.GetValue(message));
-          }
-          else if (name == "Importance")
-          {
-            targetProperty.SetValue(result, (Importance)property.GetValue(message));
-          }
-          else if (name == "Sensitivity")
-          {
-            targetProperty.SetValue(result, (Sensitivity)property.GetValue(message));
-          }
-        }
-      }
-
-      var content = null as Office365.TextBody;
-
-      if (message.TryGetProperty(
-        Office365.ItemSchema.TextBody,
-        out content))
-      {
-        result.TextBody = content.ToString();
-      }
-
-      result.BccRecipients = GetRecipients(message, "BccRecipients");
-      result.CcRecipients = GetRecipients(message, "CcRecipients");
-      result.ToRecipients = GetRecipients(message, "ToRecipients");
-
-      if (message.HasAttachments)
-      {
-        result.Attachments = new List<Attachment>();
-
-        foreach (var attachment in message.Attachments)
-        {
-          result.Attachments.Add(
-            new Attachment 
-            {
-              Name = attachment.Name,
-              ContentType = attachment.ContentType,
-              Size = attachment.Size
-            });
-        }
-      }
-
-      result.ExtendedProperties = GetExtendedProperties(message);
-      result.Categories = GetCategories(message);
-
-      return result;
     }
 
     private static List<EMailAddress> GetRecipients(

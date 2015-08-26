@@ -16,7 +16,7 @@ namespace Bnhp.Office365.Configuration
     /// <summary>
     /// Gets and sets a collection of handlers. 
     /// </summary>
-    [ConfigurationProperty("handlers", IsDefaultCollection = true)]
+    [ConfigurationProperty("handlers", IsDefaultCollection = false)]
     public HandlersCollectionElement Handlers
     {
       get

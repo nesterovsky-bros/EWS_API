@@ -11,10 +11,9 @@ namespace Bnhp.Office365
   public class RulesService : IRulesService
   {
     /// <summary>
-    /// A settings instance.
+    /// The application identifier.
     /// </summary>
-    [Dependency]
-    public Settings settings { get; set; }
+    public static readonly string ApplicationId = typeof(RulesService).FullName;
 
     #region IRulesService Members
     /// <summary>
@@ -27,8 +26,9 @@ namespace Bnhp.Office365
     {
       using (var model = new EWSQueueEntities())
       {
-        return model.Rules.
-          Where(rule => (rule.GroupName == systemName ) && (rule.Email == mailbox));
+        return model.Rules.Where(
+          rule => (rule.GroupName == systemName) && (rule.Email == mailbox)).
+            ToList();
       }
     }
 
@@ -46,7 +46,7 @@ namespace Bnhp.Office365
         return model.ChangeStateRequests.
           Where(
             request =>
-              (request.ApplicationId == settings.RulesEngineApplicationId) &&
+              (request.ApplicationId == ApplicationId) &&
               (request.GroupName == systemName)).
           Select(request => request.LastCheck).
           FirstOrDefault();
@@ -67,7 +67,7 @@ namespace Bnhp.Office365
         var changeStateRequest = model.ChangeStateRequests.
           Where(
             request =>
-              (request.ApplicationId == settings.RulesEngineApplicationId) &&
+              (request.ApplicationId == ApplicationId) &&
               (request.GroupName == systemName)).
           FirstOrDefault();
 
@@ -75,7 +75,7 @@ namespace Bnhp.Office365
         {
           changeStateRequest = new ChangeStateRequest
           {
-            ApplicationId = settings.RulesEngineApplicationId,
+            ApplicationId = ApplicationId,
             GroupName = systemName,
             LastCheck = timestamp
           };

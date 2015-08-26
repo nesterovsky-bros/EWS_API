@@ -170,7 +170,7 @@ namespace Bnhp.Office365
             handler =
               Activator.CreateInstance(item.Handler) as IEMailHandler;
 
-            if (string.IsNullOrEmpty(item.Action) && (handler != null))
+            if (!string.IsNullOrEmpty(item.Action) && (handler != null))
             {
               tmpHandlers.Add(item.Action, handler);
             }

@@ -47,10 +47,6 @@ namespace Bnhp.Office365
           int.Parse(ConfigurationManager.AppSettings["UsersPerUsersSettins"]),
         ExchangeListenerRecyclePeriod =
           int.Parse(ConfigurationManager.AppSettings["ExchangeListenerRecyclePeriod"]),
-
-        RulesEngineApplicationId =
-          ConfigurationManager.AppSettings["RulesEngineApplicationId"],
-
         ApplicationUsers = users,
         DefaultApplicationUser = users[0]
       };
