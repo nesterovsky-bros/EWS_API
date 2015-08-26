@@ -52,6 +52,13 @@ namespace Bnhp.Office365
 
       // save e-mail content to a temporary file
       var eml = await client.GetMessageContentAsync(recipient, message.Id);
+
+      if (eml == null)
+      {
+        // cannot print this e-mail
+        return false;
+      }
+
       var tempFile = Path.GetTempFileName();
 
       File.Delete(tempFile);

@@ -372,6 +372,14 @@
           appointment.ReminderMinutesBeforeStart = proxy.ReminderMinutesBeforeStart;
         }
 
+        if (!string.IsNullOrEmpty(proxy.TextBody))
+        {
+          appointment.Body = new Office365.MessageBody(
+            IsHtml.IsMatch(proxy.TextBody) ?
+              Office365.BodyType.HTML : Office365.BodyType.Text,
+            proxy.TextBody);
+        }
+
         SetExtendedProperties(appointment, proxy.ExtendedProperties);
         SetCategories(appointment, proxy.Categories);
 
@@ -961,7 +969,12 @@
     {
       var service = GetService(request.email);
       var message = Office365.EmailMessage.Bind(service, request.ID);
-      var mimeContent = message.MimeContent;
+      var mimeContent = null as Office365.MimeContent;
+
+      if (!message.TryGetProperty(Office365.EmailMessageSchema.MimeContent, out mimeContent))
+      {
+        return null;
+      }
 
       return new MimeContent 
       {
@@ -1400,22 +1413,7 @@
 
       if (item.TryGetProperty(Office365.ItemSchema.Body, out content))
       {
-        switch (content.BodyType)
-        {
-          case BodyType.HTML:
-          {
-            result.TextBody =
-              Encoding.UTF8.GetString(Convert.FromBase64String(content.Text));
-
-            break;
-          }
-          case BodyType.Text:
-          {
-            result.TextBody = content.Text;
-
-            break;
-          }
-        }
+        result.TextBody = content.Text;
       }
 
       result.ExtendedProperties = GetExtendedProperties(item);
