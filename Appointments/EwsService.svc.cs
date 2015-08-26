@@ -968,13 +968,9 @@
     private MimeContent GetMessageContentImpl(EMailProcessRequest request)
     {
       var service = GetService(request.email);
-      var message = Office365.EmailMessage.Bind(service, request.ID);
-      var mimeContent = null as Office365.MimeContent;
-
-      if (!message.TryGetProperty(Office365.EmailMessageSchema.MimeContent, out mimeContent))
-      {
-        return null;
-      }
+      var propertySet = new PropertySet(ItemSchema.MimeContent);
+      var message = Office365.EmailMessage.Bind(service, request.ID, propertySet);
+      var mimeContent = message.MimeContent;
 
       return new MimeContent 
       {
