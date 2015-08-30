@@ -23,7 +23,7 @@ namespace ESServiceTest
   [DataBinding("DataSource", "CreateAndUpdateAppointment", "AppointmentDate", "$AppointmentDate")]
   [DataBinding("DataSource", "CreateAndUpdateAppointment", "AppointmentSubject", "$AppointmentSubject")]
   [DataBinding("DataSource", "CreateAndUpdateAppointment", "Text", "$Text")]
-  public class SetupCreateAndUpdateAppointmentCoded : WebTest
+  public class CUDAppointmentSetupCoded : WebTest
   {
     public override IEnumerator<WebTestRequest> GetRequestEnumerator()
     {

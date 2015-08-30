@@ -50,6 +50,7 @@
     /// <summary>
     /// A folder ID.
     /// </summary>
+    [DataMember]
     public string FolderID { get; set; }
 
     /// <summary>

@@ -8,7 +8,7 @@
       <ExtractionRules>
         <ExtractionRule Classname="Microsoft.VisualStudio.TestTools.WebTesting.ExtractHtmlTagInnerText, Microsoft.VisualStudio.QualityTools.WebTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" VariableName="$ItemId" DisplayName="Tag Inner Text" Description="Extracts the inner text from the specified HTML tag.">
           <RuleParameters>
-            <RuleParameter Name="TagName" Value="CreateResult" />
+            <RuleParameter Name="TagName" Value="CreateAppointmentResult" />
             <RuleParameter Name="AttributeName" Value="" />
             <RuleParameter Name="AttributeValue" Value="" />
             <RuleParameter Name="RemoveInnerTags" Value="True" />

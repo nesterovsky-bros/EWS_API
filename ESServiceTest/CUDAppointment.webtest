@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WebTest Name="CUDAppointment" Id="a62f05e6-5e8e-42c9-b2bc-2db67a657e3b" Owner="" Priority="2147483647" Enabled="True" CssProjectStructure="" CssIteration="" Timeout="0" WorkItemIds="" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010" Description="" CredentialUserName="" CredentialPassword="" PreAuthenticate="True" Proxy="default" StopOnError="False" RecordedResultFile="WebTest.ad883c1e-5567-4ddd-95f0-bcb5369b1f3f.rec.webtestresult" ResultsLocale="">
+  <Items>
+    <IncludedWebTest Name="ESServiceTest.CUDAppointmentSetupCoded" Path="bin\debug\esservicetest.dll" Id="e7046997-6d77-44b2-9a2a-2545805f1a3e" IsCodedWebTest="True" InheritWebTestSettings="False" />
+    <IncludedWebTest Name="CreateAppointment" Path="createappointment.webtest" Id="70ab7555-afad-4029-8384-0be5e4981168" IsCodedWebTest="False" InheritWebTestSettings="True" />
+    <IncludedWebTest Name="UpdateAppointment" Path="updateappointment.webtest" Id="94c40dff-751c-482b-bafe-0bc45e8f01f3" IsCodedWebTest="False" InheritWebTestSettings="False" />
+    <IncludedWebTest Name="DeleteAppointment" Path="deleteappointment.webtest" Id="7219a4ed-8229-4710-9438-afc8b66c2701" IsCodedWebTest="False" InheritWebTestSettings="False" />
+  </Items>
+  <ContextParameters>
+    <ContextParameter Name="$Email" Value="" />
+    <ContextParameter Name="$RequiredAttendee" Value="" />
+    <ContextParameter Name="$WebServer" Value="http://localhost:54401" />
+    <ContextParameter Name="$Text" Value="" />
+    <ContextParameter Name="$AppointmentSubject" Value="" />
+    <ContextParameter Name="$AppointmentDate" Value="" />
+  </ContextParameters>
+</WebTest>

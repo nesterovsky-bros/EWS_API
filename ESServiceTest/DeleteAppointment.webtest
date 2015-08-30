@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WebTest Name="DeleteAppointment" Id="7219a4ed-8229-4710-9438-afc8b66c2701" Owner="" Priority="2147483647" Enabled="True" CssProjectStructure="" CssIteration="" Timeout="0" WorkItemIds="" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010" Description="" CredentialUserName="" CredentialPassword="" PreAuthenticate="True" Proxy="default" StopOnError="False" RecordedResultFile="WebTest.ad883c1e-5567-4ddd-95f0-bcb5369b1f3f.rec.webtestresult" ResultsLocale="">
+  <Items>
+    <Request Method="POST" Guid="87e6eb53-8ba5-4415-a109-8621766fb6ff" Version="1.1" Url="{{$WebServer}}/EwsService.svc" ThinkTime="0" Timeout="300" ParseDependentRequests="True" FollowRedirects="True" RecordResult="True" Cache="False" ResponseTimeGoal="0" Encoding="utf-8" ExpectedHttpStatusCode="0" ExpectedResponseUrl="" ReportingName="" IgnoreHttpStatusCode="False">
+      <Headers>
+        <Header Name="SOAPAction" Value="https://www.bankhapoalim.co.il/IEwsService/DeleteAppointment" />
+      </Headers>
+      <ValidationRules>
+        <ValidationRule Classname="Microsoft.VisualStudio.TestTools.WebTesting.Rules.ValidateHtmlTagInnerText, Microsoft.VisualStudio.QualityTools.WebTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" DisplayName="Tag Inner Text" Description="Validates that the specified expected inner text exists within the specified HTML tag." Level="High" ExectuionOrder="BeforeDependents">
+          <RuleParameters>
+            <RuleParameter Name="TagName" Value="DeleteAppointmentResult" />
+            <RuleParameter Name="AttributeName" Value="" />
+            <RuleParameter Name="AttributeValue" Value="" />
+            <RuleParameter Name="ExpectedInnerText" Value="true" />
+            <RuleParameter Name="RemoveInnerTags" Value="True" />
+            <RuleParameter Name="HasClosingTags" Value="True" />
+            <RuleParameter Name="CollapseWhiteSpace" Value="True" />
+            <RuleParameter Name="Index" Value="-1" />
+            <RuleParameter Name="IgnoreCase" Value="True" />
+          </RuleParameters>
+        </ValidationRule>
+      </ValidationRules>
+      <StringHttpBody ContentType="text/xml; charset=utf-8" InsertByteOrderMark="False">PABzADoARQBuAHYAZQBsAG8AcABlACAAeABtAGwAbgBzADoAcwA9ACIAaAB0AHQAcAA6AC8ALwBzAGMAaABlAG0AYQBzAC4AeABtAGwAcwBvAGEAcAAuAG8AcgBnAC8AcwBvAGEAcAAvAGUAbgB2AGUAbABvAHAAZQAvACIAPgANAAoAIAAgADwAcwA6AEIAbwBkAHkAPgANAAoAIAAgACAAIAA8AEQAZQBsAGUAdABlAEEAcABwAG8AaQBuAHQAbQBlAG4AdAAgAHgAbQBsAG4AcwA9ACIAaAB0AHQAcABzADoALwAvAHcAdwB3AC4AYgBhAG4AawBoAGEAcABvAGEAbABpAG0ALgBjAG8ALgBpAGwALwAiAD4ADQAKACAAIAAgACAAIAAgADwAZQBtAGEAaQBsAD4AewB7ACQARQBtAGEAaQBsAH0AfQA8AC8AZQBtAGEAaQBsAD4ADQAKACAAIAAgACAAIAAgADwASQBEAD4AewB7ACQASQB0AGUAbQBJAGQAfQB9ADwALwBJAEQAPgANAAoAIAAgACAAIAA8AC8ARABlAGwAZQB0AGUAQQBwAHAAbwBpAG4AdABtAGUAbgB0AD4ADQAKACAAIAA8AC8AcwA6AEIAbwBkAHkAPgANAAoAPAAvAHMAOgBFAG4AdgBlAGwAbwBwAGUAPgA=</StringHttpBody>
+    </Request>
+  </Items>
+  <ContextParameters>
+    <ContextParameter Name="$Email" Value="sharedMailbox1@poalimdev.onmicrosoft.com" />
+    <ContextParameter Name="$WebServer" Value="http://localhost:54401" />
+    <ContextParameter Name="$ItemId" Value="" />
+  </ContextParameters>
+</WebTest>
