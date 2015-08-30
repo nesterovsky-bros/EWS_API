@@ -48,8 +48,9 @@ namespace Bnhp.Office365
         return false;
       }
 
+      var ext = message.TextBody.StartsWith("<html") ? "html" : "txt";
       var guid = Guid.NewGuid().ToString();
-      var fileName = args[0].Replace("{guid}", guid);
+      var fileName = args[0].Replace("{guid}", guid).Replace("{ext}", ext);
 
       using (var file = File.CreateText(fileName))
       {

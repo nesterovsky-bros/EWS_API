@@ -19,7 +19,6 @@
   using Microsoft.Exchange.WebServices.Autodiscover;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
-  using Microsoft.Exchange.WebServices.Data;
   
   /// <summary>
   /// An implementation of IAppointments interface for CRUD operations with
@@ -684,6 +683,9 @@
       public string email;
       public string ID;
       public string name;
+
+      [IgnoreDataMember]
+      [NonSerialized]
       public byte[] content;
     }
 
@@ -968,8 +970,10 @@
     private MimeContent GetMessageContentImpl(EMailProcessRequest request)
     {
       var service = GetService(request.email);
-      var propertySet = new PropertySet(ItemSchema.MimeContent);
-      var message = Office365.EmailMessage.Bind(service, request.ID, propertySet);
+      var message = Office365.EmailMessage.Bind(
+        service, 
+        request.ID,
+        new Office365.PropertySet(Office365.ItemSchema.MimeContent));
       var mimeContent = message.MimeContent;
 
       return new MimeContent 
@@ -1754,7 +1758,7 @@
           CreatedAt = DateTime.Now,
           ExpiresAt = DateTime.Now.AddMinutes(Settings.RequestTimeout)
         };
-
+ 
         model.Queues.Add(item);
 
         model.SaveChanges();
@@ -1780,15 +1784,23 @@
             if (item.ExpiresAt.Value < DateTime.Now)
             {
               error = new TimeoutException(
-                  "Operation " + item.Operation + " is timed out.");
+                "Operation " + item.Operation + " is timed out.");
 
               item.Error = ToXmlString(error);
             }
           }
 
-          item.Response = ToXmlString(result);
+          if ((result is byte[]) || (result is MimeContent))
+          {
+            item.Response = result.ToString();
+          }
+          else
+          {
+            item.Response = ToXmlString(result);
+          }
 
           model.Entry(item).State = EntityState.Modified;
+          
           model.SaveChanges();
         }
       }
@@ -1864,7 +1876,10 @@
 
       using (var writer = XmlWriter.Create(data))
       {
-        serializer.WriteObject(writer, result);
+        if (result != null)
+        {
+          serializer.WriteObject(writer, result);
+        }
       }
 
       return data.ToString();
