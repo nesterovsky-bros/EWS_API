@@ -32,7 +32,7 @@ namespace Bnhp.Office365
     /// </param>
     public static async Task ExecuteAsync(
       string systemName, 
-      CancellationToken token)
+      CancellationToken token = default(CancellationToken))
     {
       var mailbox = "";
       var action = "";
@@ -43,10 +43,7 @@ namespace Bnhp.Office365
         var rulesService = new RulesServiceClient();
         var timestamp = await rulesService.GetLastCheckAsync(systemName);
 
-        if (token.IsCancellationRequested)
-        {
-          return;
-        }
+        token.ThrowIfCancellationRequested();
 
         // retrieves latest changes for this system
         var ewsService = new EwsServiceClient();
@@ -59,10 +56,7 @@ namespace Bnhp.Office365
           null,
           null);
 
-        if (token.IsCancellationRequested)
-        {
-          return;
-        }
+        token.ThrowIfCancellationRequested();
 
         // next timestamp
         timestamp = DateTime.Now;
@@ -88,10 +82,7 @@ namespace Bnhp.Office365
           // executes action handlers for the current mailbox
           foreach (var rule in rules)
           {
-            if (token.IsCancellationRequested)
-            {
-              return;
-            }
+            token.ThrowIfCancellationRequested();
 
             action = rule.Action;
             
@@ -110,10 +101,7 @@ namespace Bnhp.Office365
 
             var message = await ewsService.GetMessageAsync(mailbox, change.ItemID);
 
-            if (token.IsCancellationRequested)
-            {
-              return;
-            }
+            token.ThrowIfCancellationRequested();
 
             if (!await handler.Handle(ewsService, message, mailbox, rule.Params))
             {
