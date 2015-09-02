@@ -976,7 +976,7 @@
         Office365.ExchangeVersion.Exchange2013);
 
       var users = Settings.ApplicationUsers;
-      var user = users[Generator.Next(users.Length)];
+      var user = users[EwsUtils.Random(0, users.Length)];
 
       service.Credentials = 
         new Office365.WebCredentials(user.Email, user.Password);
@@ -1503,11 +1503,6 @@
     /// </summary>
     private static Guid ExtendedPropertySetId =
       new Guid("{DD12CD36-DB49-4002-A809-56B40E6B60E9}");
-
-    /// <summary>
-    /// Defines a random generator.
-    /// </summary>
-    private Random Generator = new Random();
     #endregion
   }
 }
