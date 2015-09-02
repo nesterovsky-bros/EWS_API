@@ -74,8 +74,6 @@ namespace Bnhp.Office365
         if (IsConsoleApp)
         {
           // start as console application
-          service.Mode = "console";
-
           service.OnStart(null);
 
           Console.WriteLine("Press enter to stop the server.");
@@ -197,7 +195,7 @@ namespace Bnhp.Office365
     // An array of system names to process.
     private string[] SystemNames;
 
-    // The service mode: "wcf", "service" or "console".
+    // The service mode: "wcf" or "service".
     private string Mode;
 
     // A cancelation token source for canceling of rules engines' tasks.
