@@ -22,6 +22,7 @@
     <IISExpressUseClassicPipelineMode />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <UseGlobalApplicationHostFile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -123,6 +124,7 @@
     <Compile Include="ChangeStateRequest.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
+    <Compile Include="LoggingEndPoint.cs" />
     <Compile Include="RulesService.svc.cs">
       <DependentUpon>RulesService.svc</DependentUpon>
     </Compile>
@@ -195,6 +197,7 @@
     <Compile Include="TraceMessage.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
+    <Compile Include="LoggingMessageInspector.cs" />
     <Compile Include="WcfServiceFactory.cs" />
   </ItemGroup>
   <ItemGroup>

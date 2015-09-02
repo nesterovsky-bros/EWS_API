@@ -58,7 +58,7 @@
             await ExpandGroups(cancellation);
             watch.Stop();
             Trace.TraceInformation(
-              "End expanding group; elasped: {0}.",
+              "End expanding groups; elasped: {0}.",
               watch.Elapsed);
 
             Trace.TraceInformation("Start discover mailboxes.");
@@ -878,6 +878,7 @@
           }
         };
 
+      var groupingInformation = null as string;
       var primaryEmail = null as string;
       var primaryService = null as Office365.ExchangeService;
       var primarySubscription = null as Office365.StreamingSubscription;
@@ -891,6 +892,7 @@
 
         if (subscription != null)
         {
+          groupingInformation = mailbox.GroupingInformation;
           primaryEmail = mailbox.Email;
           primaryService = service;
           primarySubscription = subscription;
@@ -905,7 +907,8 @@
       if (primarySubscription != null)
       {
         Trace.TraceInformation(
-          "Subscribe to a group with primary mailbox: {0}, group size is: {1}",
+          "Subscribe to a group {0} with primary mailbox: {1}, group size is: {2}",
+          groupingInformation,
           primaryEmail,
           mailboxes.Length - primaryIndex);
 
@@ -986,7 +989,8 @@
         else
         {
           Trace.TraceWarning(
-            "Subscription error for a group with primary mailbox: {0}. {1}",
+            "Subscription error for a group {0} with primary mailbox: {1}. {2}",
+            groupingInformation,
             primaryEmail,
             args.Exception);
         }

@@ -24,6 +24,37 @@ namespace Bnhp.Office365
 
     public static void Configure(IUnityContainer container)
     {
+      var listener = new EwsListener();
+
+      container.
+        RegisterInstance(GetSettings()).
+        RegisterInstance<IResponseNotifier>(new ResponseNotifier()).
+        RegisterInstance(listener).
+        RegisterType<IEwsService, EwsService>().
+        RegisterType<IRulesService, RulesService>();
+
+      container.BuildUp(listener);
+
+      var startTask = Start(listener);
+    }
+
+    public static ApplicationUser[] GetApplicationUsers()
+    {
+      using(var model = new EWSQueueEntities())
+      {
+        model.Configuration.ProxyCreationEnabled = false;
+
+        return model.ApplicationUsers.AsNoTracking().ToArray();
+      }
+    }
+
+    private static Settings GetSettings()
+    {
+      if (globalSettings != null)
+      {
+        return globalSettings;
+      }
+
       var users = GetApplicationUsers();
 
       if (users.Length == 0)
@@ -51,42 +82,37 @@ namespace Bnhp.Office365
         DefaultApplicationUser = users[0]
       };
 
-      var listener = new EwsListener();
+      globalSettings = settings;
 
-      container.
-        RegisterInstance(settings).
-        RegisterInstance<IResponseNotifier>(new ResponseNotifier()).
-        RegisterInstance(listener).
-        RegisterType<IEwsService, EwsService>().
-        RegisterType<IRulesService, RulesService>();
-
-      container.BuildUp(listener);
-
-      var startTask = Start(listener);
-    }
-
-    public static ApplicationUser[] GetApplicationUsers()
-    {
-      using(var model = new EWSQueueEntities())
-      {
-        model.Configuration.ProxyCreationEnabled = false;
-
-        return model.ApplicationUsers.AsNoTracking().ToArray();
-      }
+      return settings;
     }
 
     private static async Task Start(EwsListener listener)
     {
+      if (globalListener != null)
+      {
+        return;
+      }
+
+      globalListener = listener;
+
       try
       {
         await listener.Start();
       }
-      catch(Exception e)
+      catch (Exception e)
       {
         Trace.TraceError("Listener failed. {0}", e);
 
         throw;
       }
+      finally
+      {
+        globalListener = null;
+      }
     }
+
+    private static EwsListener globalListener;
+    private static Settings globalSettings;
   }
 }

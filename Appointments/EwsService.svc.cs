@@ -2,21 +2,16 @@
 {
   using System;
   using System.Collections.Generic;
-  using System.Configuration;
   using System.IO;
   using System.Linq;
-  using System.Threading;
   using System.Runtime.Serialization;
   using System.ServiceModel;
-  using System.ServiceModel.Web;
   using System.Text;
   using System.Text.RegularExpressions;
   using System.Xml;
-  using System.Threading.Tasks;
   using System.Data.Entity;
   
   using Microsoft.Practices.Unity;
-  using Microsoft.Exchange.WebServices.Autodiscover;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
   
@@ -33,12 +28,6 @@
     [Dependency]
     public Settings Settings { get; set; }
 
-    /// <summary>
-    /// A response notifier.
-    /// </summary>
-    [Dependency]
-    public IResponseNotifier ResponseNotifier { get; set; }
-
     #region CreateAppointment method
     /// <summary>
     /// Creates a new appointment and sends notifications to attendees.
@@ -51,51 +40,27 @@
     /// <exception cref="Exception">in case of error.</exception>
     public string CreateAppointment(string email, Appointment appointment)
     {
-      return Call(
-        "CreateAppointment",
-        new CreateAppointmentRequest
-        {
-          email = email,
-          appointment = appointment
-        },
-        CreateAppointmentImpl);
-    }
-
-    public struct CreateAppointmentRequest
-    {
-      public string email;
-      public Appointment appointment;
-    }
-
-    private string CreateAppointmentImpl(CreateAppointmentRequest request)
-    {
-      if (request.appointment == null)
-      {
-        throw new ArgumentNullException("request.proxy");
-      }
-      
-      var email = request.email;
       var service = GetService(email);
-      var appointment = new Office365.Appointment(service);
-      var proxy = request.appointment;
+      var officeAppointment = new Office365.Appointment(service);
+      var proxy = appointment;
 
       // Set the properties on the proxy object to create the proxy.
-      appointment.Subject = proxy.Subject;
+      officeAppointment.Subject = proxy.Subject;
 
       if (!string.IsNullOrEmpty(proxy.TextBody))
       {
-        appointment.Body = new Office365.MessageBody(
+        officeAppointment.Body = new Office365.MessageBody(
           IsHtml.IsMatch(proxy.TextBody) ?
             Office365.BodyType.HTML : Office365.BodyType.Text,
           proxy.TextBody);
       }
 
-      appointment.Start = proxy.Start;
-      appointment.End = proxy.End;
-      appointment.Location = proxy.Location;
-      appointment.AllowNewTimeProposal = true;
-      appointment.Importance = (Office365.Importance)proxy.Importance;
-      appointment.ReminderMinutesBeforeStart = proxy.ReminderMinutesBeforeStart;
+      officeAppointment.Start = proxy.Start;
+      officeAppointment.End = proxy.End;
+      officeAppointment.Location = proxy.Location;
+      officeAppointment.AllowNewTimeProposal = true;
+      officeAppointment.Importance = (Office365.Importance)proxy.Importance;
+      officeAppointment.ReminderMinutesBeforeStart = proxy.ReminderMinutesBeforeStart;
 
       if ((proxy.Recurrence != null) && 
         (proxy.Recurrence.Type != RecurrenceType.Unknown))
@@ -106,7 +71,7 @@
         {
           case RecurrenceType.Daily:
           {
-            appointment.Recurrence = new Office365.Recurrence.DailyPattern(
+            officeAppointment.Recurrence = new Office365.Recurrence.DailyPattern(
               start,
               proxy.Recurrence.Interval);
 
@@ -114,7 +79,7 @@
           }
           case RecurrenceType.Weekly:
           {
-            appointment.Recurrence = new Office365.Recurrence.WeeklyPattern(
+            officeAppointment.Recurrence = new Office365.Recurrence.WeeklyPattern(
               start,
               proxy.Recurrence.Interval,
               (Office365.DayOfTheWeek)start.DayOfWeek);
@@ -123,7 +88,7 @@
           }
           case RecurrenceType.Monthly:
           {
-            appointment.Recurrence = new Office365.Recurrence.MonthlyPattern(
+            officeAppointment.Recurrence = new Office365.Recurrence.MonthlyPattern(
               start,
               proxy.Recurrence.Interval,
               start.Day);
@@ -132,7 +97,7 @@
           }
           case RecurrenceType.Yearly:
           {
-            appointment.Recurrence =
+            officeAppointment.Recurrence =
               new Office365.Recurrence.YearlyPattern(
                 start,
                 (Office365.Month)start.Month,
@@ -144,11 +109,11 @@
 
         if (proxy.Recurrence.HasEnd)
         {
-          appointment.Recurrence.EndDate = proxy.Recurrence.EndDate;
+          officeAppointment.Recurrence.EndDate = proxy.Recurrence.EndDate;
         }
         else
         {
-          appointment.Recurrence.NumberOfOccurrences = proxy.Recurrence.NumberOfOccurrences;
+          officeAppointment.Recurrence.NumberOfOccurrences = proxy.Recurrence.NumberOfOccurrences;
         }
       }
 
@@ -156,7 +121,7 @@
       {
         foreach (var attendee in proxy.RequiredAttendees)
         {
-          appointment.RequiredAttendees.Add(attendee.Address);
+          officeAppointment.RequiredAttendees.Add(attendee.Address);
         }
       }
 
@@ -164,7 +129,7 @@
       {
         foreach (var attendee in proxy.OptionalAttendees)
         {
-          appointment.OptionalAttendees.Add(attendee.Address);
+          officeAppointment.OptionalAttendees.Add(attendee.Address);
         }
       }
 
@@ -172,20 +137,20 @@
       {
         foreach (var resource in proxy.Resources)
         {
-          appointment.Resources.Add(resource.Address);
+          officeAppointment.Resources.Add(resource.Address);
         }
       }
 
-      SetExtendedProperties(appointment, proxy.ExtendedProperties);
-      SetCategories(appointment, proxy.Categories);
+      SetExtendedProperties(officeAppointment, proxy.ExtendedProperties);
+      SetCategories(officeAppointment, proxy.Categories);
 
-      appointment.ICalUid = 
+      officeAppointment.ICalUid = 
         Guid.NewGuid().ToString() + email.Substring(email.IndexOf('@'));
 
       // SendMessage the proxy request
-      appointment.Save(Office365.SendInvitationsMode.SendToAllAndSaveCopy);
+      officeAppointment.Save(Office365.SendInvitationsMode.SendToAllAndSaveCopy);
 
-      return appointment.Id.ToString();
+      return officeAppointment.Id.ToString();
     }
     #endregion
 
@@ -206,37 +171,15 @@
       DateTime? end,
       int? maxResults)
     {
-      return Call(
-        "FindAppointments",
-        new FindAppointmentsRequest
-        {
-          email = email,
-          start = start,
-          end = end,
-          maxResults = maxResults
-        },
-        FindAppointmentsImpl);
-    }
-
-    public struct FindAppointmentsRequest
-    {
-      public string email;
-      public DateTime start;
-      public DateTime? end;
-      public int? maxResults;
-    }
-
-    private IEnumerable<string> FindAppointmentsImpl(FindAppointmentsRequest request)
-    {
       Office365.CalendarView view = new Office365.CalendarView(
-        request.start,
-        request.end.GetValueOrDefault(DateTime.Now),
-        request.maxResults.GetValueOrDefault(int.MaxValue - 1));
+        start,
+        end.GetValueOrDefault(DateTime.Now),
+        maxResults.GetValueOrDefault(int.MaxValue - 1));
 
       // Item searches do not support Deep traversal.
       view.Traversal = Office365.ItemTraversal.Shallow;
 
-      var service = GetService(request.email);
+      var service = GetService(email);
       var appointments = service.FindAppointments(
         Office365.WellKnownFolderName.Calendar,
         view);
@@ -268,25 +211,7 @@
     /// </returns>
     public Appointment GetAppointment(string email, string ID)
     {
-      return Call(
-        "GetAppointment",
-        new ProcessAppointmentRequest
-        {
-          email = email,
-          ID = ID
-        },
-        GetAppointmentImpl);
-    }
-
-    public struct ProcessAppointmentRequest
-    {
-      public string email;
-      public string ID;
-    }
-
-    private Appointment GetAppointmentImpl(ProcessAppointmentRequest request)
-    {
-      var appointment = RetrieveAppointment(request.email, request.ID);
+      var appointment = RetrieveAppointment(email, ID);
 
       return ConvertAppointment(appointment);
     }
@@ -314,90 +239,72 @@
     /// </remarks>
     public bool UpdateAppointment(string email, Appointment appointment)
     {
-      return Call(
-        "UpdateAppointment",
-        new UpdateAppointmentRequest
-        {
-          email = email,
-          appointment = appointment
-        },
-        UpdateAppointmentImpl).GetValueOrDefault(false);
-    }
-
-    public struct UpdateAppointmentRequest
-    {
-      public string email;
-      public Appointment appointment;
-    }
-
-    private bool? UpdateAppointmentImpl(UpdateAppointmentRequest request)
-    { 
-      var proxy = request.appointment;
+      var proxy = appointment;
 
       if (proxy == null)
       {
-        throw new ArgumentNullException("request.appointment");
+        throw new ArgumentNullException("appointment");
       }
 
-      var appointment = RetrieveAppointment(request.email, proxy.Id);
+      var officeAppointment = RetrieveAppointment(email, proxy.Id);
 
       // Note: only organizer may update the proxy.
-      if ((appointment != null) &&
-        (appointment.MyResponseType == Office365.MeetingResponseType.Organizer))
+      if ((officeAppointment != null) &&
+        (officeAppointment.MyResponseType == Office365.MeetingResponseType.Organizer))
       {
         if (!proxy.Start.Equals(DateTime.MinValue))
         {
-          appointment.Start = proxy.Start;
+          officeAppointment.Start = proxy.Start;
         }
 
         if (!proxy.End.Equals(DateTime.MinValue))
         {
-          appointment.End = proxy.End;
+          officeAppointment.End = proxy.End;
         }
-        
+
         if (!string.IsNullOrEmpty(proxy.Location))
         {
-          appointment.Location = proxy.Location;
+          officeAppointment.Location = proxy.Location;
         }
 
         if (!string.IsNullOrEmpty(proxy.Subject))
         {
-          appointment.Subject = proxy.Subject;
+          officeAppointment.Subject = proxy.Subject;
         }
 
-        if ((proxy.ReminderMinutesBeforeStart > 0) && 
-          (appointment.ReminderMinutesBeforeStart != proxy.ReminderMinutesBeforeStart))
+        if ((proxy.ReminderMinutesBeforeStart > 0) &&
+          (officeAppointment.ReminderMinutesBeforeStart != proxy.ReminderMinutesBeforeStart))
         {
-          appointment.ReminderMinutesBeforeStart = proxy.ReminderMinutesBeforeStart;
+          officeAppointment.ReminderMinutesBeforeStart = proxy.ReminderMinutesBeforeStart;
         }
 
         if (!string.IsNullOrEmpty(proxy.TextBody))
         {
-          appointment.Body = new Office365.MessageBody(
+          officeAppointment.Body = new Office365.MessageBody(
             IsHtml.IsMatch(proxy.TextBody) ?
               Office365.BodyType.HTML : Office365.BodyType.Text,
             proxy.TextBody);
         }
 
-        SetExtendedProperties(appointment, proxy.ExtendedProperties);
-        SetCategories(appointment, proxy.Categories);
+        SetExtendedProperties(officeAppointment, proxy.ExtendedProperties);
+        SetCategories(officeAppointment, proxy.Categories);
 
         // TODO: update more properties
 
         // Unless explicitly specified, the default is to use SendToAllAndSaveCopy.
         // This can convert an proxy into a proxy. To avoid this,
         // explicitly set SendToNone on non-meetings.
-        var mode = appointment.IsMeeting ?
+        var mode = officeAppointment.IsMeeting ?
           Office365.SendInvitationsOrCancellationsMode.SendToAllAndSaveCopy :
           Office365.SendInvitationsOrCancellationsMode.SendToNone;
 
-        appointment.Update(Office365.ConflictResolutionMode.AlwaysOverwrite, mode);
+        officeAppointment.Update(Office365.ConflictResolutionMode.AlwaysOverwrite, mode);
 
         return true;
       }
 
       return false;
-    } 
+    }
     #endregion
 
     #region CancelAppointment method
@@ -414,31 +321,11 @@
     /// <remarks>Only the appointment organizer may cancel it.</remarks>
     public bool CancelAppointment(string email, string ID, string reason)
     {
-      return Call(
-        "CancelAppointment",
-        new CancelAppointmentRequest
-        {
-          email = email,
-          ID = ID,
-          reason = reason
-        },
-        CancelAppointmentImpl).GetValueOrDefault(false);
-    }
-
-    public struct CancelAppointmentRequest
-    {
-      public string email;
-      public string ID;
-      public string reason;
-    }
-
-    private bool? CancelAppointmentImpl(CancelAppointmentRequest request)
-    {
-      var appointment = RetrieveAppointment(request.email, request.ID);
+      var appointment = RetrieveAppointment(email, ID);
 
       if (appointment != null)
       {
-        appointment.CancelMeeting(request.reason);
+        appointment.CancelMeeting(reason);
 
         return true;
       }
@@ -460,19 +347,7 @@
     /// <remarks>Only the appointment organizer may delete it.</remarks>
     public bool DeleteAppointment(string email, string ID)
     {
-      return Call(
-        "DeleteAppointment",
-        new ProcessAppointmentRequest
-        {
-          email = email,
-          ID = ID
-        },
-        DeleteAppointmentImpl).GetValueOrDefault(false);
-    }
-
-    private bool? DeleteAppointmentImpl(ProcessAppointmentRequest request)
-    {
-      var appointment = RetrieveAppointment(request.email, request.ID);
+      var appointment = RetrieveAppointment(email, ID);
 
       if (appointment != null)
       {
@@ -496,19 +371,7 @@
     /// </returns>
     public bool AcceptAppointment(string email, string ID)
     {
-      return Call(
-        "AcceptAppointment",
-        new ProcessAppointmentRequest
-        {
-          email = email,
-          ID = ID
-        },
-        AcceptAppointmentImpl).GetValueOrDefault(false);
-    }
-
-    private bool? AcceptAppointmentImpl(ProcessAppointmentRequest request)
-    {
-      var appointment = RetrieveAppointment(request.email, request.ID);
+      var appointment = RetrieveAppointment(email, ID);
 
       if (appointment != null)
       {
@@ -532,19 +395,7 @@
     /// </returns>
     public bool DeclineAppointment(string email, string ID)
     {
-      return Call(
-        "DeclineAppointment",
-        new ProcessAppointmentRequest
-        {
-          email = email,
-          ID = ID
-        },
-        DeclineAppointmentImpl).GetValueOrDefault(false);
-    }
-
-    private bool? DeclineAppointmentImpl(ProcessAppointmentRequest request)
-    {
-      var appointment = RetrieveAppointment(request.email, request.ID);
+      var appointment = RetrieveAppointment(email, ID);
 
       if (appointment != null)
       {
@@ -571,33 +422,13 @@
     /// <exception cref="IOException">in case of error.</exception>
     public string CreateMessage(string email, EMailMessage message)
     {
-      return Call(
-        "CreateMessage",
-        new CreateMessageRequest
-        {
-          email = email,
-          message = message
-        },
-        CreateMessageImpl);
-    }
-
-    public struct CreateMessageRequest
-    {
-      public string email;
-      public EMailMessage message;
-    }
-
-    private string CreateMessageImpl(CreateMessageRequest request)
-    {
-      if (request.message == null)
+      if (message == null)
       {
-        throw new ArgumentNullException("request.message");
+        throw new ArgumentNullException("message");
       }
 
-      var email = request.email;
       var service = GetService(email);
       var emailMessage = new Office365.EmailMessage(service);
-      var message = request.message;
 
       if (message.BccRecipients != null)
       {
@@ -628,12 +459,12 @@
         var bodyType = IsHtml.IsMatch(message.TextBody) ?
           Office365.BodyType.HTML : Office365.BodyType.Text;
 
-        emailMessage.Body = 
+        emailMessage.Body =
           new Office365.MessageBody(bodyType, message.TextBody);
       }
 
       emailMessage.Importance = (Office365.Importance)message.Importance;
-      emailMessage.From = emailMessage.Sender = 
+      emailMessage.From = emailMessage.Sender =
         new Office365.EmailAddress(message.Sender.Name, message.Sender.Address);
       emailMessage.Sensitivity = (Office365.Sensitivity)message.Sensitivity;
       emailMessage.IsReadReceiptRequested = message.IsReadReceiptRequested;
@@ -666,51 +497,26 @@
       string name,
       byte[] content)
     {
-      return Call(
-        "AddAttachment",
-        new AddAttachmentRequest
-        {
-          email = email,
-          ID = ID,
-          name = name,
-          content = content
-        },
-        AddAttachmentImpl).GetValueOrDefault(false);
-    }
-
-    public struct AddAttachmentRequest
-    {
-      public string email;
-      public string ID;
-      public string name;
-
-      [IgnoreDataMember]
-      [NonSerialized]
-      public byte[] content;
-    }
-
-    private bool? AddAttachmentImpl(AddAttachmentRequest request)
-    {
-      if (string.IsNullOrEmpty(request.ID))
+      if (string.IsNullOrEmpty(ID))
       {
-        throw new ArgumentNullException("request.ID");
+        throw new ArgumentNullException("ID");
       }
 
-      var service = GetService(request.email);
-      var message = Office365.EmailMessage.Bind(service, request.ID);
+      var service = GetService(email);
+      var message = Office365.EmailMessage.Bind(service, ID);
 
       if (message == null)
       {
         return false;
       }
 
-      var attachment = 
-        message.Attachments.AddFileAttachment(request.name, request.content);
+      var attachment =
+        message.Attachments.AddFileAttachment(name, content);
 
       return attachment != null;
     }
     #endregion
-    
+
     #region SendMessage method
     /// <summary>
     /// Sends the specified e-mail message to receivers.
@@ -723,15 +529,7 @@
     /// <exception cref="IOException">in case of error.</exception>
     public bool SendMessage(string email, string ID)
     {
-      return Call(
-        "SendMessage",
-        new EMailProcessRequest
-        {
-          email = email,
-          ID = ID,
-          action = "send"
-        },
-        ProcessEMailImpl).GetValueOrDefault(false);
+      return ProcessEMailImpl(email, ID, "send");
     }
     #endregion
 
@@ -753,37 +551,17 @@
       int? pageSize, 
       int? offset)
     {
-      return Call(
-        "FindMessages",
-        new FindMessagesRequest
-        {
-          email = email,
-          pageSize = 
-            pageSize.HasValue && (pageSize.Value > 0) ? pageSize.Value : 1000,
-          offset = offset
-        },
-        FindMessagesImpl);
-    }
+      var view = new Office365.ItemView(
+        pageSize.HasValue && (pageSize.Value > 0) ? pageSize.Value : 1000);
 
-    public struct FindMessagesRequest
-    {
-      public string email;
-      public int pageSize;
-      public int? offset;
-    }
-
-    private IEnumerable<string> FindMessagesImpl(FindMessagesRequest request)
-    {
-      var view = new Office365.ItemView(request.pageSize);
-
-      if (request.offset.HasValue)
+      if (offset.HasValue)
       {
-        view.Offset = request.offset.Value;
+        view.Offset = offset.Value;
       }
 
       view.Traversal = Office365.ItemTraversal.Shallow;
 
-      var service = GetService(request.email);
+      var service = GetService(email);
       var items = service.FindItems(
         Office365.WellKnownFolderName.Inbox,
         view);
@@ -813,21 +591,9 @@
     /// </returns>
     public EMailMessage GetMessage(string email, string ID)
     {
-      return Call(
-        "GetMessage",
-        new EMailProcessRequest
-        {
-          email = email,
-          ID = ID
-        },
-        GetMessageImpl);
-    }
+      var service = GetService(email);
+      var message = Office365.EmailMessage.Bind(service, ID);
 
-    private EMailMessage GetMessageImpl(EMailProcessRequest request)
-    {
-      var service = GetService(request.email);
-      var message = Office365.EmailMessage.Bind(service, request.ID);
-      
       return ConvertMessage(message);
     }
     #endregion
@@ -845,45 +611,43 @@
     /// </returns>
     public byte[] GetAttachmentByName(string email, string ID, string name)
     {
-      return Call(
-          "GetAttachmentByName",
-          new GetFileAttachmentRequest
-          {
-            email = email,
-            ID = ID,
-            name = name
-          },
-          GetFileAttachmentImpl);
+      return GetFileAttachmentImpl(email, ID, name);
     }
 
-    public struct GetFileAttachmentRequest
+    /// <summary>
+    /// Gets a file attachment by an e-mail ID and the attachment's name or 
+    /// by index.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="ID">an e-mail message's unique ID.</param>
+    /// <param name="name">an attachment's name to get.</param>
+    /// <param name="index">optional attachment's index.</param>
+    /// <returns>
+    /// the attachment's content or null when there is no 
+    /// an attachment with such name.
+    /// </returns>
+    private byte[] GetFileAttachmentImpl(
+      string email, 
+      string ID, 
+      string name,
+      int? index = 0)
     {
-      public string email;
-      public string ID;
-      public string name;
-      public int? index;
-    }
-
-    private byte[] GetFileAttachmentImpl(GetFileAttachmentRequest request)
-    {
-      if (string.IsNullOrEmpty(request.ID))
+      if (string.IsNullOrEmpty(ID))
       {
-        throw new ArgumentNullException("request.ID");
+        throw new ArgumentNullException("ID");
       }
 
-      var service = GetService(request.email);
-      var message = Office365.EmailMessage.Bind(service, request.ID);
+      var service = GetService(email);
+      var message = Office365.EmailMessage.Bind(service, ID);
       var attachment = null as Office365.FileAttachment;
 
       if (message.HasAttachments)
       {
-        if (request.index.HasValue)
+        if (index != null)
         {
-          var index = request.index.Value;
-
           if ((index >= 0) || (index < message.Attachments.Count))
           {
-            attachment = message.Attachments[index] as Office365.FileAttachment;
+            attachment = message.Attachments[index.Value] as Office365.FileAttachment;
           }
         }
         else
@@ -895,7 +659,7 @@
             if ((attachment == null) || 
               attachment.IsInline || 
               attachment.IsContactPhoto ||
-              (attachment.Name != request.name))
+              (attachment.Name != name))
             {
               attachment = null;
 
@@ -933,15 +697,7 @@
     /// </returns>
     public byte[] GetAttachmentByIndex(string email, string ID, int index)
     {
-      return Call(
-          "GetAttachmentByIndex",
-          new GetFileAttachmentRequest
-          {
-            email = email,
-            ID = ID,
-            index = index
-          },
-          GetFileAttachmentImpl);
+      return GetFileAttachmentImpl(email, ID, null, index);
     }
     #endregion
 
@@ -957,26 +713,15 @@
     /// </returns>
     public MimeContent GetMessageContent(string email, string ID)
     {
-      return Call(
-        "GetMessageContent",
-        new EMailProcessRequest
-        {
-          email = email,
-          ID = ID
-        },
-        GetMessageContentImpl);
-    }
-
-    private MimeContent GetMessageContentImpl(EMailProcessRequest request)
-    {
-      var service = GetService(request.email);
+      var service = GetService(email);
       var message = Office365.EmailMessage.Bind(
-        service, 
-        request.ID,
+        service,
+        ID,
         new Office365.PropertySet(Office365.ItemSchema.MimeContent));
+
       var mimeContent = message.MimeContent;
 
-      return new MimeContent 
+      return new MimeContent
       {
         CharacterSet = mimeContent.CharacterSet,
         Content = mimeContent.Content
@@ -995,15 +740,7 @@
     /// </returns>
     public bool DeleteMessage(string email, string ID)
     {
-      return Call(
-        "DeleteMessage",
-        new EMailProcessRequest
-        {
-          email = email,
-          ID = ID,
-          action = "delete"
-        },
-        ProcessEMailImpl).GetValueOrDefault(false);
+      return ProcessEMailImpl(email, ID, "delete");
     }
     #endregion
 
@@ -1019,16 +756,7 @@
     /// </returns>
     public bool MoveTo(string email, string ID, string folder)
     {
-      return Call(
-        "MoveTo",
-        new EMailProcessRequest
-        {
-          email = email,
-          ID = ID,
-          folder = folder,
-          action = "move"
-        },
-        ProcessEMailImpl).GetValueOrDefault(false);
+      return ProcessEMailImpl(email, ID, "move", folder);
     }
     #endregion
 
@@ -1044,28 +772,11 @@
     /// </returns>
     public bool CopyTo(string email, string ID, string folder)
     {
-      return Call(
-        "CopyTo",
-        new EMailProcessRequest
-        {
-          email = email,
-          ID = ID,
-          folder = folder,
-          action = "copy"
-        },
-        ProcessEMailImpl).GetValueOrDefault(false);
+      return ProcessEMailImpl(email, ID, "copy", folder);
     }
     #endregion
 
     #region Notify method
-
-    public struct NotifyRequest
-    {
-      public string email;
-      public string ID;
-      public string changeType;
-    }
-
     /// <summary>
     /// Notifies about a change in a specified mail box.
     /// </summary>
@@ -1074,31 +785,11 @@
     /// <param name="changeType">A change type: delete, create, modify.</param>
     public bool Notification(string email, string ID, string changeType)
     {
-      return Call(
-        "Notify",
-        new NotifyRequest
-        {
-          email = email,
-          ID = ID,
-          changeType = changeType
-        },
-        request => true);
+      return true;
     }
     #endregion
 
     #region GetChanges and GetChangeStats
-
-    public struct GetChangesRequest
-    {
-      public string systemName;
-      public string email;
-      public string folderID;
-      public DateTime? startDate;
-      public DateTime? endDate;
-      public int? skip;
-      public int? take;
-    }
-    
     /// <summary>
     /// Gets a set of changes.
     /// </summary>
@@ -1123,19 +814,44 @@
       int? skip = 0,
       int? take = 0)
     {
-      return Call(
-        "GetChanges",
-        new GetChangesRequest
+      using(var model = new EWSQueueEntities())
+      {
+        var query = GetChangesQuery(
+          model,
+          systemName,
+          email,
+          folderID,
+          startDate,
+          endDate);
+
+        query = query.
+          OrderBy(item => item.Timestamp).
+          ThenBy(item => item.Email).
+          ThenBy(item => item.ItemID);
+
+        if (skip != null)
         {
-          systemName = systemName,
-          email = email,
-          folderID = folderID,
-          startDate = startDate,
-          endDate = endDate,
-          skip = skip,
-          take = take
-        },
-        GetChangesImpl);
+          query = query.Skip(skip.Value);
+        }
+
+        if (take != null)
+        {
+          query = query.Take(take.Value);
+        }
+
+        return query.ToList().
+          Select(
+            item => new Change
+            {
+              Timestamp = item.Timestamp,
+              Email = item.Email,
+              FolderID = item.FolderID,
+              ItemID = item.ItemID,
+              ChangeType =
+                (ChangeType)Enum.Parse(typeof(ChangeType), item.ChangeType)
+            }).
+          ToArray();
+      }
     }
 
     /// <summary>
@@ -1162,64 +878,16 @@
       int? skip = 0,
       int? take = 0)
     {
-      return Call(
-        "GetChangeStats",
-        new GetChangesRequest
-        {
-          systemName = systemName,
-          email = email,
-          folderID = folderID,
-          startDate = startDate,
-          endDate = endDate,
-          skip = skip,
-          take = take
-        },
-        GetChangeStatsImpl);
-    }
-
-    private IEnumerable<Change> GetChangesImpl(GetChangesRequest request)
-    {
       using(var model = new EWSQueueEntities())
       {
-        var query = GetChangesQuery(model, request);
+        var query = GetChangesQuery(
+          model, 
+          systemName,
+          email,
+          folderID,
+          startDate,
+          endDate);
 
-        query = query.
-          OrderBy(item => item.Timestamp).
-          ThenBy(item => item.Email).
-          ThenBy(item => item.ItemID);
-
-        if (request.skip != null)
-        {
-          query = query.Skip(request.skip.Value);
-        }
-
-        if (request.take != null)
-        {
-          query = query.Take(request.take.Value);
-        }
-
-        return query.ToList().
-          Select(
-            item => new Change 
-            {
-              Timestamp = item.Timestamp,
-              Email = item.Email,
-              FolderID = item.FolderID,
-              ItemID = item.ItemID,
-              ChangeType =  
-                (ChangeType)Enum.Parse(typeof(ChangeType), item.ChangeType)
-            }).
-          ToArray();
-      }
-    }
-
-    private IEnumerable<ChangeStats> GetChangeStatsImpl(
-      GetChangesRequest request)
-    {
-      using (var model = new EWSQueueEntities())
-      {
-        var query = GetChangesQuery(model, request);
-        
         var stats = query.GroupBy(item => new { item.Email, item.FolderID }).
           Select(
             item =>
@@ -1232,14 +900,14 @@
           OrderBy(item => item.Email).
           ThenBy(item => item.FolderID) as IQueryable<ChangeStats>;
 
-        if (request.skip != null)
+        if (skip != null)
         {
-          stats = stats.Skip(request.skip.Value);
+          stats = stats.Skip(skip.Value);
         }
 
-        if (request.take != null)
+        if (take != null)
         {
-          stats = stats.Take(request.take.Value);
+          stats = stats.Take(take.Value);
         }
 
         return stats.ToList();
@@ -1248,13 +916,17 @@
 
     private IQueryable<MailboxNotification> GetChangesQuery(
       EWSQueueEntities model,
-      GetChangesRequest request)
+      string systemName,
+      string email,
+      string folderID,
+      DateTime? startDate,
+      DateTime? endDate)
     {
-      var query = request.systemName == null ?
+      var query = systemName == null ?
         model.MailboxNotifications.AsNoTracking() :
         model.MailboxNotifications.AsNoTracking().Join(
           model.BankSystems.
-            Where(item => item.GroupName == request.systemName).
+            Where(item => item.GroupName == systemName).
             Join(
               model.BankSystemMailboxes,
               outer => outer.GroupName,
@@ -1264,24 +936,24 @@
           inner => inner.Email,
           (outer, inner) => outer);
 
-      if (request.email != null)
+      if (email != null)
       {
-        query = query.Where(item => item.Email == request.email);
+        query = query.Where(item => item.Email == email);
       }
 
-      if (request.folderID != null)
+      if (folderID != null)
       {
-        query = query.Where(item => item.FolderID == request.folderID);
+        query = query.Where(item => item.FolderID == folderID);
       }
 
-      if (request.startDate != null)
+      if (startDate != null)
       {
-        query = query.Where(item => item.Timestamp >= request.startDate);
+        query = query.Where(item => item.Timestamp >= startDate);
       }
 
-      if (request.endDate != null)
+      if (endDate != null)
       {
-        query = query.Where(item => item.Timestamp <= request.endDate);
+        query = query.Where(item => item.Timestamp <= endDate);
       }
 
       return query;
@@ -1720,129 +1392,6 @@
         Select(folder => folder.Id.ToString()).
         FirstOrDefault();
     }
-    
-    private O Call<I, O>(string actionName, I request, Func<I, O> action)
-    {
-      var requestID = StoreRequest(actionName, request);
-      var response = default(O);
-      var error = null as Exception;
-
-      try
-      {
-        response = action(request);
-        error = StoreResult(requestID, response);
-      }
-      catch(Exception e)
-      {
-        error = e;
-        StoreError(requestID, e);
-
-        throw e;
-      }
-      finally
-      {
-        Notify(requestID, request, response, error);
-      }
-
-      return response;
-    }
-
-    private long StoreRequest<T>(string actionName, T request)
-    {
-      using(var model = new EWSQueueEntities())
-      {
-        var item = new Queue
-        {
-          Operation = actionName,
-          Request = ToXmlString(request),
-          CreatedAt = DateTime.Now,
-          ExpiresAt = DateTime.Now.AddMinutes(Settings.RequestTimeout)
-        };
- 
-        model.Queues.Add(item);
-
-        model.SaveChanges();
-
-        return item.ID;
-      }
-    }
-
-    private Exception StoreResult<O>(long requestID, O result)
-    {
-      Exception error = null;
-
-      using(var model = new EWSQueueEntities())
-      {
-        var item = model.Queues.
-          Where(request => request.ID == requestID).
-          FirstOrDefault();
-
-        if (item != null)
-        {
-          if (item.ExpiresAt.HasValue)
-          {
-            if (item.ExpiresAt.Value < DateTime.Now)
-            {
-              error = new TimeoutException(
-                "Operation " + item.Operation + " is timed out.");
-
-              item.Error = ToXmlString(error);
-            }
-          }
-
-          if ((result is byte[]) || (result is MimeContent))
-          {
-            item.Response = result.ToString();
-          }
-          else
-          {
-            item.Response = ToXmlString(result);
-          }
-
-          model.Entry(item).State = EntityState.Modified;
-          
-          model.SaveChanges();
-        }
-      }
-
-      return error;
-    }
-
-    private void StoreError(long requestID, Exception error)
-    {
-      using(var model = new EWSQueueEntities())
-      {
-        var item = model.Queues.
-          Where(request => request.ID == requestID).
-          FirstOrDefault();
-
-        if (item != null)
-        {
-          item.Error = ToXmlString(error);
-          model.Entry(item).State = EntityState.Modified;
-          model.SaveChanges();
-        }
-      }
-    }
-
-    private void Notify<I, O>(
-      long requestID, 
-      I request, 
-      O response, 
-      Exception e)
-    {
-      if (ResponseNotifier != null)
-      {
-        try
-        {
-          ResponseNotifier.Notify(requestID, request, response, e);
-        }
-        catch
-        { 
-          // Notifier should not interrupt us.
-        }
-      }
-    }
 
     private static string GetServiceUrl(string email)
     {
@@ -1898,40 +1447,36 @@
       return (T)serializer.ReadObject(XmlReader.Create(reader));
     }
 
-    public struct EMailProcessRequest
+    private bool ProcessEMailImpl(
+      string email, 
+      string ID, 
+      string action, 
+      string folder = null)
     {
-      public string email;
-      public string ID;
-      public string folder;
-      public string action;
-    }
-
-    private bool? ProcessEMailImpl(EMailProcessRequest request)
-    {
-      var service = GetService(request.email);
-      var message = Office365.EmailMessage.Bind(service, request.ID);
+      var service = GetService(email);
+      var message = Office365.EmailMessage.Bind(service, ID);
 
       if (message != null)
       {
-        if (string.Compare(request.action, "delete", true) == 0)
+        if (string.Compare(action, "delete", true) == 0)
         {
           message.Delete(Office365.DeleteMode.MoveToDeletedItems);
         }
-        else if (string.Compare(request.action, "send", true) == 0)
+        else if (string.Compare(action, "send", true) == 0)
         {
           message.SendAndSaveCopy();
         }
-        else if (!string.IsNullOrEmpty(request.folder))
+        else if (!string.IsNullOrEmpty(folder))
         {
-          var folderID = FindFolder(service, request.folder);
+          var folderID = FindFolder(service, folder);
 
           if (string.IsNullOrEmpty(folderID))
           {
-            if (string.Compare(request.action, "move", true) == 0)
+            if (string.Compare(action, "move", true) == 0)
             {
               message.Move(folderID);
             }
-            else if (string.Compare(request.action, "copy", true) == 0)
+            else if (string.Compare(action, "copy", true) == 0)
             {
               message.Copy(folderID);
             }
