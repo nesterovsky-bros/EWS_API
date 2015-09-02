@@ -430,8 +430,9 @@
     /// </returns>
     private async Task SyncMailboxes(CancellationTokenSource cancellation)
     {
-      var parallelism = 
-        Settings.EWSMaxConcurrency * Settings.ApplicationUsers.Length;
+      var parallelism = Math.Min(
+        Settings.EWSMaxConcurrency * Settings.ApplicationUsers.Length, 
+        100);
       var index = 0;
 
       using(var semaphore = new SemaphoreSlim(parallelism))
