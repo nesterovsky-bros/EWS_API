@@ -1470,7 +1470,7 @@
         {
           var folderID = FindFolder(service, folder);
 
-          if (string.IsNullOrEmpty(folderID))
+          if (!string.IsNullOrEmpty(folderID))
           {
             if (string.Compare(action, "move", true) == 0)
             {
