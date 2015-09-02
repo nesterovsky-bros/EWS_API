@@ -37,7 +37,7 @@
       // 
       // RulesEngineService
       // 
-      this.ServiceName = "RunEngineService";
+      this.ServiceName = "RulesEngineService";
 
     }
 

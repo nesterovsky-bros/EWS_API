@@ -5,6 +5,7 @@ using System.Configuration;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
+using System.ServiceModel;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading;
@@ -30,7 +31,8 @@ namespace Bnhp.Office365
     {
       try
       {
-        bool IsConsoleApp = false;
+        var IsConsoleApp = false;
+        var IsWCFService = false;
 
         if (args != null)
         {
@@ -60,10 +62,17 @@ namespace Bnhp.Office365
 
               break;
             }
+            else if ("-svc" == args[i].ToLower())
+            {
+              IsWCFService = true;
+            }
+            // continue otherwise
           }
         }
 
         var service = new RulesEngineService();
+
+        service.IsWcfServiceHost = IsWCFService && !IsConsoleApp;
 
         if (IsConsoleApp)
         {
@@ -77,7 +86,7 @@ namespace Bnhp.Office365
         }
         else
         {
-          // start as Windows service
+          // starts as Windows service
           ServiceBase.Run(service);
         }
       }
@@ -97,6 +106,8 @@ namespace Bnhp.Office365
     {
       InitializeComponent();
 
+      cancellationTokenSource = new CancellationTokenSource();
+
       WaitPeriod = int.TryParse(
         ConfigurationManager.AppSettings["WaitPeriod"], 
         out WaitPeriod) ?
@@ -104,6 +115,9 @@ namespace Bnhp.Office365
       
       SystemNames =
         (ConfigurationManager.AppSettings["SystemNames"] ?? "").Split(' ');
+
+      // by default RulesEngineService is a host of WCF service.
+      IsWcfServiceHost = true;
     }
 
     /// <summary>
@@ -112,29 +126,47 @@ namespace Bnhp.Office365
     /// <param name="args">command line arguments.</param>
     protected override async void OnStart(string[] args)
     {
-      var cancelationToken = cancellationTokenSource.Token;
-
-      try
+      if (IsWcfServiceHost)
       {
-        while (true)
+        if (serviceHost != null)
         {
-          foreach (var system in SystemNames)
-          {
-            await RulesEngine.ExecuteAsync(system, cancelationToken);
-          }
-
-          await Task.Delay(WaitPeriod, cancelationToken);
+          serviceHost.Close();
         }
-      }
-      catch (OperationCanceledException)
-      {
-        // exit gracefully from the Windows service
-      }
-      catch (Exception e)
-      {
-        Trace.TraceError(e.ToString());
 
-        throw;
+        // Create a ServiceHost for the WcfRulesEngine type and 
+        // provide the base address.
+        serviceHost = new ServiceHost(typeof(WcfRulesEngine));
+
+        // Open the ServiceHostBase to create listeners and start 
+        // listening for messages.
+        serviceHost.Open();
+      }
+      else
+      {
+        var cancelationToken = cancellationTokenSource.Token;
+
+        try
+        {
+          while (true)
+          {
+            foreach (var system in SystemNames)
+            {
+              await RulesEngine.ExecuteAsync(system, cancelationToken);
+            }
+
+            await Task.Delay(WaitPeriod, cancelationToken);
+          }
+        }
+        catch (OperationCanceledException)
+        {
+          // exit gracefully from the Windows service
+        }
+        catch (Exception e)
+        {
+          Trace.TraceError(e.ToString());
+
+          throw;
+        }
       }
     }
 
@@ -143,11 +175,27 @@ namespace Bnhp.Office365
     /// </summary>
     protected override void OnStop()
     {
-      cancellationTokenSource.Cancel();
+      if (cancellationTokenSource != null)
+      {
+        cancellationTokenSource.Cancel();
+      }
+      
+      if (serviceHost != null)
+      {
+        serviceHost.Close();
+
+        serviceHost = null;
+      }
     }
     #endregion
 
     #region Private fields
+    // a WCF service host
+    private ServiceHost serviceHost;
+
+    // determines whether the service is a host of a WCF service.
+    private bool IsWcfServiceHost;
+
     // A wait period in milliseconds between next loops of change requests.
     private int WaitPeriod;
 
@@ -155,8 +203,7 @@ namespace Bnhp.Office365
     private string[] SystemNames;
 
     // A cancelation token source for canceling of rules engines' tasks.
-    private CancellationTokenSource cancellationTokenSource = 
-      new CancellationTokenSource();
+    private CancellationTokenSource cancellationTokenSource;
     #endregion
   }
 }
