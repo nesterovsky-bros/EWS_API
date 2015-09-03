@@ -1,8 +1,9 @@
+using System.Threading;
+
 namespace Bnhp.Office365
 {
   public class Settings
   {
-    public ApplicationUser DefaultApplicationUser { get; set; }
     public ApplicationUser[] ApplicationUsers { get; set; }
     public int HangingConnectionLimit { get; set; }
     public int EWSMaxConcurrency { get; set; }
@@ -10,5 +11,7 @@ namespace Bnhp.Office365
     public string AutoDiscoveryUrl { get; set; }
     public int UsersPerUsersSettins { get; set; }
     public int ExchangeListenerRecyclePeriod { get; set; }
+
+    public SemaphoreSlim AccessSemaphore { get; set; }
   }
 }

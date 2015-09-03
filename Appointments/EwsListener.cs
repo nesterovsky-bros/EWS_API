@@ -1044,11 +1044,6 @@
       var service = new Office365.ExchangeService(
         Office365.ExchangeVersion.Exchange2013);
 
-      if (user == null)
-      {
-        user = Settings.DefaultApplicationUser;
-      }
-
       service.Credentials = 
         new Office365.WebCredentials(user.Email, user.Password);
       service.UseDefaultCredentials = false;

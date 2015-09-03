@@ -1061,7 +1061,7 @@
 
       var service = new Office365.ExchangeService(
         Office365.ExchangeVersion.Exchange2013);
-      var user = Settings.DefaultApplicationUser;
+      var user = Settings.ApplicationUsers[0];
 
       service.Credentials = 
         new Office365.WebCredentials(user.Email, user.Password);

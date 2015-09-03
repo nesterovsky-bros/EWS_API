@@ -9,6 +9,7 @@ namespace Bnhp.Office365
   using System.Net;
   using System.Diagnostics;
   using System.Threading.Tasks;
+  using System.Threading;
 
   public class WcfServiceFactory : UnityServiceHostFactory
   {
@@ -79,8 +80,10 @@ namespace Bnhp.Office365
         ExchangeListenerRecyclePeriod =
           int.Parse(ConfigurationManager.AppSettings["ExchangeListenerRecyclePeriod"]),
         ApplicationUsers = users,
-        DefaultApplicationUser = users[0]
       };
+
+      settings.AccessSemaphore = new SemaphoreSlim(
+        Math.Min(500, (settings.EWSMaxConcurrency * users.Length)));
 
       globalSettings = settings;
 

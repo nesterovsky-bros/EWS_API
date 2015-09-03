@@ -10,11 +10,12 @@
   using System.Text.RegularExpressions;
   using System.Xml;
   using System.Data.Entity;
-  
+
   using Microsoft.Practices.Unity;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
-  
+  using System.Threading;
+
   /// <summary>
   /// An implementation of IAppointments interface for CRUD operations with
   /// appointments for Office365.
@@ -148,7 +149,7 @@
         Guid.NewGuid().ToString() + email.Substring(email.IndexOf('@'));
 
       // SendMessage the proxy request
-      officeAppointment.Save(Office365.SendInvitationsMode.SendToAllAndSaveCopy);
+      Sync(() => officeAppointment.Save(Office365.SendInvitationsMode.SendToAllAndSaveCopy));
 
       return officeAppointment.Id.ToString();
     }
@@ -180,15 +181,16 @@
       view.Traversal = Office365.ItemTraversal.Shallow;
 
       var service = GetService(email);
-      var appointments = service.FindAppointments(
+      var appointments = Sync(() =>
+        service.FindAppointments(
         Office365.WellKnownFolderName.Calendar,
-        view);
+        view));
 
       var result = new List<string>();
 
       if (appointments != null)
       {
-        foreach (var appointment in appointments)
+        foreach(var appointment in appointments)
         {
           result.Add(appointment.Id.ToString());
         }
@@ -298,7 +300,7 @@
           Office365.SendInvitationsOrCancellationsMode.SendToAllAndSaveCopy :
           Office365.SendInvitationsOrCancellationsMode.SendToNone;
 
-        officeAppointment.Update(Office365.ConflictResolutionMode.AlwaysOverwrite, mode);
+        Sync(() => officeAppointment.Update(Office365.ConflictResolutionMode.AlwaysOverwrite, mode));
 
         return true;
       }
@@ -325,7 +327,7 @@
 
       if (appointment != null)
       {
-        appointment.CancelMeeting(reason);
+        Sync(() => appointment.CancelMeeting(reason));
 
         return true;
       }
@@ -351,7 +353,7 @@
 
       if (appointment != null)
       {
-        appointment.Delete(Office365.DeleteMode.MoveToDeletedItems, true);
+        Sync(() => appointment.Delete(Office365.DeleteMode.MoveToDeletedItems, true));
 
         return true;
       }
@@ -375,7 +377,7 @@
 
       if (appointment != null)
       {
-        appointment.Accept(true);
+        Sync(() => appointment.Accept(true));
 
         return true;
       }
@@ -399,7 +401,7 @@
 
       if (appointment != null)
       {
-        appointment.Decline(true);
+        Sync(() => appointment.Decline(true));
 
         return true;
       }
@@ -474,7 +476,7 @@
       SetCategories(emailMessage, message.Categories);
       SetExtendedProperties(emailMessage, message.ExtendedProperties);
 
-      emailMessage.Save(Office365.WellKnownFolderName.Drafts);
+      Sync(() => emailMessage.Save(Office365.WellKnownFolderName.Drafts));
 
       return emailMessage.Id.ToString();
     }
@@ -503,7 +505,7 @@
       }
 
       var service = GetService(email);
-      var message = Office365.EmailMessage.Bind(service, ID);
+      var message = Sync(() => Office365.EmailMessage.Bind(service, ID));
 
       if (message == null)
       {
@@ -511,7 +513,7 @@
       }
 
       var attachment =
-        message.Attachments.AddFileAttachment(name, content);
+        Sync(() => message.Attachments.AddFileAttachment(name, content));
 
       return attachment != null;
     }
@@ -562,9 +564,9 @@
       view.Traversal = Office365.ItemTraversal.Shallow;
 
       var service = GetService(email);
-      var items = service.FindItems(
+      var items = Sync(() => service.FindItems(
         Office365.WellKnownFolderName.Inbox,
-        view);
+        view));
       var result = new List<string>();
 
       if (items != null)
@@ -592,7 +594,7 @@
     public EMailMessage GetMessage(string email, string ID)
     {
       var service = GetService(email);
-      var message = Office365.EmailMessage.Bind(service, ID);
+      var message = Sync(() => Office365.EmailMessage.Bind(service, ID));
 
       return ConvertMessage(message);
     }
@@ -638,7 +640,7 @@
       }
 
       var service = GetService(email);
-      var message = Office365.EmailMessage.Bind(service, ID);
+      var message = Sync(() => Office365.EmailMessage.Bind(service, ID));
       var attachment = null as Office365.FileAttachment;
 
       if (message.HasAttachments)
@@ -714,10 +716,10 @@
     public MimeContent GetMessageContent(string email, string ID)
     {
       var service = GetService(email);
-      var message = Office365.EmailMessage.Bind(
+      var message = Sync(() => Office365.EmailMessage.Bind(
         service,
         ID,
-        new Office365.PropertySet(Office365.ItemSchema.MimeContent));
+        new Office365.PropertySet(Office365.ItemSchema.MimeContent)));
 
       var mimeContent = message.MimeContent;
 
@@ -972,9 +974,11 @@
         throw new ArgumentNullException("impersonatedUserId");
       }
 
+      var users = Settings.ApplicationUsers;
+      var index = Interlocked.Increment(ref accessCount) % users.Length;
+      var user = users[index];
       var service = new Office365.ExchangeService(
         Office365.ExchangeVersion.Exchange2013);
-      var user = Settings.DefaultApplicationUser;
 
       service.Credentials = 
         new Office365.WebCredentials(user.Email, user.Password);
@@ -1022,7 +1026,7 @@
     {
       var service = GetService(email);
 
-      return Office365.Appointment.Bind(service, new Office365.ItemId(ID));
+      return Sync(() => Office365.Appointment.Bind(service, new Office365.ItemId(ID)));
     }
 
     private O ConvertItem<I, O>(I item)
@@ -1486,8 +1490,43 @@
       }
 
       return false;
-    }  
+    }
     #endregion
+
+    /// <summary>
+    /// Runs action in context of AccessSemaphore.
+    /// </summary>
+    /// <param name="action"></param>
+    private void Sync(Action action)
+    {
+      var semaphore = Settings.AccessSemaphore;
+
+      semaphore.Wait(TimeSpan.FromMinutes(Settings.RequestTimeout));
+
+      try
+      {
+        action();
+      }
+      finally
+      {
+        semaphore.Release();
+      }
+    }
+    private T Sync<T>(Func<T> action)
+    {
+      var semaphore = Settings.AccessSemaphore;
+
+      semaphore.Wait(TimeSpan.FromMinutes(Settings.RequestTimeout));
+
+      try
+      {
+        return action();
+      }
+      finally
+      {
+        semaphore.Release();
+      }
+    }
 
     #region private fields
     /// <summary>
@@ -1501,6 +1540,11 @@
     /// </summary>
     private static Guid ExtendedPropertySetId =
       new Guid("{DD12CD36-DB49-4002-A809-56B40E6B60E9}");
+
+    /// <summary>
+    /// Internal counter of number of accesses to GetService() method.
+    /// </summary>
+    private static int accessCount;
     #endregion
   }
 }
