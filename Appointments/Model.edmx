@@ -39,6 +39,7 @@
           <Property Name="GroupName" Type="nvarchar" MaxLength="128" Nullable="false" />
           <Property Name="Description" Type="nvarchar(max)" />
           <Property Name="Local" Type="bit" Nullable="false" />
+          <Property Name="CallbackURL" Type="nvarchar" MaxLength="512" />
         </EntityType>
         <EntityType Name="BankSystemMailbox">
           <Key>
@@ -218,6 +219,7 @@
           <Property Name="GroupName" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
           <Property Name="Description" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="Local" Type="Boolean" Nullable="false" />
+          <Property Name="CallbackURL" Type="String" MaxLength="512" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="BankSystemMailboxes" Relationship="EWSQueueModel.FK_BankSystemMailbox_BankSystem" FromRole="BankSystem" ToRole="BankSystemMailbox" />
           <NavigationProperty Name="BankSystemNotifications" Relationship="EWSQueueModel.FK_BankSystemNotification_BankSystem" FromRole="BankSystem" ToRole="BankSystemNotification" />
         </EntityType>
@@ -355,6 +357,7 @@
           <EntitySetMapping Name="BankSystems">
             <EntityTypeMapping TypeName="EWSQueueModel.BankSystem">
               <MappingFragment StoreEntitySet="BankSystem">
+                <ScalarProperty Name="CallbackURL" ColumnName="CallbackURL" />
                 <ScalarProperty Name="Local" ColumnName="Local" />
                 <ScalarProperty Name="Description" ColumnName="Description" />
                 <ScalarProperty Name="GroupName" ColumnName="GroupName" />

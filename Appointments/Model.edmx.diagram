@@ -8,7 +8,7 @@
         <EntityTypeShape EntityType="EWSQueueModel.ChangeStateRequest" Width="1.5" PointX="5.75" PointY="0.75" />
         <EntityTypeShape EntityType="EWSQueueModel.Rule" Width="1.5" PointX="0.75" PointY="5.75" />
         <EntityTypeShape EntityType="EWSQueueModel.ApplicationUser" Width="1.5" PointX="2.75" PointY="5.75" />
-        <EntityTypeShape EntityType="EWSQueueModel.BankSystem" Width="1.5" PointX="0.75" PointY="2" />
+        <EntityTypeShape EntityType="EWSQueueModel.BankSystem" Width="1.5" PointX="0.75" PointY="1.875" />
         <EntityTypeShape EntityType="EWSQueueModel.BankSystemMailbox" Width="1.5" PointX="3" PointY="3.375" />
         <EntityTypeShape EntityType="EWSQueueModel.BankSystemNotification" Width="1.5" PointX="3" PointY="1" />
         <EntityTypeShape EntityType="EWSQueueModel.InvalidMailbox" Width="1.5" PointX="5.75" PointY="3.75" />

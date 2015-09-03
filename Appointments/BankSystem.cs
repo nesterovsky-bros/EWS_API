@@ -23,6 +23,7 @@ namespace Bnhp.Office365
         public string GroupName { get; set; }
         public string Description { get; set; }
         public bool Local { get; set; }
+        public string CallbackURL { get; set; }
     
         public virtual ICollection<BankSystemMailbox> BankSystemMailboxes { get; set; }
         public virtual ICollection<BankSystemNotification> BankSystemNotifications { get; set; }

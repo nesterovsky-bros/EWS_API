@@ -10,12 +10,12 @@
   using System.Text.RegularExpressions;
   using System.Xml;
   using System.Data.Entity;
-
+  
   using Microsoft.Practices.Unity;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
   using System.Threading;
-
+  
   /// <summary>
   /// An implementation of IAppointments interface for CRUD operations with
   /// appointments for Office365.
@@ -1339,7 +1339,7 @@
             {
               Address = attendee.Address,
               Name = attendee.Name,
-              ResponseType = (MeetingResponseType)attendee.ResponseType
+              ResponseType = (MeetingResponseType?)attendee.ResponseType
             });
         }
       }
@@ -1474,7 +1474,7 @@
         {
           var folderID = FindFolder(service, folder);
 
-          if (string.IsNullOrEmpty(folderID))
+          if (!string.IsNullOrEmpty(folderID))
           {
             if (string.Compare(action, "move", true) == 0)
             {
@@ -1490,7 +1490,7 @@
       }
 
       return false;
-    }
+    }  
     #endregion
 
     /// <summary>

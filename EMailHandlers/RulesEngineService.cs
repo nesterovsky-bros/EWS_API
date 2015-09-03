@@ -32,7 +32,6 @@ namespace Bnhp.Office365
       try
       {
         var IsConsoleApp = false;
-        var IsWCFService = false;
 
         if (args != null)
         {
@@ -64,15 +63,13 @@ namespace Bnhp.Office365
             }
             else if ("-svc" == args[i].ToLower())
             {
-              IsWCFService = true;
+              break;
             }
             // continue otherwise
           }
         }
 
         var service = new RulesEngineService();
-
-        service.IsWcfServiceHost = IsWCFService && !IsConsoleApp;
 
         if (IsConsoleApp)
         {
@@ -116,8 +113,7 @@ namespace Bnhp.Office365
       SystemNames =
         (ConfigurationManager.AppSettings["SystemNames"] ?? "").Split(' ');
 
-      // by default RulesEngineService is a host of WCF service.
-      IsWcfServiceHost = true;
+      Mode = (ConfigurationManager.AppSettings["Mode"] ?? "service").ToLower();
     }
 
     /// <summary>
@@ -126,7 +122,7 @@ namespace Bnhp.Office365
     /// <param name="args">command line arguments.</param>
     protected override async void OnStart(string[] args)
     {
-      if (IsWcfServiceHost)
+      if (Mode == "wcf")
       {
         if (serviceHost != null)
         {
@@ -141,7 +137,7 @@ namespace Bnhp.Office365
         // listening for messages.
         serviceHost.Open();
       }
-      else
+      else // run in "service" mode
       {
         var cancelationToken = cancellationTokenSource.Token;
 
@@ -193,14 +189,14 @@ namespace Bnhp.Office365
     // a WCF service host
     private ServiceHost serviceHost;
 
-    // determines whether the service is a host of a WCF service.
-    private bool IsWcfServiceHost;
-
     // A wait period in milliseconds between next loops of change requests.
     private int WaitPeriod;
 
     // An array of system names to process.
     private string[] SystemNames;
+
+    // The service mode: "wcf" or "service".
+    private string Mode;
 
     // A cancelation token source for canceling of rules engines' tasks.
     private CancellationTokenSource cancellationTokenSource;
