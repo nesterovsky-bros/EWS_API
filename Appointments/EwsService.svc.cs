@@ -1337,7 +1337,7 @@
             {
               Address = attendee.Address,
               Name = attendee.Name,
-              ResponseType = (MeetingResponseType)attendee.ResponseType
+              ResponseType = (MeetingResponseType?)attendee.ResponseType
             });
         }
       }
