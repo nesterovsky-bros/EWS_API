@@ -29,7 +29,7 @@ namespace Bnhp.Office365
     string CreateAppointment(string email, Appointment appointment);
 
     /// <summary>
-    /// Retrieves all appointments' IDs that belongs to the specified range of dates.
+    /// Retrieves appointments that belongs to the specified range of dates.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>
     /// <param name="start">a start date.</param>
@@ -37,12 +37,16 @@ namespace Bnhp.Office365
     /// <param name="maxResults">
     /// an optional parameter, determines maximum results in resonse.
     /// </param>
-    /// <returns>a list of appointments' IDs.</returns>
+    /// <param name="properties">
+    /// defines, if any, properties of Appointment instance to initialize.
+    /// </param>
+    /// <returns>a list of Appointment instances.</returns>
     [OperationContract]
-    IEnumerable<string> FindAppointments(string email,
+    IEnumerable<Appointment> FindAppointments(string email,
       DateTime start,
       DateTime? end,
-      int? maxResults);
+      int? maxResults,
+      string[] properties);
 
     /// <summary>
     /// Gets an proxy by its unique ID.
@@ -172,7 +176,7 @@ namespace Bnhp.Office365
     bool SendMessage(string email, string ID);
 
     /// <summary>
-    /// Retrieves all e-mal messages' IDs from Inbox.
+    /// Retrieves e-mail messages' IDs from Inbox.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>
     /// <param name="pageSize">
@@ -182,9 +186,16 @@ namespace Bnhp.Office365
     /// <param name="offset">
     /// an optional parameter, determines start offset in Inbox.
     /// </param>
-    /// <returns>a list of messages' IDs instances.</returns>
+    /// <param name="properties">
+    /// defines, if any, properties of EMailMessage instance to initialize.
+    /// </param>
+    /// <returns>a list of EMailMessage instances.</returns>
     [OperationContract]
-    IEnumerable<string> FindMessages(string email, int? pageSize, int? offset);
+    IEnumerable<EMailMessage> FindMessages(
+      string email, 
+      int? pageSize, 
+      int? offset,
+      string[] properties);
 
     /// <summary>
     /// Gets an e-mail message by its ID.

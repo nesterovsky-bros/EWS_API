@@ -15,6 +15,7 @@
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
   using System.Threading;
+  using System.Reflection;
   
   /// <summary>
   /// An implementation of IAppointments interface for CRUD operations with
@@ -157,7 +158,7 @@
 
     #region FindAppointments method
     /// <summary>
-    /// Retrieves all appointments' IDs in the specified range of dates.
+    /// Retrieves appointments that belongs to the specified range of dates.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>
     /// <param name="start">a start date.</param>
@@ -165,12 +166,16 @@
     /// <param name="maxResults">
     /// an optional parameter, determines maximum results in resonse.
     /// </param>
-    /// <returns>a collection of appointments' IDs.</returns>
-    public IEnumerable<string> FindAppointments(
+    /// <param name="properties">
+    /// defines, if any, properties of Appointment instance to initialize.
+    /// </param>
+    /// <returns>a list of Appointment instances.</returns>
+    public IEnumerable<Appointment> FindAppointments(
       string email,
       DateTime start,
       DateTime? end,
-      int? maxResults)
+      int? maxResults,
+      string[] properties)
     {
       Office365.CalendarView view = new Office365.CalendarView(
         start,
@@ -179,6 +184,7 @@
 
       // Item searches do not support Deep traversal.
       view.Traversal = Office365.ItemTraversal.Shallow;
+      view.PropertySet = GetPropertySet(properties);
 
       var service = GetService(email);
       var appointments = Sync(() =>
@@ -186,13 +192,13 @@
         Office365.WellKnownFolderName.Calendar,
         view));
 
-      var result = new List<string>();
+      var result = new List<Appointment>();
 
       if (appointments != null)
       {
         foreach(var appointment in appointments)
         {
-          result.Add(appointment.Id.ToString());
+          result.Add(ConvertAppointment(appointment));
         }
       }
 
@@ -537,7 +543,7 @@
 
     #region FindMessages method
     /// <summary>
-    /// Retrieves all e-mal messages' IDs from Inbox.
+    /// Retrieves e-mail messages' IDs from Inbox.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>
     /// <param name="pageSize">
@@ -547,11 +553,15 @@
     /// <param name="offset">
     /// an optional parameter, determines start offset in Inbox.
     /// </param>
-    /// <returns>a list of messages' IDs instances.</returns>
-    public IEnumerable<string> FindMessages(
+    /// <param name="properties">
+    /// defines, if any, properties of EMailMessage instance to initialize.
+    /// </param>
+    /// <returns>a list of EMailMessage instances.</returns>
+    public IEnumerable<EMailMessage> FindMessages(
       string email, 
       int? pageSize, 
-      int? offset)
+      int? offset,
+      string[] properties)
     {
       var view = new Office365.ItemView(
         pageSize.HasValue && (pageSize.Value > 0) ? pageSize.Value : 1000);
@@ -562,18 +572,24 @@
       }
 
       view.Traversal = Office365.ItemTraversal.Shallow;
+      view.PropertySet = GetPropertySet(properties);
 
       var service = GetService(email);
       var items = Sync(() => service.FindItems(
         Office365.WellKnownFolderName.Inbox,
         view));
-      var result = new List<string>();
+      var result = new List<EMailMessage>();
 
       if (items != null)
       {
         foreach (var item in items)
         {
-          result.Add(item.Id.ToString());
+          var message = ConvertMessage(item as Office365.EmailMessage);
+
+          if (message != null)
+          {
+            result.Add(message);
+          }
         }
       }
 
@@ -964,6 +980,55 @@
 
     #region Private methods
     /// <summary>
+    /// Initializes property set dictionary.
+    /// </summary>
+    static EwsService()
+    {
+      Properties = new Dictionary<string, Office365.PropertyDefinition>();
+
+      var properties = typeof(Office365.ItemSchema).GetFields(
+        BindingFlags.DeclaredOnly |
+        BindingFlags.Public |
+        BindingFlags.Static);
+
+      foreach (var property in properties)
+      {
+        Properties.Add(
+          property.Name.ToLower(), 
+          property.GetValue(null) as Office365.PropertyDefinition);
+      }
+
+      properties = typeof(Office365.AppointmentSchema).GetFields(
+        BindingFlags.DeclaredOnly |
+        BindingFlags.Public |
+        BindingFlags.Static);
+
+      foreach (var property in properties)
+      {
+        Properties.Add(
+          property.Name.ToLower(),
+          property.GetValue(null) as Office365.PropertyDefinition);
+      }
+
+      properties = typeof(Office365.EmailMessageSchema).GetFields(
+        BindingFlags.DeclaredOnly |
+        BindingFlags.Public |
+        BindingFlags.Static);
+
+      foreach (var property in properties)
+      {
+        var name = property.Name.ToLower();
+
+        if (!Properties.ContainsKey(name))
+        {
+          Properties.Add(
+            name, 
+            property.GetValue(null) as Office365.PropertyDefinition);
+        }
+      }
+    }
+
+    /// <summary>
     /// Gets a service instance.
     /// </summary>
     /// <returns>a ExchangeService instance.</returns>
@@ -1132,8 +1197,14 @@
         };
       }
 
-      if (appointment.IsRecurring)
+      bool isRecurring;
+
+      if (appointment.TryGetProperty(
+        Office365.AppointmentSchema.IsRecurring, 
+        out isRecurring))
       {
+        result.IsRecurring = true;
+
         Office365.Recurrence recurrence;
 
         if (appointment.TryGetProperty(
@@ -1206,6 +1277,11 @@
 
     private EMailMessage ConvertMessage(Office365.EmailMessage message)
     {
+      if (message == null)
+      {
+        return null;
+      }
+
       var result = ConvertItem<Office365.EmailMessage, EMailMessage>(message);
 
       if (result == null)
@@ -1374,6 +1450,28 @@
       }
 
       return list;
+    }
+
+    private static Office365.PropertySet GetPropertySet(string[] properties)
+    {
+      if (properties == null)
+      {
+        return null;
+      }
+
+      var propertySet = new Office365.PropertySet(Office365.ItemSchema.Id);
+
+      foreach(var property in properties)
+      {
+        var name = property.ToLower();
+
+        if ((name != "id") && Properties.ContainsKey(name))
+        {
+          propertySet.Add(Properties[name]);
+        }
+      }
+
+      return propertySet;
     }
 
     private static string FindFolder(
@@ -1545,6 +1643,11 @@
     /// Internal counter of number of accesses to GetService() method.
     /// </summary>
     private static int accessCount;
+
+    /// <summary>
+    /// A map of property name to a property definition.
+    /// </summary>
+    private static Dictionary<string, Office365.PropertyDefinition> Properties;
     #endregion
   }
 }
