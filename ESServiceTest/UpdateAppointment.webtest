@@ -8,7 +8,7 @@
       <ValidationRules>
         <ValidationRule Classname="Microsoft.VisualStudio.TestTools.WebTesting.Rules.ValidateHtmlTagInnerText, Microsoft.VisualStudio.QualityTools.WebTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" DisplayName="Tag Inner Text" Description="Validates that the specified expected inner text exists within the specified HTML tag." Level="High" ExectuionOrder="BeforeDependents">
           <RuleParameters>
-            <RuleParameter Name="TagName" Value="UpdateResult" />
+            <RuleParameter Name="TagName" Value="UpdateAppointmentResult" />
             <RuleParameter Name="AttributeName" Value="" />
             <RuleParameter Name="AttributeValue" Value="" />
             <RuleParameter Name="ExpectedInnerText" Value="true" />
