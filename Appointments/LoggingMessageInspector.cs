@@ -37,27 +37,41 @@
       copy.WriteMessage(xmlWriter);
       xmlWriter.Flush();
 
-      using(var model = new EWSQueueEntities())
+      try
       {
-        var item = new Queue
+        using (var model = new EWSQueueEntities())
         {
-          Operation = copy.Headers.Action,
-          Request = builder.ToString(),
-          CreatedAt = DateTime.Now,
-          //ExpiresAt = DateTime.Now.AddMinutes(Settings.RequestTimeout)
-        };
+          var item = new Queue
+          {
+            Operation = copy.Headers.Action,
+            Request = builder.ToString(),
+            CreatedAt = DateTime.Now,
+            //ExpiresAt = DateTime.Now.AddMinutes(Settings.RequestTimeout)
+          };
 
-        request.Properties[RequestIDName] = item.ID;
+          request.Properties[RequestIDName] = item.ID;
 
-        model.Queues.Add(item);
-        model.SaveChanges();
+          model.Queues.Add(item);
 
-        return item.ID;
+          model.SaveChanges();
+
+          return item.ID;
+        }
+      }
+      catch
+      {
+        // Cannot log. Continue.
+        return null;
       }
     }
 
     public void BeforeSendReply(ref Message reply, object correlationState)
     {
+      if (correlationState == null)
+      {
+        return;
+      }
+
       var buffer = reply.CreateBufferedCopy(int.MaxValue);
 
       reply = buffer.CreateMessage();
@@ -71,40 +85,39 @@
       copy.WriteMessage(xmlWriter);
       xmlWriter.Flush();
 
-      using(var model = new EWSQueueEntities())
+      try
       {
-        var item = model.Queues.
-          Where(request => request.ID == requestID).
-          FirstOrDefault();
-
-        if (item != null)
+        using (var model = new EWSQueueEntities())
         {
-          if (copy.IsFault)
-          {
-            item.Error = builder.ToString();
-          }
-          else
-          {
-            item.Response = builder.ToString();
-          }
+          var item = model.Queues.
+            Where(request => request.ID == requestID).
+            FirstOrDefault();
 
-          model.Entry(item).State = EntityState.Modified;
-          model.SaveChanges();
+          if (item != null)
+          {
+            if (copy.IsFault)
+            {
+              item.Error = builder.ToString();
+            }
+            else
+            {
+              item.Response = builder.ToString();
+            }
+
+            model.Entry(item).State = EntityState.Modified;
+            model.SaveChanges();
+          }
         }
-      }
 
-      if (ResponseNotifier != null)
-      {
-        try
+        if (ResponseNotifier != null)
         {
           ResponseNotifier.Notify(requestID, copy.IsFault);
         }
-        catch
-        {
-          // Notifier should not interrupt us.
-        }
       }
-
+      catch
+      {
+        // Connot log. Continue.
+      }
     }
 
     public const string RequestIDName = "Bnhp.Office365.RequestID";

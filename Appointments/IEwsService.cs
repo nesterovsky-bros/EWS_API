@@ -26,7 +26,7 @@ namespace Bnhp.Office365
     /// <returns>An unique ID of the new proxy.</returns>
     /// <exception cref="IOException">in case of error.</exception>
     [OperationContract]
-    string CreateAppointment(string email, Appointment appointment);
+    Task<string> CreateAppointment(string email, Appointment appointment);
 
     /// <summary>
     /// Retrieves all appointments' IDs that belongs to the specified range of dates.
@@ -39,7 +39,7 @@ namespace Bnhp.Office365
     /// </param>
     /// <returns>a list of appointments' IDs.</returns>
     [OperationContract]
-    IEnumerable<string> FindAppointments(string email,
+    Task<IEnumerable<string>> FindAppointments(string email,
       DateTime start,
       DateTime? end,
       int? maxResults);
@@ -54,7 +54,7 @@ namespace Bnhp.Office365
     /// was not found.
     /// </returns>
     [OperationContract]
-    Appointment GetAppointment(string email, string ID);
+    Task<Appointment> GetAppointment(string email, string ID);
 
     /// <summary>
     /// Updates the specified appointment.
@@ -76,7 +76,7 @@ namespace Bnhp.Office365
     /// Only organizer can update an proxy.
     /// </remarks>
     [OperationContract]
-    bool UpdateAppointment(string email, Appointment appointment);
+    Task<bool> UpdateAppointment(string email, Appointment appointment);
 
     /// <summary>
     /// Cancels an appointment specified by unique ID.
@@ -90,7 +90,7 @@ namespace Bnhp.Office365
     /// </returns>
     /// <remarks>Only the appointment organizer may cancel it.</remarks>
     [OperationContract]
-    bool CancelAppointment(string email, string ID, string reason);
+    Task<bool> CancelAppointment(string email, string ID, string reason);
 
     /// <summary>
     /// Delets an appointment specified by unique ID from organizer's e-mail box and
@@ -103,7 +103,7 @@ namespace Bnhp.Office365
     /// </returns>
     /// <remarks>Only the appointment organizer may delete it.</remarks>
     [OperationContract]
-    bool DeleteAppointment(string email, string ID);
+    Task<bool> DeleteAppointment(string email, string ID);
 
     /// <summary>
     /// Accepts the specified appointment.
@@ -114,7 +114,7 @@ namespace Bnhp.Office365
     /// true when the operation succeseed, and false otherwise.
     /// </returns>
     [OperationContract]
-    bool AcceptAppointment(string email, string ID);
+    Task<bool> AcceptAppointment(string email, string ID);
 
     /// <summary>
     /// Declines the specified appointment.
@@ -125,7 +125,7 @@ namespace Bnhp.Office365
     /// true when the operation succeseed, and false otherwise.
     /// </returns>
     [OperationContract]
-    bool DeclineAppointment(string email, string ID);
+    Task<bool> DeclineAppointment(string email, string ID);
     #endregion
 
     #region E-Mail
@@ -140,7 +140,7 @@ namespace Bnhp.Office365
     /// <returns>An unique ID of the stored e-mail message.</returns>
     /// <exception cref="IOException">in case of error.</exception>
     [OperationContract]
-    string CreateMessage(string email, EMailMessage message);
+    Task<string> CreateMessage(string email, EMailMessage message);
 
     /// <summary>
     /// Add a file attachment that to the specified e-mail message.
@@ -153,7 +153,7 @@ namespace Bnhp.Office365
     /// true when the attachment was added successfully, and false otherwise.
     /// </returns>
     [OperationContract]
-    bool AddAttachment(
+    Task<bool> AddAttachment(
       string email, 
       string ID, 
       string name, 
@@ -169,7 +169,7 @@ namespace Bnhp.Office365
     /// </returns>
     /// <exception cref="IOException">in case of error.</exception>
     [OperationContract]
-    bool SendMessage(string email, string ID);
+    Task<bool> SendMessage(string email, string ID);
 
     /// <summary>
     /// Retrieves all e-mal messages' IDs from Inbox.
@@ -184,7 +184,7 @@ namespace Bnhp.Office365
     /// </param>
     /// <returns>a list of messages' IDs instances.</returns>
     [OperationContract]
-    IEnumerable<string> FindMessages(string email, int? pageSize, int? offset);
+    Task<IEnumerable<string>> FindMessages(string email, int? pageSize, int? offset);
 
     /// <summary>
     /// Gets an e-mail message by its ID.
@@ -196,7 +196,7 @@ namespace Bnhp.Office365
     /// the specified ID was not found.
     /// </returns>
     [OperationContract]
-    EMailMessage GetMessage(string email, string ID);
+    Task<EMailMessage> GetMessage(string email, string ID);
 
     /// <summary>
     /// Gets a file attachment by an e-mail ID and the attachment's name.
@@ -209,7 +209,7 @@ namespace Bnhp.Office365
     /// an attachment with such name.
     /// </returns>
     [OperationContract]
-    byte[] GetAttachmentByName(string email, string ID, string name);
+    Task<byte[]> GetAttachmentByName(string email, string ID, string name);
 
     /// <summary>
     /// Gets a file attachment by an e-mail ID and the attachment's index.
@@ -221,7 +221,7 @@ namespace Bnhp.Office365
     /// the attachment's content or null when there is no an attachment with such index.
     /// </returns>
     [OperationContract]
-    byte[] GetAttachmentByIndex(string email, string ID, int index);
+    Task<byte[]> GetAttachmentByIndex(string email, string ID, int index);
 
     /// <summary>
     /// Gets an e-mail message content by its ID.
@@ -233,7 +233,7 @@ namespace Bnhp.Office365
     /// the specified ID was not found.
     /// </returns>
     [OperationContract]
-    MimeContent GetMessageContent(string email, string ID);
+    Task<MimeContent> GetMessageContent(string email, string ID);
 
     /// <summary>
     /// Deletes an e-mail message specified by unique ID.
@@ -244,7 +244,7 @@ namespace Bnhp.Office365
     /// true when the message was successfully deleted, and false otherwise.
     /// </returns>
     [OperationContract]
-    bool DeleteMessage(string email, string ID);
+    Task<bool> DeleteMessage(string email, string ID);
 
     /// <summary>
     /// Moves the specified e-mail message to a folder.
@@ -256,7 +256,7 @@ namespace Bnhp.Office365
     /// true when the message was successfully moved, and false otherwise.
     /// </returns>
     [OperationContract]
-    bool MoveTo(string email, string ID, string folder);
+    Task<bool> MoveTo(string email, string ID, string folder);
 
     /// <summary>
     /// Copies the specified e-mail message to a folder.
@@ -268,7 +268,7 @@ namespace Bnhp.Office365
     /// true when the message was successfully copied, and false otherwise.
     /// </returns>
     [OperationContract]
-    bool CopyTo(string email, string ID, string folder);
+    Task<bool> CopyTo(string email, string ID, string folder);
     #endregion
 
     #region Notification
@@ -279,7 +279,7 @@ namespace Bnhp.Office365
     /// <param name="ID">An ID of proxy changed.</param>
     /// <param name="changeType">A change type: delete, create, modify.</param>
     [OperationContract]
-    bool Notification(string email, string ID, string changeType);
+    Task<bool> Notification(string email, string ID, string changeType);
 
     /// <summary>
     /// Gets a set of changes.
@@ -297,7 +297,7 @@ namespace Bnhp.Office365
     /// </param>
     /// <returns>A enumeration of changes.</returns>
     [OperationContract]
-    IEnumerable<Change> GetChanges(
+    Task<IEnumerable<Change>> GetChanges(
       string systemName,
       string email,
       string folderID,
@@ -322,7 +322,7 @@ namespace Bnhp.Office365
     /// </param>
     /// <returns>A enumeration of changes.</returns>
     [OperationContract]
-    IEnumerable<ChangeStats> GetChangeStats(
+    Task<IEnumerable<ChangeStats>> GetChangeStats(
       string systemName,
       string email,
       string folderID,

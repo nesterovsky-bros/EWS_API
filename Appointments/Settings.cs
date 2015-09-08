@@ -11,7 +11,6 @@ namespace Bnhp.Office365
     public string AutoDiscoveryUrl { get; set; }
     public int UsersPerUsersSettins { get; set; }
     public int ExchangeListenerRecyclePeriod { get; set; }
-
-    public SemaphoreSlim AccessSemaphore { get; set; }
+    public int RetryCount { get; set; }
   }
 }

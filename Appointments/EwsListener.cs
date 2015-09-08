@@ -4,16 +4,15 @@
   using System.Linq;
   using System.Collections.Generic;
   using System.Data.Entity;
-  using System.Runtime.Serialization;
   using System.Threading.Tasks;
   using Microsoft.Practices.Unity;
-  using Microsoft.Exchange.WebServices.Autodiscover;
-  using System.Net;
   using System.Threading;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
   using System.Diagnostics;
-  
+  using System.Collections.Concurrent;
+  using System.Net.Http;
+
   /// <summary>
   /// A EWS listener.
   /// </summary>
@@ -39,9 +38,9 @@
     public async Task Start(
       CancellationToken cancellationToken = default(CancellationToken))
     {
-      while(true)
+      while (true)
       {
-        using(var cancellation = 
+        using (var cancellation =
           CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
         {
           cancellation.CancelAfter(
@@ -74,9 +73,9 @@
             watch.Restart();
             await ListenMailboxes(cancellation);
             watch.Stop();
-            
+
             Trace.TraceInformation(
-              "Listener has started; elapsed: {0}.", 
+              "Listener has started; elapsed: {0}.",
               watch.Elapsed);
 
             Trace.TraceInformation("Sync mailboxes.");
@@ -90,7 +89,7 @@
 
             await Task.Delay(int.MaxValue, cancellation.Token);
           }
-          catch(OperationCanceledException)
+          catch (OperationCanceledException)
           {
             cancellationToken.ThrowIfCancellationRequested();
           }
@@ -120,7 +119,7 @@
         cancellation);
 
       // GetAppointment their affinity.
-      using(var model = CreateModel())
+      using (var model = CreateModel())
       {
         usersAffinities = await model.MailboxAffinities.
           Where(item => users.Contains(item.Email)).
@@ -133,22 +132,23 @@
           "No all application users are discovered.");
       }
 
-      var parallelism = Settings.EWSMaxConcurrency;
+      var parallelism = Math.Max(1, Settings.EWSMaxConcurrency / 2);
       var index = 0;
 
-      using(var semaphore = new SemaphoreSlim(parallelism))
+      using (var semaphore = new SemaphoreSlim(parallelism))
       {
         Func<int, BankSystem, Task> expand = async (i, bankSystem) =>
         {
           try
           {
             var user = GetUser(i);
-            var service = 
+            var service =
               GetService(user, usersAffinities[i % usersAffinities.Length]);
 
             await EwsUtils.TryAction(
               "ExpandGroup",
               bankSystem.GroupName,
+              service,
               async attempt =>
               {
                 await Task.Yield();
@@ -157,7 +157,7 @@
                   Select(item => item.Address).
                   ToDictionary(item => item);
 
-                using(var model = CreateModel())
+                using (var model = CreateModel())
                 {
                   var existing = model.BankSystemMailboxes.
                     Where(item => item.GroupName == bankSystem.GroupName).
@@ -171,11 +171,11 @@
                     results.Values.
                       Where(email => !existing.ContainsKey(email)).
                       Select(
-                        email => 
-                          new BankSystemMailbox 
+                        email =>
+                          new BankSystemMailbox
                           {
-                            GroupName = bankSystem.GroupName, 
-                            Email = email 
+                            GroupName = bankSystem.GroupName,
+                            Email = email
                           }));
 
                   await model.SaveChangesAsync(cancellation.Token);
@@ -183,9 +183,10 @@
 
                 return true;
               },
+              Settings,
               cancellation.Token);
           }
-          catch(Exception e)
+          catch (Exception e)
           {
             EwsUtils.Log(true, "ExpandGroup", null, e);
 
@@ -199,7 +200,7 @@
 
         var bankSystems = null as BankSystem[];
 
-        using(var model = CreateModel())
+        using (var model = CreateModel())
         {
           bankSystems = await model.BankSystems.
             Where(item => !item.Local).
@@ -233,12 +234,12 @@
     {
       var groupSize = Settings.UsersPerUsersSettins;
       var group = new List<string>(groupSize);
-      var parallelism = Settings.EWSMaxConcurrency;
+      var parallelism = Math.Max(1, Settings.EWSMaxConcurrency / 2);
       var index = 0;
 
       using(var semaphore = new SemaphoreSlim(parallelism))
       {
-        using(var model = CreateModel())
+        using (var model = CreateModel())
         {
           await model.BankSystemMailboxes.
             Select(item => item.Email).
@@ -253,7 +254,7 @@
                   await semaphore.WaitAsync(cancellation.Token);
 
                   var task = Discover(
-                    index++, 
+                    index++,
                     group.ToArray(),
                     semaphore,
                     cancellation);
@@ -271,14 +272,14 @@
           await semaphore.WaitAsync(cancellation.Token);
 
           var task = Discover(
-            index++, 
+            index++,
             group.ToArray(),
             semaphore,
             cancellation);
         }
 
         // Wait to complete pending tasks.
-        for(var i = 0; semaphore.CurrentCount + i < parallelism; ++i)
+        for (var i = 0; semaphore.CurrentCount + i < parallelism; ++i)
         {
           await semaphore.WaitAsync(cancellation.Token);
         }
@@ -297,21 +298,21 @@
     {
       var groupSize = Settings.UsersPerUsersSettins;
       var group = new List<string>(groupSize);
-      var parallelism = Settings.EWSMaxConcurrency;
+      var parallelism = Math.Max(1, Settings.EWSMaxConcurrency / 2);
       var index = 0;
 
-      using(var semaphore = new SemaphoreSlim(parallelism))
+      using (var semaphore = new SemaphoreSlim(parallelism))
       {
-        foreach(var email in emails)
+        foreach (var email in emails)
         {
           if (group.Count >= groupSize)
           {
             await semaphore.WaitAsync(cancellation.Token);
 
             var task = Discover(
-              index++, 
-              group.ToArray(), 
-              semaphore, 
+              index++,
+              group.ToArray(),
+              semaphore,
               cancellation);
 
             group.Clear();
@@ -325,14 +326,14 @@
           await semaphore.WaitAsync(cancellation.Token);
 
           var task = Discover(
-            index++, 
-            group.ToArray(), 
-            semaphore, 
+            index++,
+            group.ToArray(),
+            semaphore,
             cancellation);
         }
 
         // Wait to complete pending tasks.
-        for(var i = 0; semaphore.CurrentCount + i < parallelism; ++i)
+        for (var i = 0; semaphore.CurrentCount + i < parallelism; ++i)
         {
           await semaphore.WaitAsync(cancellation.Token);
         }
@@ -348,9 +349,9 @@
     /// <param name="cancellation">Cancellation source.</param>
     /// <returns>Tasks that complete after discover.</returns>
     private async Task Discover(
-      int index, 
-      string[] emails, 
-      SemaphoreSlim semaphore, 
+      int index,
+      string[] emails,
+      SemaphoreSlim semaphore,
       CancellationTokenSource cancellation)
     {
       try
@@ -360,18 +361,20 @@
         var mailboxes = (await EwsUtils.TryAction(
           "Discover",
           emails[0],
+          null,
           async attempt =>
           {
             await Task.Yield();
 
             return EwsUtils.GetMailboxAffinities(user, Settings.AutoDiscoveryUrl, emails);
           },
+          Settings,
           cancellation.Token)).
           ToDictionary(item => item.Email);
 
-        using(var model = CreateModel())
+        using (var model = CreateModel())
         {
-          foreach(var email in emails)
+          foreach (var email in emails)
           {
             var mailbox = mailboxes.Get(email);
 
@@ -409,7 +412,7 @@
           }
         }
       }
-      catch(Exception e)
+      catch (Exception e)
       {
         EwsUtils.Log(true, "Discovery", null, e);
 
@@ -431,11 +434,14 @@
     private async Task SyncMailboxes(CancellationTokenSource cancellation)
     {
       var parallelism = Math.Min(
-        Settings.EWSMaxConcurrency * Settings.ApplicationUsers.Length, 
-        100);
+        100,
+        Math.Max(
+          1, 
+          Settings.EWSMaxConcurrency * Settings.ApplicationUsers.Length / 2));
+
       var index = 0;
 
-      using(var semaphore = new SemaphoreSlim(parallelism))
+      using (var semaphore = new SemaphoreSlim(parallelism))
       {
         Func<int, MailboxAffinity, Task> sync = async (i, mailbox) =>
         {
@@ -455,7 +461,7 @@
           }
         };
 
-        using(var model = CreateModel())
+        using (var model = CreateModel())
         {
           await model.BankSystemMailboxes.
             Select(item => item.Email).
@@ -493,18 +499,18 @@
     /// <param name="cancellation">A cancellation token source.</param>
     /// <returns>Synced mail box, or null if mail box is up to date.</returns>
     private async Task SyncMailbox(
-      ApplicationUser user, 
+      ApplicationUser user,
       MailboxAffinity mailbox,
       CancellationTokenSource cancellation)
     {
-      if ((mailbox == null) || 
-        (mailbox.ExternalEwsUrl == null) || 
+      if ((mailbox == null) ||
+        (mailbox.ExternalEwsUrl == null) ||
         (mailbox.GroupingInformation == null))
       {
         return;
       }
 
-      var folderIDs = 
+      var folderIDs =
         await GetNotificationFolders(mailbox.Email, cancellation);
 
       if (folderIDs.Length == 0)
@@ -514,12 +520,12 @@
 
       var service = GetService(user, mailbox);
 
-      foreach(var folderID in folderIDs)
+      foreach (var folderID in folderIDs)
       {
         var folderName = folderID.FolderName.ToString();
         string state;
 
-        using(var model = CreateModel())
+        using (var model = CreateModel())
         {
           state = await model.MailboxSyncs.
             Where(
@@ -539,7 +545,7 @@
 
         if (state != newState)
         {
-          using(var model = CreateModel())
+          using (var model = CreateModel())
           {
             var item = new MailboxSync
             {
@@ -550,7 +556,7 @@
 
             model.Entry(item).State =
               newState == null ? EntityState.Deleted :
-              state == null ? EntityState.Added : 
+              state == null ? EntityState.Added :
               EntityState.Modified;
 
             await model.SaveChangesAsync(cancellation.Token);
@@ -584,7 +590,7 @@
             var parentID = item.ParentFolderId.UniqueId;
 
             var folder = folders.Get(parentID) ??
-              (folders[parentID] = 
+              (folders[parentID] =
                 Office365.Folder.Bind(service, parentID, FolderProperties));
 
             return new MailboxNotification
@@ -601,14 +607,21 @@
                   ChangeType.Deleted.ToString() :
                   ChangeType.Updated.ToString()
             };
-          });
+          }).
+        ToArray();
 
-      using(var model = CreateModel())
+      var callbacks = null as string[];
+
+      using (var model = CreateModel())
       {
         model.MailboxNotifications.AddRange(notifications);
 
         await model.SaveChangesAsync(cancellation.Token);
+
+        callbacks = await GetCallbacks(model, notifications, cancellation);
       }
+
+      TriggerCallbacks(callbacks, cancellation);
     }
 
     /// <summary>
@@ -622,7 +635,7 @@
     /// <returns>A new syncState value.</returns>
     private async Task<string> SyncMailbox(
       MailboxAffinity mailbox,
-      Office365.ExchangeService service, 
+      Office365.ExchangeService service,
       Office365.FolderId folderID,
       string syncState,
       CancellationTokenSource cancellation)
@@ -639,6 +652,7 @@
           var changes = await EwsUtils.TryAction(
             "Sync",
             mailbox.Email,
+            service,
             attempt =>
             {
               if ((attempt > 0) && (state == syncState))
@@ -656,7 +670,7 @@
                   {
                     source.SetResult(service.EndSyncFolderItems(asyncResult));
                   }
-                  catch(Exception e)
+                  catch (Exception e)
                   {
                     source.SetException(e);
                   }
@@ -671,48 +685,61 @@
 
               return source.Task;
             },
+            Settings,
             cancellation.Token);
 
           if (changes.Count > 0)
           {
-            using(var model = CreateModel())
+            var notifications = changes.Select(
+              change => new MailboxNotification
+              {
+                Timestamp = change.Item.LastModifiedTime,
+                Email = mailbox.Email,
+                FolderID = folderID.FolderName.ToString(),
+                ItemID = change.ItemId.UniqueId,
+                ChangeType =
+                  change.ChangeType == Office365.ChangeType.Create ?
+                    ChangeType.Created.ToString() :
+                  change.ChangeType == Office365.ChangeType.Delete ?
+                    ChangeType.Deleted.ToString() :
+                    ChangeType.Updated.ToString()
+              }).
+              ToArray();
+
+            var callbacks = null as string[];
+
+            using (var model = CreateModel())
             {
-              model.MailboxNotifications.AddRange(
-                changes.Select(
-                  change => new MailboxNotification
-                  {
-                    Timestamp = change.Item.LastModifiedTime,
-                    Email = mailbox.Email,
-                    FolderID = folderID.FolderName.ToString(),
-                    ItemID = change.ItemId.UniqueId,
-                    ChangeType = 
-                      change.ChangeType == Office365.ChangeType.Create ?
-                        ChangeType.Created.ToString() :
-                      change.ChangeType == Office365.ChangeType.Delete ? 
-                        ChangeType.Deleted.ToString() :
-                        ChangeType.Updated.ToString()
-                  }).
+              notifications = notifications.
                 Where(
                   outer => !model.MailboxNotifications.
                     Any(
                       inner =>
                         (outer.Timestamp == inner.Timestamp) &&
                         (outer.Email == inner.Email) &&
-                        (outer.ItemID == inner.ItemID))));
+                        (outer.ItemID == inner.ItemID))).
+                ToArray();
+
+              model.MailboxNotifications.AddRange(notifications);
 
               await model.SaveChangesAsync(cancellation.Token);
+
+              callbacks =
+                await GetCallbacks(model, notifications, cancellation);
             }
+
+            TriggerCallbacks(callbacks, cancellation);
           }
 
           state = changes.SyncState;
           hasMore = changes.MoreChangesAvailable;
         }
-        catch 
+        catch
         {
           return state == syncState ? null : state;
         }
       }
-      while(hasMore);
+      while (hasMore);
 
       return state;
     }
@@ -732,8 +759,8 @@
         groupSize * Settings.ApplicationUsers.Length,
         1000);
 
-      using(var semaphore = new SemaphoreSlim(parallelism))
-      using(var model = CreateModel())
+      using (var semaphore = new SemaphoreSlim(parallelism))
+      using (var model = CreateModel())
       {
         Func<int, MailboxAffinity[], Task> listen = async (i, mailboxes) =>
         {
@@ -792,7 +819,7 @@
         }
 
         // Wait to complete pending tasks.
-        for(var i = 0; semaphore.CurrentCount + i < parallelism; ++i)
+        for (var i = 0; semaphore.CurrentCount + i < parallelism; ++i)
         {
           await semaphore.WaitAsync(cancellation.Token);
         }
@@ -821,7 +848,7 @@
           service.HttpHeaders.Add("X-AnchorMailbox", anchorMailbox);
           service.HttpHeaders.Add("X-PreferServerAffinity", "true");
 
-          var folderIDs = 
+          var folderIDs =
             await GetNotificationFolders(mailbox.Email, cancellation);
 
           try
@@ -829,6 +856,7 @@
             return await EwsUtils.TryAction(
               "Subscribe",
               mailbox.Email,
+              service,
               attempt =>
               {
                 var source =
@@ -842,7 +870,7 @@
                       source.SetResult(service.
                         EndSubscribeToStreamingNotifications(asyncResult));
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                       source.SetException(e);
                     }
@@ -856,17 +884,18 @@
 
                 return source.Task;
               },
+              Settings,
               cancellation.Token);
           }
-          catch(OperationCanceledException)
+          catch (OperationCanceledException)
           {
             throw;
           }
-          catch(ObjectDisposedException)
+          catch (ObjectDisposedException)
           {
             throw;
           }
-          catch(Office365.ServiceResponseException)
+          catch (Office365.ServiceResponseException)
           {
             mailbox.ExternalEwsUrl = null;
             mailbox.GroupingInformation = null;
@@ -885,7 +914,7 @@
       var primarySubscription = null as Office365.StreamingSubscription;
       var primaryIndex = 0;
 
-      for(var i = 0; i < mailboxes.Length; ++i)
+      for (var i = 0; i < mailboxes.Length; ++i)
       {
         var mailbox = mailboxes[i];
         var service = GetService(user, mailbox);
@@ -928,7 +957,7 @@
                     var service = GetService(user, mailbox);
 
                     service.CookieContainer.Add(
-                      service.Url, 
+                      service.Url,
                       backEndOverrideCookie);
 
                     return subscribe(service, mailbox, primaryEmail);
@@ -937,9 +966,9 @@
           ToArray();
       }
 
-      using(var model = CreateModel())
+      using (var model = CreateModel())
       {
-        foreach(var mailbox in mailboxes)
+        foreach (var mailbox in mailboxes)
         {
           if (mailbox.ExternalEwsUrl == null)
           {
@@ -969,8 +998,8 @@
 
         // Note: fire and forget task.
         var syncTask = SyncAndUpdateMailbox(
-          args.Subscription.Service, 
-          args.Events, 
+          args.Subscription.Service,
+          args.Events,
           cancellation);
       };
 
@@ -1006,7 +1035,7 @@
       {
         Trace.TraceInformation(
           "Disconnection for a group with primary mailbox: {0}. {1}",
-          primaryEmail, 
+          primaryEmail,
           args.Exception);
 
         if (!cancellation.IsCancellationRequested)
@@ -1024,7 +1053,7 @@
           connection.Close();
         }
         catch
-        { 
+        {
         }
       });
 
@@ -1044,7 +1073,7 @@
       var service = new Office365.ExchangeService(
         Office365.ExchangeVersion.Exchange2013);
 
-      service.Credentials = 
+      service.Credentials =
         new Office365.WebCredentials(user.Email, user.Password);
       service.UseDefaultCredentials = false;
       service.PreAuthenticate = true;
@@ -1098,7 +1127,7 @@
     {
       string[] folderNames;
 
-      using(var model = CreateModel())
+      using (var model = CreateModel())
       {
         folderNames = await model.BankSystemNotifications.
           Join(
@@ -1108,12 +1137,13 @@
             inner => inner.GroupName,
             (outer, inner) => outer.FolderID).
           Distinct().
+          AsNoTracking().
           ToArrayAsync(cancellation.Token);
       }
 
       var folderIDs = new List<Office365.FolderId>(folderNames.Length);
 
-      foreach(var folderName in folderNames)
+      foreach (var folderName in folderNames)
       {
         Office365.WellKnownFolderName folderID;
 
@@ -1125,6 +1155,84 @@
 
       return folderIDs.ToArray();
     }
+
+    private static async Task<string[]> GetCallbacks(
+      EWSQueueEntities model,
+      MailboxNotification[] notifications,
+      CancellationTokenSource cancellation)
+    {
+      if ((notifications == null) || (notifications.Length == 0))
+      {
+        return new string[0];
+      }
+
+      return await model.BankSystemMailboxes.
+        Join(
+          notifications.Select(item => item.Email),
+          outer => outer.Email,
+          inner => inner,
+          (outer, inner) => outer).
+        Join(
+          model.BankSystems,
+          outer => outer.GroupName,
+          inner => inner.GroupName,
+          (outer, inner) => inner).
+        Select(item => item.CallbackURL).
+        Where(item => item != null).
+        Distinct().
+        AsNoTracking().
+        ToArrayAsync(cancellation.Token);
+    }
+
+    private void TriggerCallbacks(
+      string[] callbacks, 
+      CancellationTokenSource cancellation)
+    {
+      if ((callbacks == null) || (callbacks.Length == 0))
+      {
+        return;
+      }
+
+      var delay = 1000;
+
+      foreach (var callback in callbacks)
+      {
+        var callbackCancellation = null as CancellationTokenSource;
+
+        if (pendingCallbacks.TryRemove(callback, out cancellation))
+        {
+          callbackCancellation.Cancel();
+        }
+
+        pendingCallbacks.GetOrAdd(
+          callback,
+          url =>
+          {
+            callbackCancellation =
+              CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token);
+
+            Task.Run(
+              async () =>
+              {
+                await Task.Delay(delay);
+
+                using(var client = new HttpClient())
+                {
+                  await client.GetAsync(url, callbackCancellation.Token);
+                }
+              },
+              callbackCancellation.Token);
+
+            return callbackCancellation;
+          });
+      }
+    }
+
+    /// <summary>
+    /// Pending callbacks.
+    /// </summary>
+    public ConcurrentDictionary<string, CancellationTokenSource> pendingCallbacks = 
+      new ConcurrentDictionary<string, CancellationTokenSource>();
 
     /// <summary>
     /// A properies to retrieve during Sync.

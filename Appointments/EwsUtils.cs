@@ -12,7 +12,8 @@
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
   using System.Runtime.ExceptionServices;
-  
+  using System.Collections.Concurrent;
+
   /// <summary>
   /// EWS utility API.
   /// </summary>
@@ -72,20 +73,36 @@
     /// <typeparam name="T">A result type.</typeparam>
     /// <param name="name">Action name.</param>
     /// <param name="email">A mailbox.</param>
+    /// <param name="service">An exchange service.</param>
     /// <param name="action">Action function.</param>
-    /// <param name="cancellationToken">A cancellation token.</param>
-    /// <param name="retryCount">Optional retry count. Default is 3.</param>
+    /// <param name="settings">A Settings instance.</param>
+    /// <param name="cancellationToken">Optional cancellation token.</param>
     /// <returns>Actio result.</returns>
     public static async Task<T> TryAction<T>(
       string name,
       string email,
+      Office365.ExchangeService service,
       Func<int, Task<T>> action,
-      CancellationToken cancellationToken,
-      int retryCount = 3)
+      Settings settings,
+      CancellationToken cancellationToken = default(CancellationToken))
     {
+      var key = "";
+
+      if (service != null)
+      {
+        var webCredentials = service.Credentials as Office365.WebCredentials;
+        var networkCredential = webCredentials.Credentials as NetworkCredential;
+
+        key = networkCredential.UserName;
+      }
+
+      var semaphore = GetSemaphore(key, settings.EWSMaxConcurrency);
+
+      var retryCount = settings.RetryCount;
+
       if (retryCount <= 0)
       {
-        throw new ArgumentException("retryCount");
+        retryCount = 1;
       }
 
       for(var i = 0; i < retryCount; ++i)
@@ -94,7 +111,18 @@
 
         try
         {
-          return await action(i);
+          await semaphore.WaitAsync(
+            TimeSpan.FromMinutes(settings.RequestTimeout), 
+            cancellationToken);
+
+          try
+          {
+            return await action(i);
+          }
+          finally
+          {
+            semaphore.Release();
+          }
         }
         catch(Exception e)
         {
@@ -144,12 +172,18 @@
 
       if (serviceResponseException != null)
       {
-        switch(serviceResponseException.ErrorCode)
+        if (serviceResponseException is Office365.ServerBusyException)
+        {
+          return true;
+        }
+
+        switch (serviceResponseException.ErrorCode)
         {
           case Office365.ServiceError.ErrorMailboxStoreUnavailable:
           case Office365.ServiceError.ErrorInternalServerError:
           case Office365.ServiceError.ErrorInternalServerTransientError:
           case Office365.ServiceError.ErrorNoRespondingCASInDestinationSite:
+          case Office365.ServiceError.ErrorTooManyObjectsOpened:
           {
             return true;
           }
@@ -294,6 +328,20 @@
     }
 
     /// <summary>
+    /// Gets a global semaphore.
+    /// </summary>
+    /// <param name="key">A semaphore id.</param>
+    /// <param name="maxCount">
+    /// A maximum number of requests for the semaphore that 
+    /// can be granted concurrently.
+    /// </param>
+    /// <returns></returns>
+    public static SemaphoreSlim GetSemaphore(string key, int maxCount)
+    {
+      return semaphores.GetOrAdd(key, item => new SemaphoreSlim(maxCount));
+    }
+
+    /// <summary>
     /// Global lock.
     /// </summary>
     private static object sync = new object();
@@ -302,5 +350,11 @@
     /// Random used to generate delays.
     /// </summary>
     private static Random random = new Random();
+
+    /// <summary>
+    /// Global semaphores.
+    /// </summary>
+    private static ConcurrentDictionary<string, SemaphoreSlim> semaphores = 
+      new ConcurrentDictionary<string, SemaphoreSlim>();
   }
 }

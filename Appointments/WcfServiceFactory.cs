@@ -45,7 +45,9 @@ namespace Bnhp.Office365
       {
         model.Configuration.ProxyCreationEnabled = false;
 
-        return model.ApplicationUsers.AsNoTracking().ToArray();
+        return model.ApplicationUsers.AsNoTracking().
+          OrderBy(item => item.Email).
+          ToArray();
       }
     }
 
@@ -79,11 +81,10 @@ namespace Bnhp.Office365
           int.Parse(ConfigurationManager.AppSettings["UsersPerUsersSettins"]),
         ExchangeListenerRecyclePeriod =
           int.Parse(ConfigurationManager.AppSettings["ExchangeListenerRecyclePeriod"]),
+        RetryCount =
+          int.Parse(ConfigurationManager.AppSettings["RetryCount"] ?? "3"),
         ApplicationUsers = users,
       };
-
-      settings.AccessSemaphore = new SemaphoreSlim(
-        Math.Min(500, (settings.EWSMaxConcurrency * users.Length)));
 
       globalSettings = settings;
 

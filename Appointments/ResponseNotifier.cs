@@ -18,7 +18,7 @@
     {
       if (isFault)
       {
-        Trace.TraceError("Request {0} failed with error.");
+        Trace.TraceError("Request {0} is failed.", ID);
       }
       else
       {

@@ -10,12 +10,13 @@
   using System.Text.RegularExpressions;
   using System.Xml;
   using System.Data.Entity;
-  
+
   using Microsoft.Practices.Unity;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
   using System.Threading;
-  
+  using System.Threading.Tasks;
+
   /// <summary>
   /// An implementation of IAppointments interface for CRUD operations with
   /// appointments for Office365.
@@ -39,7 +40,7 @@
     /// </param>
     /// <returns>An unique ID of the new appointment.</returns>
     /// <exception cref="Exception">in case of error.</exception>
-    public string CreateAppointment(string email, Appointment appointment)
+    public async Task<string> CreateAppointment(string email, Appointment appointment)
     {
       var service = GetService(email);
       var officeAppointment = new Office365.Appointment(service);
@@ -149,9 +150,17 @@
         Guid.NewGuid().ToString() + email.Substring(email.IndexOf('@'));
 
       // SendMessage the proxy request
-      Sync(() => officeAppointment.Save(Office365.SendInvitationsMode.SendToAllAndSaveCopy));
+      return await EwsUtils.TryAction(
+        "CreateAppointment",
+        email,
+        service,
+        i =>
+        {
+          officeAppointment.Save(Office365.SendInvitationsMode.SendToAllAndSaveCopy);
 
-      return officeAppointment.Id.ToString();
+          return Task.FromResult(officeAppointment.Id.ToString());
+        },
+        Settings);
     }
     #endregion
 
@@ -166,7 +175,7 @@
     /// an optional parameter, determines maximum results in resonse.
     /// </param>
     /// <returns>a collection of appointments' IDs.</returns>
-    public IEnumerable<string> FindAppointments(
+    public async Task<IEnumerable<string>> FindAppointments(
       string email,
       DateTime start,
       DateTime? end,
@@ -181,10 +190,15 @@
       view.Traversal = Office365.ItemTraversal.Shallow;
 
       var service = GetService(email);
-      var appointments = Sync(() =>
-        service.FindAppointments(
-        Office365.WellKnownFolderName.Calendar,
-        view));
+
+      var appointments = await EwsUtils.TryAction(
+        "FindAppointments",
+        email,
+        service,
+        i => Task.FromResult(service.FindAppointments(
+          Office365.WellKnownFolderName.Calendar,
+          view)),
+        Settings);
 
       var result = new List<string>();
 
@@ -211,9 +225,10 @@
     /// <returns>
     /// an Appointment instance or null if the appointment was not found.
     /// </returns>
-    public Appointment GetAppointment(string email, string ID)
+    public async Task<Appointment> GetAppointment(string email, string ID)
     {
-      var appointment = RetrieveAppointment(email, ID);
+      var service = GetService(email);
+      var appointment = await RetrieveAppointment(service, email, ID);
 
       return ConvertAppointment(appointment);
     }
@@ -239,7 +254,7 @@
     /// <remarks>
     /// Only organizer can update an appointment.
     /// </remarks>
-    public bool UpdateAppointment(string email, Appointment appointment)
+    public async Task<bool> UpdateAppointment(string email, Appointment appointment)
     {
       var proxy = appointment;
 
@@ -248,7 +263,8 @@
         throw new ArgumentNullException("appointment");
       }
 
-      var officeAppointment = RetrieveAppointment(email, proxy.Id);
+      var service = GetService(email);
+      var officeAppointment = await RetrieveAppointment(service, email, proxy.Id);
 
       // Note: only organizer may update the proxy.
       if ((officeAppointment != null) &&
@@ -300,7 +316,17 @@
           Office365.SendInvitationsOrCancellationsMode.SendToAllAndSaveCopy :
           Office365.SendInvitationsOrCancellationsMode.SendToNone;
 
-        Sync(() => officeAppointment.Update(Office365.ConflictResolutionMode.AlwaysOverwrite, mode));
+        await EwsUtils.TryAction(
+          "UpdateAppointment",
+          email,
+          service,
+          i =>
+          {
+            officeAppointment.Update(Office365.ConflictResolutionMode.AlwaysOverwrite, mode);
+
+            return Task.FromResult(true);
+          },
+          Settings);
 
         return true;
       }
@@ -321,13 +347,19 @@
     /// true when the appointment was canceled successfully, and false otherwise.
     /// </returns>
     /// <remarks>Only the appointment organizer may cancel it.</remarks>
-    public bool CancelAppointment(string email, string ID, string reason)
+    public async Task<bool> CancelAppointment(string email, string ID, string reason)
     {
-      var appointment = RetrieveAppointment(email, ID);
+      var service = GetService(email);
+      var appointment = await RetrieveAppointment(service, email, ID);
 
       if (appointment != null)
       {
-        Sync(() => appointment.CancelMeeting(reason));
+        await EwsUtils.TryAction(
+          "CancelAppointment",
+          email,
+          service,
+          i => Task.FromResult(appointment.CancelMeeting(reason)),
+          Settings);
 
         return true;
       }
@@ -347,15 +379,24 @@
     /// true when the appointment was successfully deleted, and false otherwise.
     /// </returns>
     /// <remarks>Only the appointment organizer may delete it.</remarks>
-    public bool DeleteAppointment(string email, string ID)
+    public async Task<bool> DeleteAppointment(string email, string ID)
     {
-      var appointment = RetrieveAppointment(email, ID);
+      var service = GetService(email);
+      var appointment = await RetrieveAppointment(service, email, ID);
 
       if (appointment != null)
       {
-        Sync(() => appointment.Delete(Office365.DeleteMode.MoveToDeletedItems, true));
+        return await EwsUtils.TryAction(
+          "DeleteAppointment",
+          email,
+          service,
+          i =>
+          {
+            appointment.Delete(Office365.DeleteMode.MoveToDeletedItems, true);
 
-        return true;
+            return Task.FromResult(true);
+          },
+          Settings);
       }
 
       return false;
@@ -371,13 +412,19 @@
     /// <returns>
     /// true when the operation succeseed, and false otherwise.
     /// </returns>
-    public bool AcceptAppointment(string email, string ID)
+    public async Task<bool> AcceptAppointment(string email, string ID)
     {
-      var appointment = RetrieveAppointment(email, ID);
+      var service = GetService(email);
+      var appointment = await RetrieveAppointment(service, email, ID);
 
       if (appointment != null)
       {
-        Sync(() => appointment.Accept(true));
+        await EwsUtils.TryAction(
+          "AcceptAppointment",
+          email,
+          service,
+          i => Task.FromResult(appointment.Accept(true)),
+          Settings);
 
         return true;
       }
@@ -395,13 +442,19 @@
     /// <returns>
     /// true when the operation succeseed, and false otherwise.
     /// </returns>
-    public bool DeclineAppointment(string email, string ID)
+    public async Task<bool> DeclineAppointment(string email, string ID)
     {
-      var appointment = RetrieveAppointment(email, ID);
+      var service = GetService(email);
+      var appointment = await RetrieveAppointment(service, email, ID);
 
       if (appointment != null)
       {
-        Sync(() => appointment.Decline(true));
+        await EwsUtils.TryAction(
+          "DeclineAppointment",
+          email,
+          service,
+          i => Task.FromResult(appointment.Decline(true)),
+          Settings);
 
         return true;
       }
@@ -422,7 +475,7 @@
     /// </param>
     /// <returns>An unique ID of the stored e-mail message.</returns>
     /// <exception cref="IOException">in case of error.</exception>
-    public string CreateMessage(string email, EMailMessage message)
+    public async Task<string> CreateMessage(string email, EMailMessage message)
     {
       if (message == null)
       {
@@ -476,9 +529,17 @@
       SetCategories(emailMessage, message.Categories);
       SetExtendedProperties(emailMessage, message.ExtendedProperties);
 
-      Sync(() => emailMessage.Save(Office365.WellKnownFolderName.Drafts));
+      return await EwsUtils.TryAction(
+        "CreateMessage",
+        email,
+        service,
+        i =>
+        {
+          emailMessage.Save(Office365.WellKnownFolderName.Drafts);
 
-      return emailMessage.Id.ToString();
+          return Task.FromResult(emailMessage.Id.ToString());
+        },
+        Settings);
     }
     #endregion
 
@@ -493,7 +554,7 @@
     /// <returns>
     /// true when the attachment was added successfully, and false otherwise.
     /// </returns>
-    public bool AddAttachment(
+    public async Task<bool> AddAttachment(
       string email,
       string ID,
       string name,
@@ -505,16 +566,26 @@
       }
 
       var service = GetService(email);
-      var message = Sync(() => Office365.EmailMessage.Bind(service, ID));
+
+      var message = await EwsUtils.TryAction(
+        "AddAttachment",
+        email,
+        service,
+        i => Task.FromResult(Office365.EmailMessage.Bind(service, ID)),
+        Settings);
 
       if (message == null)
       {
         return false;
       }
 
-      var attachment =
-        Sync(() => message.Attachments.AddFileAttachment(name, content));
-
+      var attachment = await EwsUtils.TryAction(
+        "AddFileAttachment",
+        email,
+        service,
+        i => Task.FromResult(message.Attachments.AddFileAttachment(name, content)),
+        Settings);
+        
       return attachment != null;
     }
     #endregion
@@ -529,7 +600,7 @@
     /// true when the message was successfully sent, and false otherwise.
     /// </returns>
     /// <exception cref="IOException">in case of error.</exception>
-    public bool SendMessage(string email, string ID)
+    public Task<bool> SendMessage(string email, string ID)
     {
       return ProcessEMailImpl(email, ID, "send");
     }
@@ -548,7 +619,7 @@
     /// an optional parameter, determines start offset in Inbox.
     /// </param>
     /// <returns>a list of messages' IDs instances.</returns>
-    public IEnumerable<string> FindMessages(
+    public async Task<IEnumerable<string>> FindMessages(
       string email, 
       int? pageSize, 
       int? offset)
@@ -564,9 +635,16 @@
       view.Traversal = Office365.ItemTraversal.Shallow;
 
       var service = GetService(email);
-      var items = Sync(() => service.FindItems(
-        Office365.WellKnownFolderName.Inbox,
-        view));
+
+      var items = await EwsUtils.TryAction(
+        "FindMessages",
+        email,
+        service,
+        i => Task.FromResult(service.FindItems(
+          Office365.WellKnownFolderName.Inbox,
+          view)),
+        Settings);
+
       var result = new List<string>();
 
       if (items != null)
@@ -591,10 +669,16 @@
     /// an EMailMessage instance or null if the e-mail with 
     /// the specified ID was not found.
     /// </returns>
-    public EMailMessage GetMessage(string email, string ID)
+    public async Task<EMailMessage> GetMessage(string email, string ID)
     {
       var service = GetService(email);
-      var message = Sync(() => Office365.EmailMessage.Bind(service, ID));
+
+      var message = await EwsUtils.TryAction(
+        "GetMessage",
+        email,
+        service,
+        i => Task.FromResult(Office365.EmailMessage.Bind(service, ID)),
+        Settings);
 
       return ConvertMessage(message);
     }
@@ -611,7 +695,7 @@
     /// the attachment's content or null when there is no 
     /// an attachment with such name.
     /// </returns>
-    public byte[] GetAttachmentByName(string email, string ID, string name)
+    public Task<byte[]> GetAttachmentByName(string email, string ID, string name)
     {
       return GetFileAttachmentImpl(email, ID, name);
     }
@@ -628,7 +712,7 @@
     /// the attachment's content or null when there is no 
     /// an attachment with such name.
     /// </returns>
-    private byte[] GetFileAttachmentImpl(
+    private async Task<byte[]> GetFileAttachmentImpl(
       string email, 
       string ID, 
       string name,
@@ -640,7 +724,14 @@
       }
 
       var service = GetService(email);
-      var message = Sync(() => Office365.EmailMessage.Bind(service, ID));
+
+      var message = await EwsUtils.TryAction(
+        "GetFileAttachment",
+        email,
+        service,
+        i => Task.FromResult(Office365.EmailMessage.Bind(service, ID)),
+        Settings);
+
       var attachment = null as Office365.FileAttachment;
 
       if (message.HasAttachments)
@@ -697,7 +788,7 @@
     /// <returns>
     /// the attachment's content or null when there is no an attachment with such index.
     /// </returns>
-    public byte[] GetAttachmentByIndex(string email, string ID, int index)
+    public Task<byte[]> GetAttachmentByIndex(string email, string ID, int index)
     {
       return GetFileAttachmentImpl(email, ID, null, index);
     }
@@ -713,13 +804,19 @@
     /// an MimeContent instance or null if the e-mail with 
     /// the specified ID was not found.
     /// </returns>
-    public MimeContent GetMessageContent(string email, string ID)
+    public async Task<MimeContent> GetMessageContent(string email, string ID)
     {
       var service = GetService(email);
-      var message = Sync(() => Office365.EmailMessage.Bind(
+
+      var message = await EwsUtils.TryAction(
+        "GetMessageContent",
+        email,
         service,
-        ID,
-        new Office365.PropertySet(Office365.ItemSchema.MimeContent)));
+        i => Task.FromResult(Office365.EmailMessage.Bind(
+          service,
+          ID,
+          new Office365.PropertySet(Office365.ItemSchema.MimeContent))),
+        Settings);
 
       var mimeContent = message.MimeContent;
 
@@ -740,7 +837,7 @@
     /// <returns>
     /// true when the message was successfully deleted, and false otherwise.
     /// </returns>
-    public bool DeleteMessage(string email, string ID)
+    public Task<bool> DeleteMessage(string email, string ID)
     {
       return ProcessEMailImpl(email, ID, "delete");
     }
@@ -756,7 +853,7 @@
     /// <returns>
     /// true when the message was successfully moved, and false otherwise.
     /// </returns>
-    public bool MoveTo(string email, string ID, string folder)
+    public Task<bool> MoveTo(string email, string ID, string folder)
     {
       return ProcessEMailImpl(email, ID, "move", folder);
     }
@@ -772,7 +869,7 @@
     /// <returns>
     /// true when the message was successfully copied, and false otherwise.
     /// </returns>
-    public bool CopyTo(string email, string ID, string folder)
+    public Task<bool> CopyTo(string email, string ID, string folder)
     {
       return ProcessEMailImpl(email, ID, "copy", folder);
     }
@@ -785,9 +882,9 @@
     /// <param name="email">A mail box where change has occured.</param>
     /// <param name="ID">An ID of proxy changed.</param>
     /// <param name="changeType">A change type: delete, create, modify.</param>
-    public bool Notification(string email, string ID, string changeType)
+    public Task<bool> Notification(string email, string ID, string changeType)
     {
-      return true;
+      return Task.FromResult(true);
     }
     #endregion
 
@@ -807,7 +904,7 @@
     /// Optional number of records to return from result.
     /// </param>
     /// <returns>A enumeration of changes.</returns>
-    public IEnumerable<Change> GetChanges(
+    public async Task<IEnumerable<Change>> GetChanges(
       string systemName,
       string email,
       string folderID,
@@ -841,7 +938,7 @@
           query = query.Take(take.Value);
         }
 
-        return query.ToList().
+        return (await query.ToListAsync()).
           Select(
             item => new Change
             {
@@ -871,7 +968,7 @@
     /// Optional number of records to return from result.
     /// </param>
     /// <returns>A enumeration of changes.</returns>
-    public IEnumerable<ChangeStats> GetChangeStats(
+    public async Task<IEnumerable<ChangeStats>> GetChangeStats(
       string systemName,
       string email,
       string folderID,
@@ -912,7 +1009,7 @@
           stats = stats.Take(take.Value);
         }
 
-        return stats.ToList();
+        return await stats.ToListAsync();
       }
     }
 
@@ -1015,6 +1112,7 @@
     /// <summary>
     /// Gets the specified proxy. 
     /// </summary>
+    /// <param name="service">An exchange service.</param>
     /// <param name="email">
     /// an e-mail address of an organizer or a participant of the proxy.
     /// </param>
@@ -1022,11 +1120,17 @@
     /// <returns>
     /// an Appointment instance or null when the proxy was not found.
     /// </returns>
-    private Office365.Appointment RetrieveAppointment(string email, string ID)
+    private async Task<Office365.Appointment> RetrieveAppointment(
+      Office365.ExchangeService service, 
+      string email, 
+      string ID)
     {
-      var service = GetService(email);
-
-      return Sync(() => Office365.Appointment.Bind(service, new Office365.ItemId(ID)));
+      return await EwsUtils.TryAction(
+        "RetrieveAppointment",
+        email,
+        service,
+        i => Task.FromResult(Office365.Appointment.Bind(service, new Office365.ItemId(ID))),
+        Settings);
     }
 
     private O ConvertItem<I, O>(I item)
@@ -1412,11 +1516,13 @@
     {
       using(var model = new EWSQueueEntities())
       {
+        var prev = model.MailboxAffinities.AsNoTracking().
+          Where(item => item.Email == mailbox.Email).
+          FirstOrDefault();
+
         model.Entry(mailbox).State = 
           mailbox.ExternalEwsUrl == null ?  EntityState.Deleted :
-          model.MailboxAffinities.AsNoTracking().
-            Any(item => item.Email == mailbox.Email) ? EntityState.Added :
-          EntityState.Modified;
+          prev == null ? EntityState.Added : EntityState.Modified;
 
         model.SaveChanges();
       }
@@ -1451,24 +1557,50 @@
       return (T)serializer.ReadObject(XmlReader.Create(reader));
     }
 
-    private bool ProcessEMailImpl(
+    private async Task<bool> ProcessEMailImpl(
       string email, 
       string ID, 
       string action, 
       string folder = null)
     {
       var service = GetService(email);
-      var message = Office365.EmailMessage.Bind(service, ID);
+
+      var message = await EwsUtils.TryAction(
+        "Bind",
+        email,
+        service,
+        i => Task.FromResult(Office365.EmailMessage.Bind(service, ID)),
+        Settings);
 
       if (message != null)
       {
         if (string.Compare(action, "delete", true) == 0)
         {
-          message.Delete(Office365.DeleteMode.MoveToDeletedItems);
+          await EwsUtils.TryAction(
+            "DeleteMessage",
+            email,
+            service,
+            i =>
+            {
+              message.Delete(Office365.DeleteMode.MoveToDeletedItems);
+
+              return Task.FromResult(true);
+            },
+            Settings);
         }
         else if (string.Compare(action, "send", true) == 0)
         {
-          message.SendAndSaveCopy();
+          await EwsUtils.TryAction(
+            "SendMessage",
+            email,
+            service,
+            i =>
+            {
+              message.SendAndSaveCopy();
+
+              return Task.FromResult(true);
+            },
+            Settings);
         }
         else if (!string.IsNullOrEmpty(folder))
         {
@@ -1478,11 +1610,21 @@
           {
             if (string.Compare(action, "move", true) == 0)
             {
-              message.Move(folderID);
+              await EwsUtils.TryAction(
+                "MoveMessage",
+                email,
+                service,
+                i => Task.FromResult(message.Move(folderID)),
+                Settings);
             }
             else if (string.Compare(action, "copy", true) == 0)
             {
-              message.Copy(folderID);
+              await EwsUtils.TryAction(
+                "DeleteMessage",
+                email,
+                service,
+                i => Task.FromResult(message.Copy(folderID)),
+                Settings);
             }
             // else return false;
           }
@@ -1492,41 +1634,6 @@
       return false;
     }  
     #endregion
-
-    /// <summary>
-    /// Runs action in context of AccessSemaphore.
-    /// </summary>
-    /// <param name="action"></param>
-    private void Sync(Action action)
-    {
-      var semaphore = Settings.AccessSemaphore;
-
-      semaphore.Wait(TimeSpan.FromMinutes(Settings.RequestTimeout));
-
-      try
-      {
-        action();
-      }
-      finally
-      {
-        semaphore.Release();
-      }
-    }
-    private T Sync<T>(Func<T> action)
-    {
-      var semaphore = Settings.AccessSemaphore;
-
-      semaphore.Wait(TimeSpan.FromMinutes(Settings.RequestTimeout));
-
-      try
-      {
-        return action();
-      }
-      finally
-      {
-        semaphore.Release();
-      }
-    }
 
     #region private fields
     /// <summary>
