@@ -16,37 +16,37 @@ namespace Bnhp.Office365
     /// <summary>
     /// Gets or sets the "on behalf" sender of the e-mail message.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public EMailAddress From { get; set; }
 
     /// <summary>
     /// Gets or sets the sender of the e-mail message.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public EMailAddress Sender { get; set; }
 
     /// <summary>
     /// Gets the list of Bcc recipients for the e-mail message.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public List<EMailAddress> BccRecipients { get; internal set; }
 
     /// <summary>
     /// Gets the list of Cc recipients for the e-mail message.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public List<EMailAddress> CcRecipients { get; internal set; }
 
     /// <summary>
     /// Gets the list of To recipients for the e-mail message.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public List<EMailAddress> ToRecipients { get; internal set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether responses are requested.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public bool? IsResponseRequested { get; set; }
 
     /// <summary>
@@ -54,14 +54,14 @@ namespace Bnhp.Office365
     /// e-mail message.
     /// </summary>
     [DefaultValue(false)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public bool IsDeliveryReceiptRequested { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the e-mail message is read.
     /// </summary>
     [DefaultValue(false)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public bool IsRead { get; set; }
 
     /// <summary>
@@ -69,13 +69,13 @@ namespace Bnhp.Office365
     /// e-mail message.
     /// </summary>
     [DefaultValue(false)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public bool IsReadReceiptRequested { get; set; }
 
     /// <summary>
     /// Gets and sets list of the file attachments' pathes.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public List<Attachment> Attachments { get; internal set; }
   }
 
@@ -91,13 +91,13 @@ namespace Bnhp.Office365
     /// <summary>
     /// Gets or sets a content type of the attachment.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string ContentType { get; set; }
 
     /// <summary>
     /// Gets or sets the attachment's size.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public int? Size { get; internal set; }
   }
 
@@ -107,7 +107,7 @@ namespace Bnhp.Office365
     /// <summary>
     /// Gets or sets the character set of the content.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string CharacterSet { get; set; }
     
     /// <summary>

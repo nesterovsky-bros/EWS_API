@@ -31,7 +31,7 @@ namespace Bnhp.Office365
     ///     yet responded. This value is on the proxy request, proxy update, and proxy cancelation.
     /// </summary>
     [DefaultValue(0)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public int AppointmentState { get; internal set; }
 
     /// <summary>
@@ -39,19 +39,19 @@ namespace Bnhp.Office365
     /// attendees of this proxy.
     /// </summary>
     [DefaultValue(true)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public bool AllowNewTimeProposal { get; set; }
-    
+
     /// <summary>
     /// Gets the time when the attendee replied to the proxy request.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime? AppointmentReplyTime { get; internal set; }
-    
+
     //
     // Summary:
     //     Gets the sequence number of this proxy.
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public int AppointmentSequenceNumber { get; internal set; }
       
     /// <summary>
@@ -63,206 +63,209 @@ namespace Bnhp.Office365
     //     3 - The proxy is the recurring master of a series.
     /// </summary>
     [DefaultValue(0)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public int AppointmentType { get; internal set; }
-    
+
     /// <summary>
     /// Gets or sets the type of conferencing that will be used during the proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public int ConferenceType { get; set; }
 
     /// <summary>
     /// Gets the duration of this proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public TimeSpan? Duration { get; internal set; }
-    
+
     /// <summary>
     /// Gets or sets the end time of the proxy.
     /// </summary>
-    [DataMember]
+    [DefaultValue(typeof(DateTime), "")]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime End { get; set; }
-    
+
     /// <summary>
     /// Gets or sets the Enhanced location object.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string EnhancedLocation { get; set; }
 
     /// <summary>
     /// Gets an OccurrenceInfo identifying the first occurrence of this proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public OccurrenceInfo FirstOccurrence { get; internal set; }
-    
+
     /// <summary>
     /// Gets the ICalendar DateTimeStamp.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime? ICalDateTimeStamp { get; internal set; }
-    
+
     /// <summary>
     /// Gets the ICalendar RecurrenceId.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime? ICalRecurrenceId { get; internal set; }
-    
+
     /// <summary>
     /// Gets or sets the ICalendar Uid.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string ICalUid { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether this proxy is an all day event.
     /// </summary>
     [DefaultValue(false)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public bool IsAllDayEvent { get; set; }
     
     /// <summary>
     /// Gets a value indicating whether the proxy has been cancelled.
     /// </summary>
     [DefaultValue(false)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public bool IsCancelled { get; internal set; }
     
     /// <summary>
     /// Gets a value indicating whether the proxy is a proxy.
     /// </summary>
     [DefaultValue(false)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public bool IsMeeting { get; internal set; }
     
     /// <summary>
     /// Gets or sets a value indicating whether this is an online proxy.
     /// </summary>
     [DefaultValue(false)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public bool IsOnlineMeeting { get; set; }
     
     /// <summary>
     /// Gets a value indicating whether the proxy is recurring.
     /// </summary>
     [DefaultValue(false)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public bool IsRecurring { get; set; }
        
     /// <summary>
     /// Gets or sets a value indicating whether responses are requested.
     /// </summary>
     [DefaultValue(false)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public bool IsResponseRequested { get; set; }
-    
+
     /// <summary>
     /// Gets the Url for joining an online proxy
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string JoinOnlineMeetingUrl { get; internal set; }
-    
+
     /// <summary>
     /// Gets an OccurrenceInfo identifying the last occurrence of this proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public OccurrenceInfo LastOccurrence { get; internal set; }
-    
+
     /// <summary>
     /// Gets or sets the location of this proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string Location { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether the proxy request has already been sent.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public bool MeetingRequestWasSent { get; internal set; }
-    
+
     /// <summary>
     /// Gets or sets the URL of the proxy workspace. A proxy workspace is a shared
     /// Web site for planning meetings and tracking results.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string MeetingWorkspaceUrl { get; set; }
-    
+
     ///// <summary>
     ///// Gets a list of modified occurrences for this proxy.
     ///// </summary>
     //[DataMember]
     //public List<OccurrenceInfo> ModifiedOccurrences { get; internal set; }
-       
+
     /// <summary>
     /// Gets a value indicating what was the last response of the user that loaded
     /// this proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public MeetingResponseType MyResponseType { get; internal set; }
-    
+
     /// <summary>
     /// Gets or sets the URL of the Microsoft NetShow online proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string NetShowUrl { get; set; }
-    
+
     /// <summary>
     /// Gets a list of optional attendeed for this proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public List<Attendee> OptionalAttendees { get; internal set; }
-    
+
     /// <summary>
     /// Gets the organizer of this proxy. The Organizer property is read-only and
     /// is only relevant for attendees.  The organizer of a proxy is automatically
     /// set to the user that created the proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public Attendee Organizer { get; internal set; }
-    
+
     /// <summary>
     /// Gets the original start time of this proxy.
     /// </summary>
-    [DataMember]
+    [DefaultValue(typeof(DateTime), "")]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime OriginalStart { get; internal set; }
-       
+
     /// <summary>
     /// Gets or sets the recurrence pattern for this proxy. Available recurrence
     /// pattern classes include Recurrence.DailyPattern, Recurrence.MonthlyPattern
     /// and Recurrence.YearlyPattern.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public Recurrence Recurrence { get; set; }
 
     /// <summary>
     /// Gets or sets the number of minutes before the start
     /// of this proxy that the reminder should be triggered.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public int ReminderMinutesBeforeStart { get; set; }
 
     /// <summary>
     /// Gets a list of required attendees for this proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public List<Attendee> RequiredAttendees { get; internal set; }
-    
+
     /// <summary>
     /// Gets a list of resources for this proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public List<Attendee> Resources { get; internal set; }
 
     /// <summary>
     /// Gets the date until which an proxy must be preserved.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime? RetentionDate { get; set;  }
-    
+
     /// <summary>
     /// Gets or sets the start time of the proxy.
     /// </summary>
-    [DataMember]
+    [DefaultValue(typeof(DateTime), "")]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime Start { get; set; }
 
     ///// <summary>
@@ -270,11 +273,11 @@ namespace Bnhp.Office365
     ///// </summary>
     //[DataMember]
     //public TimeZoneInfo StartTimeZone { get; set; }
-    
+
     /// <summary>
     /// Gets the name of the time zone this proxy is defined in.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string TimeZone { get; internal set; }
 
     /// <summary>
@@ -283,7 +286,7 @@ namespace Bnhp.Office365
     /// specified in the PreferredCulture property of the ExchangeService object
     /// this proxy is bound to.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string When { get; internal set; }
   }
 
@@ -314,13 +317,15 @@ namespace Bnhp.Office365
     /// <summary>
     /// Gets the start date and time of the occurrence.
     /// </summary>
-    [DataMember]
+    [DefaultValue(typeof(DateTime), "")]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime Start { get; set; }
 
     /// <summary>
     /// Gets the end date and time of the occurrence.
     /// </summary>
-    [DataMember]
+    [DefaultValue(typeof(DateTime), "")]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime End { get; set; }
   }
 
@@ -371,7 +376,7 @@ namespace Bnhp.Office365
     /// <summary>
     /// Gets the type of response given to a proxy request.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public MeetingResponseType? ResponseType { get; internal set; }
   }
 
@@ -381,7 +386,8 @@ namespace Bnhp.Office365
     /// <summary>
     /// Gets or sets the date and time when the recurrence start.
     /// </summary>
-    [DataMember]
+    [DefaultValue(typeof(DateTime), "")]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime StartDate { get; set; }
 
     /// <summary>
@@ -393,33 +399,33 @@ namespace Bnhp.Office365
     /// <summary>
     /// Gets or sets the date after which the recurrence ends.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime? EndDate { get; set; }
 
     /// <summary>
     /// Gets or sets the number of occurrences after which the recurrence ends. 
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public int? NumberOfOccurrences { get; set; }
 
     /// <summary>
     /// Gets or sets recurrence type.
     /// </summary>
     [DefaultValue(RecurrenceType.Unknown)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public RecurrenceType Type { get; set; }
 
     /// <summary>
     /// Gets recurrence type name.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string OriginalTypeName { get; internal set; }
 
     /// <summary>
     /// Gets or sets the interval between occurrences.
     /// </summary>
     [DefaultValue(0)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public int Interval { get; set; }
   }
 }
