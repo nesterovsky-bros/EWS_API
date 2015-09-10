@@ -221,7 +221,6 @@
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
-    <None Include="wsdl\Appointments.wsdl" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bnhp.RunitChannel\Bnhp.RunitChanel.csproj">

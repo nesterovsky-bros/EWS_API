@@ -23,87 +23,89 @@ namespace Bnhp.Office365
     /// <summary>
     /// Gets a text summarizing the To recipients of this proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string DisplayTo { get; internal set; }
   
     /// <summary>
     /// Gets the date and time this proxy was created.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime? DateTimeCreated { get; internal set; }
 
     /// <summary>
     /// Gets the time when this proxy was received.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime? DateTimeReceived { get; internal set; }
     
     /// <summary>
     /// Gets the date and time this proxy was sent.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime? DateTimeSent { get; internal set; }
     
     /// <summary>
     /// Gets a text summarizing the Cc receipients of this proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string DisplayCc { get; internal set; }
 
     /// <summary>
     /// Gets a value indicating whether the proxy has been modified since it was created.
     /// </summary>
     [DefaultValue(false)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public bool IsUnmodified { get; internal set;  }
 
     /// <summary>
     /// Gets and sets importance of the proxy.
     /// </summary>
     [DefaultValue(Importance.Normal)]
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public Importance Importance { get; set; }
 
     /// <summary>
     /// Gets the name of the user who last modified this proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string LastModifiedName { get; internal set; }
 
     /// <summary>
     /// Gets the date and time this proxy was last modified.
     /// </summary>
-    [DataMember]
+    [DefaultValue(typeof(DateTime), "")]
+    [DataMember(EmitDefaultValue = false)]
     public DateTime LastModifiedTime { get; internal set; }
 
     /// <summary>
     /// Gets or sets the subject of this proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string Subject { get; set; }
 
     /// <summary>
     /// Gets the sensitivity of this proxy.
     /// </summary>
-    [DataMember]
+    [DefaultValue(Sensitivity.Normal)]
+    [DataMember(EmitDefaultValue = false)]
     public Sensitivity Sensitivity { get; set; }
 
     /// <summary>
     /// Gets and sets the text body of the proxy as a string value.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public string TextBody { get; set; }
 
     /// <summary>
     /// Gets and sets extended properties of the proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public List<ExtendedProperty> ExtendedProperties { get; set; }
 
     /// <summary>
     /// Gets and sets extended properties of the proxy.
     /// </summary>
-    [DataMember]
+    [DataMember(EmitDefaultValue = false)]
     public List<string> Categories { get; set; }
   }
 
