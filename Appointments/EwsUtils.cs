@@ -136,7 +136,18 @@
           }
         }
 
-        await Task.Delay(Random(500, 2000), cancellationToken);
+        if (i == 0)
+        {
+          await Task.Delay(Random(500, 2000), cancellationToken);
+        }
+        else if (i == 1)
+        {
+          await Task.Delay(Random(2000, 5000), cancellationToken);
+        }
+        else
+        {
+          await Task.Delay(Random(5000, 10000), cancellationToken);
+        }
       }
 
       throw new InvalidOperationException();

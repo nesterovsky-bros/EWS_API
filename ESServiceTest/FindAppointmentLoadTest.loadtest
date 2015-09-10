@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<LoadTest Name="CUDAppointmentLoadTest" Description="" Owner="" storage="c:\projects\source\ews_api\esservicetest\cudappointmentloadtest.loadtest" Priority="2147483647" Enabled="true" CssProjectStructure="" CssIteration="" DeploymentItemsEditable="" WorkItemIds="" TraceLevel="None" CurrentRunConfig="Run Settings1" Id="a6082f82-a378-4774-b120-eb6fe1093af8" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+<LoadTest Name="FindAppointmentLoadTest" Description="" Owner="" storage="c:\projects\source\ews_api\esservicetest\findappointmentloadtest.loadtest" Priority="2147483647" Enabled="true" CssProjectStructure="" CssIteration="" DeploymentItemsEditable="" WorkItemIds="" TraceLevel="None" CurrentRunConfig="Run Settings1" Id="046ea60d-8cda-464a-b555-3dea3bd3d194" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
   <Scenarios>
     <Scenario Name="Create and Update Appointments" DelayBetweenIterations="1" PercentNewUsers="0" IPSwitching="false" TestMixType="PercentageOfTestsStarted" ApplyDistributionToPacingDelay="true" MaxTestIterations="0" DisableDuringWarmup="false" DelayStartTime="0" AllowedAgents="">
       <ThinkProfile Value="0.2" Pattern="NormalDistribution" />
       <LoadProfile Pattern="Step" InitialUsers="10" MaxUsers="200" StepUsers="1" StepDuration="1" StepRampTime="0" />
       <TestMix>
-        <TestProfile Name="CUDAppointment" Path="cudappointment.webtest" Id="a62f05e6-5e8e-42c9-b2bc-2db67a657e3b" Percentage="100" Type="Microsoft.VisualStudio.TestTools.WebStress.DeclarativeWebTestElement, Microsoft.VisualStudio.QualityTools.LoadTest, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+        <TestProfile Name="FindAppointment" Path="findappointment.webtest" Id="70ab7555-afad-4029-8384-0be5e4981168" Percentage="100" Type="Microsoft.VisualStudio.TestTools.WebStress.DeclarativeWebTestElement, Microsoft.VisualStudio.QualityTools.LoadTest, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
       </TestMix>
       <BrowserMix>
         <BrowserProfile Percentage="100">
@@ -441,7 +441,8 @@
         <ContextParameter Name="$WebServer" Value="http://localhost:54401" />
         <ContextParameter Name="$Text" Value="A text" />
         <ContextParameter Name="$AppointmentSubject" Value="A meeting" />
-        <ContextParameter Name="$AppointmentDate" Value="2016-05-07" />
+        <ContextParameter Name="$AppointmentStartDate" Value="2016-05-07" />
+        <ContextParameter Name="$AppointmentEndDate" Value="2016-05-08" />
       </ContextParameters>
     </RunConfiguration>
   </RunConfigurations>
