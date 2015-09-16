@@ -36,7 +36,7 @@ namespace Bnhp.Office365
 
       container.BuildUp(listener);
 
-      var startTask = Start(listener);
+      //var startTask = Start(listener);
     }
 
     public static ApplicationUser[] GetApplicationUsers()
