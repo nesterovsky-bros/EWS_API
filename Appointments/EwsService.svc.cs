@@ -10,14 +10,14 @@
   using System.Text.RegularExpressions;
   using System.Xml;
   using System.Data.Entity;
-  
+
   using Microsoft.Practices.Unity;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
   using System.Threading;
   using System.Reflection;
   using System.Threading.Tasks;
-  
+
   /// <summary>
   /// An implementation of IAppointments interface for CRUD operations with
   /// appointments for Office365.
@@ -65,7 +65,7 @@
       officeAppointment.Importance = (Office365.Importance)proxy.Importance;
       officeAppointment.ReminderMinutesBeforeStart = proxy.ReminderMinutesBeforeStart;
 
-      if ((proxy.Recurrence != null) && 
+      if ((proxy.Recurrence != null) &&
         (proxy.Recurrence.Type != RecurrenceType.Unknown))
       {
         var start = proxy.Recurrence.StartDate;
@@ -73,41 +73,41 @@
         switch (proxy.Recurrence.Type)
         {
           case RecurrenceType.Daily:
-          {
-            officeAppointment.Recurrence = new Office365.Recurrence.DailyPattern(
-              start,
-              proxy.Recurrence.Interval);
-
-            break;
-          }
-          case RecurrenceType.Weekly:
-          {
-            officeAppointment.Recurrence = new Office365.Recurrence.WeeklyPattern(
-              start,
-              proxy.Recurrence.Interval,
-              (Office365.DayOfTheWeek)start.DayOfWeek);
-
-            break;
-          }
-          case RecurrenceType.Monthly:
-          {
-            officeAppointment.Recurrence = new Office365.Recurrence.MonthlyPattern(
-              start,
-              proxy.Recurrence.Interval,
-              start.Day);
-
-            break;
-          }
-          case RecurrenceType.Yearly:
-          {
-            officeAppointment.Recurrence =
-              new Office365.Recurrence.YearlyPattern(
+            {
+              officeAppointment.Recurrence = new Office365.Recurrence.DailyPattern(
                 start,
-                (Office365.Month)start.Month,
+                proxy.Recurrence.Interval);
+
+              break;
+            }
+          case RecurrenceType.Weekly:
+            {
+              officeAppointment.Recurrence = new Office365.Recurrence.WeeklyPattern(
+                start,
+                proxy.Recurrence.Interval,
+                (Office365.DayOfTheWeek)start.DayOfWeek);
+
+              break;
+            }
+          case RecurrenceType.Monthly:
+            {
+              officeAppointment.Recurrence = new Office365.Recurrence.MonthlyPattern(
+                start,
+                proxy.Recurrence.Interval,
                 start.Day);
 
-            break;
-          }
+              break;
+            }
+          case RecurrenceType.Yearly:
+            {
+              officeAppointment.Recurrence =
+                new Office365.Recurrence.YearlyPattern(
+                  start,
+                  (Office365.Month)start.Month,
+                  start.Day);
+
+              break;
+            }
         }
 
         if (proxy.Recurrence.HasEnd)
@@ -147,7 +147,7 @@
       SetExtendedProperties(officeAppointment, proxy.ExtendedProperties);
       SetCategories(officeAppointment, proxy.Categories);
 
-      officeAppointment.ICalUid = 
+      officeAppointment.ICalUid =
         Guid.NewGuid().ToString() + email.Substring(email.IndexOf('@'));
 
       // SendMessage the proxy request
@@ -210,7 +210,7 @@
 
       if (appointments != null)
       {
-        foreach(var appointment in appointments)
+        foreach (var appointment in appointments)
         {
           result.Add(ConvertAppointment(appointment));
         }
@@ -525,12 +525,21 @@
       }
 
       emailMessage.Importance = (Office365.Importance)message.Importance;
-      emailMessage.From = emailMessage.Sender =
-        new Office365.EmailAddress(message.Sender.Name, message.Sender.Address);
       emailMessage.Sensitivity = (Office365.Sensitivity)message.Sensitivity;
       emailMessage.IsReadReceiptRequested = message.IsReadReceiptRequested;
       emailMessage.IsResponseRequested = message.IsResponseRequested;
       emailMessage.Subject = message.Subject;
+
+      if (message.Sender != null)
+      {
+        emailMessage.Sender = new Office365.EmailAddress(message.Sender.Name, email);
+      }
+
+      if (message.From != null)
+      {
+        emailMessage.From =
+          new Office365.EmailAddress(message.From.Name, message.From.Address);
+      }
 
       SetCategories(emailMessage, message.Categories);
       SetExtendedProperties(emailMessage, message.ExtendedProperties);
@@ -629,8 +638,8 @@
     /// </param>
     /// <returns>a list of EMailMessage instances.</returns>
     public async Task<IEnumerable<EMailMessage>> FindMessages(
-      string email, 
-      int? pageSize, 
+      string email,
+      int? pageSize,
       int? offset,
       string[] properties)
     {
@@ -729,8 +738,8 @@
     /// an attachment with such name.
     /// </returns>
     private async Task<byte[]> GetFileAttachmentImpl(
-      string email, 
-      string ID, 
+      string email,
+      string ID,
       string name,
       int? index = 0)
     {
@@ -765,8 +774,8 @@
           {
             attachment = item as Office365.FileAttachment;
 
-            if ((attachment == null) || 
-              attachment.IsInline || 
+            if ((attachment == null) ||
+              attachment.IsInline ||
               attachment.IsContactPhoto ||
               (attachment.Name != name))
             {
@@ -929,7 +938,7 @@
       int? skip = 0,
       int? take = 0)
     {
-      using(var model = new EWSQueueEntities())
+      using (var model = new EWSQueueEntities())
       {
         var query = GetChangesQuery(
           model,
@@ -993,10 +1002,10 @@
       int? skip = 0,
       int? take = 0)
     {
-      using(var model = new EWSQueueEntities())
+      using (var model = new EWSQueueEntities())
       {
         var query = GetChangesQuery(
-          model, 
+          model,
           systemName,
           email,
           folderID,
@@ -1091,7 +1100,7 @@
       foreach (var property in properties)
       {
         Properties.Add(
-          property.Name.ToLower(), 
+          property.Name.ToLower(),
           property.GetValue(null) as Office365.PropertyDefinition);
       }
 
@@ -1119,7 +1128,7 @@
         if (!Properties.ContainsKey(name))
         {
           Properties.Add(
-            name, 
+            name,
             property.GetValue(null) as Office365.PropertyDefinition);
         }
       }
@@ -1142,7 +1151,7 @@
       var service = new Office365.ExchangeService(
         Office365.ExchangeVersion.Exchange2013);
 
-      service.Credentials = 
+      service.Credentials =
         new Office365.WebCredentials(user.Email, user.Password);
       service.UseDefaultCredentials = false;
       service.PreAuthenticate = true;
@@ -1158,7 +1167,7 @@
         var mailbox = EwsUtils.GetMailboxAffinities(
           user,
           Settings.AutoDiscoveryUrl,
-          new [] { impersonatedUserId }).
+          new[] { impersonatedUserId }).
           FirstOrDefault();
 
         if (mailbox != null)
@@ -1186,8 +1195,8 @@
     /// an Appointment instance or null when the proxy was not found.
     /// </returns>
     private async Task<Office365.Appointment> RetrieveAppointment(
-      Office365.ExchangeService service, 
-      string email, 
+      Office365.ExchangeService service,
+      string email,
       string ID)
     {
       return await EwsUtils.TryAction(
@@ -1277,11 +1286,11 @@
       }
 
       result.RequiredAttendees = GetAttendees(
-        appointment, 
+        appointment,
         Office365.AppointmentSchema.RequiredAttendees);
 
       result.OptionalAttendees = GetAttendees(
-        appointment, 
+        appointment,
         Office365.AppointmentSchema.OptionalAttendees);
 
       result.Resources = GetAttendees(
@@ -1294,7 +1303,7 @@
         Office365.AppointmentSchema.Organizer,
         out emailAddress))
       {
-        result.Organizer = new Attendee 
+        result.Organizer = new Attendee
         {
           Address = emailAddress.Address,
           Name = emailAddress.Name
@@ -1304,7 +1313,7 @@
       bool isRecurring;
 
       if (appointment.TryGetProperty(
-        Office365.AppointmentSchema.IsRecurring, 
+        Office365.AppointmentSchema.IsRecurring,
         out isRecurring))
       {
         result.IsRecurring = true;
@@ -1325,7 +1334,7 @@
 
           if (recurrence is Office365.Recurrence.IntervalPattern)
           {
-            result.Recurrence.Interval = 
+            result.Recurrence.Interval =
               ((Office365.Recurrence.IntervalPattern)recurrence).Interval;
 
             if ((recurrence is Office365.Recurrence.DailyPattern) ||
@@ -1354,7 +1363,7 @@
         Office365.OccurrenceInfo occurence;
 
         if (appointment.TryGetProperty(
-          Office365.AppointmentSchema.FirstOccurrence, 
+          Office365.AppointmentSchema.FirstOccurrence,
           out occurence))
         {
           result.FirstOccurrence = new OccurrenceInfo
@@ -1431,7 +1440,7 @@
           var isNotesID = false;
           var propertyDefinition = property.PropertyDefinition;
 
-          if (propertyDefinition.PropertySetId != 
+          if (propertyDefinition.PropertySetId !=
             EwsService.ExtendedPropertySetId)
           {
             isNotesID = propertyDefinition.Tag == EwsService.OriginalNotesID;
@@ -1567,7 +1576,7 @@
 
       if ((property != null) && property.CanRead)
       {
-        var recipients = 
+        var recipients =
           property.GetValue(message) as Office365.EmailAddressCollection;
 
         if (recipients != null)
@@ -1594,13 +1603,23 @@
         return null;
       }
 
-      var propertySet = new Office365.PropertySet(Office365.ItemSchema.Id);
+      var propertySet = new Office365.PropertySet(
+        Office365.ItemSchema.Id, 
+        Office365.ItemSchema.Attachments,
+        Office365.ItemSchema.ExtendedProperties);
 
-      foreach(var property in properties)
+      foreach (var property in properties)
       {
         var name = property.ToLower();
 
-        if ((name != "id") && Properties.ContainsKey(name))
+        if ((name == "id") ||
+          (name == "attachments") ||
+          (name == "extendedproperties"))
+        {
+          continue;
+        }
+
+        if (Properties.ContainsKey(name))
         {
           propertySet.Add(Properties[name]);
         }
@@ -1643,14 +1662,14 @@
 
     private static void SaveServiceUrl(MailboxAffinity mailbox)
     {
-      using(var model = new EWSQueueEntities())
+      using (var model = new EWSQueueEntities())
       {
         var prev = model.MailboxAffinities.AsNoTracking().
           Where(item => item.Email == mailbox.Email).
           FirstOrDefault();
 
-        model.Entry(mailbox).State = 
-          mailbox.ExternalEwsUrl == null ?  EntityState.Deleted :
+        model.Entry(mailbox).State =
+          mailbox.ExternalEwsUrl == null ? EntityState.Deleted :
           prev == null ? EntityState.Added : EntityState.Modified;
 
         model.SaveChanges();
@@ -1687,9 +1706,9 @@
     }
 
     private async Task<bool> ProcessEMailImpl(
-      string email, 
-      string ID, 
-      string action, 
+      string email,
+      string ID,
+      string action,
       string folder = null)
     {
       var service = GetService(email);
@@ -1705,13 +1724,13 @@
       {
         if (string.Compare(action, "delete", true) == 0)
         {
-          await EwsUtils.TryAction(
+          return await EwsUtils.TryAction(
             "DeleteMessage",
             email,
             service,
             i =>
             {
-          message.Delete(Office365.DeleteMode.MoveToDeletedItems);
+              message.Delete(Office365.DeleteMode.MoveToDeletedItems);
 
               return Task.FromResult(true);
             },
@@ -1719,13 +1738,13 @@
         }
         else if (string.Compare(action, "send", true) == 0)
         {
-          await EwsUtils.TryAction(
+          return await EwsUtils.TryAction(
             "SendMessage",
             email,
             service,
             i =>
             {
-          message.SendAndSaveCopy();
+              message.SendAndSaveCopy();
 
               return Task.FromResult(true);
             },
@@ -1739,20 +1758,30 @@
           {
             if (string.Compare(action, "move", true) == 0)
             {
-              await EwsUtils.TryAction(
+              return await EwsUtils.TryAction(
                 "MoveMessage",
                 email,
                 service,
-                i => Task.FromResult(message.Move(folderID)),
+                i => 
+                {
+                  message.Move(folderID);
+
+                  return Task.FromResult(true);
+                },
                 Settings);
             }
             else if (string.Compare(action, "copy", true) == 0)
             {
-              await EwsUtils.TryAction(
+              return await EwsUtils.TryAction(
                 "DeleteMessage",
                 email,
                 service,
-                i => Task.FromResult(message.Copy(folderID)),
+                i =>
+                {
+                  message.Copy(folderID);
+
+                  return Task.FromResult(true);
+                },
                 Settings);
             }
             // else return false;
@@ -1761,7 +1790,7 @@
       }
 
       return false;
-    }  
+    }
     #endregion
 
     #region private fields
