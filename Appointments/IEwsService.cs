@@ -37,16 +37,12 @@ namespace Bnhp.Office365
     /// <param name="maxResults">
     /// an optional parameter, determines maximum results in resonse.
     /// </param>
-    /// <param name="properties">
-    /// defines, if any, properties of Appointment instance to initialize.
-    /// </param>
     /// <returns>a list of Appointment instances.</returns>
     [OperationContract]
     Task<IEnumerable<Appointment>> FindAppointments(string email,
       DateTime start,
       DateTime? end,
-      int? maxResults,
-      string[] properties);
+      int? maxResults);
 
     /// <summary>
     /// Gets an proxy by its unique ID.
@@ -186,16 +182,12 @@ namespace Bnhp.Office365
     /// <param name="offset">
     /// an optional parameter, determines start offset in Inbox.
     /// </param>
-    /// <param name="properties">
-    /// defines, if any, properties of EMailMessage instance to initialize.
-    /// </param>
     /// <returns>a list of EMailMessage instances.</returns>
     [OperationContract]
     Task<IEnumerable<EMailMessage>> FindMessages(
       string email, 
       int? pageSize, 
-      int? offset,
-      string[] properties);
+      int? offset);
 
     /// <summary>
     /// Gets an e-mail message by its ID.

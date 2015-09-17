@@ -175,16 +175,12 @@
     /// <param name="maxResults">
     /// an optional parameter, determines maximum results in resonse.
     /// </param>
-    /// <param name="properties">
-    /// defines, if any, properties of Appointment instance to initialize.
-    /// </param>
     /// <returns>a list of Appointment instances.</returns>
     public async Task<IEnumerable<Appointment>> FindAppointments(
       string email,
       DateTime start,
       DateTime? end,
-      int? maxResults,
-      string[] properties)
+      int? maxResults)
     {
       Office365.CalendarView view = new Office365.CalendarView(
         start,
@@ -193,7 +189,6 @@
 
       // Item searches do not support Deep traversal.
       view.Traversal = Office365.ItemTraversal.Shallow;
-      view.PropertySet = GetPropertySet(properties);
 
       var service = GetService(email);
 
@@ -201,9 +196,9 @@
         "FindAppointments",
         email,
         service,
-        i => Task.FromResult(service.FindAppointments(
-        Office365.WellKnownFolderName.Calendar,
-          view)),
+        i => Task.FromResult(
+          service.FindAppointments(
+            Office365.WellKnownFolderName.Calendar, view)),
         Settings);
 
       var result = new List<Appointment>();
@@ -212,7 +207,13 @@
       {
         foreach (var appointment in appointments)
         {
-          result.Add(ConvertAppointment(appointment));
+          var item = ConvertAppointment(
+            Office365.Appointment.Bind(service, appointment.Id));
+
+          if (item != null)
+          {
+            result.Add(item);
+          }
         }
       }
 
@@ -633,15 +634,11 @@
     /// <param name="offset">
     /// an optional parameter, determines start offset in Inbox.
     /// </param>
-    /// <param name="properties">
-    /// defines, if any, properties of EMailMessage instance to initialize.
-    /// </param>
     /// <returns>a list of EMailMessage instances.</returns>
     public async Task<IEnumerable<EMailMessage>> FindMessages(
       string email,
       int? pageSize,
-      int? offset,
-      string[] properties)
+      int? offset)
     {
       var view = new Office365.ItemView(
         pageSize.HasValue && (pageSize.Value > 0) ? pageSize.Value : 1000);
@@ -652,7 +649,6 @@
       }
 
       view.Traversal = Office365.ItemTraversal.Shallow;
-      view.PropertySet = GetPropertySet(properties);
 
       var service = GetService(email);
 
@@ -660,9 +656,9 @@
         "FindMessages",
         email,
         service,
-        i => Task.FromResult(service.FindItems(
-        Office365.WellKnownFolderName.Inbox,
-          view)),
+        i => Task.FromResult(
+          service.FindItems(
+            Office365.WellKnownFolderName.Inbox, view)),
         Settings);
 
       var result = new List<EMailMessage>();
@@ -671,7 +667,8 @@
       {
         foreach (var item in items)
         {
-          var message = ConvertMessage(item as Office365.EmailMessage);
+          var message = ConvertMessage(
+            Office365.EmailMessage.Bind(service, item.Id));
 
           if (message != null)
           {
@@ -1594,38 +1591,6 @@
       }
 
       return list;
-    }
-
-    private static Office365.PropertySet GetPropertySet(string[] properties)
-    {
-      if (properties == null)
-      {
-        return null;
-      }
-
-      var propertySet = new Office365.PropertySet(
-        Office365.ItemSchema.Id, 
-        Office365.ItemSchema.Attachments,
-        Office365.ItemSchema.ExtendedProperties);
-
-      foreach (var property in properties)
-      {
-        var name = property.ToLower();
-
-        if ((name == "id") ||
-          (name == "attachments") ||
-          (name == "extendedproperties"))
-        {
-          continue;
-        }
-
-        if (Properties.ContainsKey(name))
-        {
-          propertySet.Add(Properties[name]);
-        }
-      }
-
-      return propertySet;
     }
 
     private static string FindFolder(
