@@ -1262,7 +1262,8 @@
 
       var content = null as Office365.MessageBody;
 
-      if (item.TryGetProperty(Office365.ItemSchema.Body, out content))
+      if (item.TryGetProperty(Office365.ItemSchema.Body, out content) && 
+        (content != null))
       {
         result.TextBody = content.Text;
       }
@@ -1298,7 +1299,8 @@
 
       if (appointment.TryGetProperty(
         Office365.AppointmentSchema.Organizer,
-        out emailAddress))
+        out emailAddress) &&
+        (emailAddress != null))
       {
         result.Organizer = new Attendee
         {
@@ -1319,7 +1321,8 @@
 
         if (appointment.TryGetProperty(
           Office365.AppointmentSchema.Recurrence,
-          out recurrence))
+          out recurrence) &&
+          (recurrence != null))
         {
           result.Recurrence = new Recurrence
           {
@@ -1361,7 +1364,8 @@
 
         if (appointment.TryGetProperty(
           Office365.AppointmentSchema.FirstOccurrence,
-          out occurence))
+          out occurence) &&
+          (occurence != null))
         {
           result.FirstOccurrence = new OccurrenceInfo
           {
@@ -1372,7 +1376,8 @@
 
         if (appointment.TryGetProperty(
           Office365.AppointmentSchema.LastOccurrence,
-          out occurence))
+          out occurence) &&
+          (occurence != null))
         {
           result.LastOccurrence = new OccurrenceInfo
           {
@@ -1430,7 +1435,8 @@
 
       if (item.TryGetProperty(
         Office365.ItemSchema.ExtendedProperties,
-        out properties))
+        out properties) &&
+        (properties != null))
       {
         foreach (var property in properties)
         {
@@ -1514,7 +1520,8 @@
 
       if (item.TryGetProperty(
         Office365.ItemSchema.Categories,
-        out categories))
+        out categories) &&
+        (categories != null))
       {
         foreach (var category in categories)
         {
@@ -1547,7 +1554,8 @@
       var list = new List<Attendee>();
       var attendees = null as Office365.AttendeeCollection;
 
-      if (appointment.TryGetProperty(property, out attendees))
+      if (appointment.TryGetProperty(property, out attendees) && 
+        (attendees != null))
       {
         foreach (var attendee in attendees)
         {
