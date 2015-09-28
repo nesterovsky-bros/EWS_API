@@ -12,5 +12,6 @@ namespace Bnhp.Office365
     public int UsersPerUsersSettins { get; set; }
     public int ExchangeListenerRecyclePeriod { get; set; }
     public int RetryCount { get; set; }
+    public bool EWSTrace { get; set; }
   }
 }

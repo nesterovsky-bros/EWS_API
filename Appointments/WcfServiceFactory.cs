@@ -67,6 +67,8 @@ namespace Bnhp.Office365
         throw new ApplicationException("No application users are defined.");
       }
 
+      var boolValue = false;
+
       var settings = new Settings
       {
         HangingConnectionLimit =
@@ -83,6 +85,10 @@ namespace Bnhp.Office365
           int.Parse(ConfigurationManager.AppSettings["ExchangeListenerRecyclePeriod"]),
         RetryCount =
           int.Parse(ConfigurationManager.AppSettings["RetryCount"] ?? "3"),
+        EWSTrace =
+          bool.TryParse(
+            ConfigurationManager.AppSettings["EWSTrace"], 
+            out boolValue) && boolValue,
         ApplicationUsers = users,
       };
 

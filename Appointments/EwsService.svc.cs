@@ -207,8 +207,12 @@
       {
         foreach (var appointment in appointments)
         {
-          var item = ConvertAppointment(
-            Office365.Appointment.Bind(service, appointment.Id));
+          var item = ConvertAppointment(await EwsUtils.TryAction(
+            "FindAppointments.Bind",
+            email,
+            service,
+            i => Task.FromResult(Office365.Appointment.Bind(service, appointment.Id)),
+            Settings));
 
           if (item != null)
           {
@@ -667,8 +671,12 @@
       {
         foreach (var item in items)
         {
-          var message = ConvertMessage(
-            Office365.EmailMessage.Bind(service, item.Id));
+          var message = ConvertMessage(await EwsUtils.TryAction(
+            "FindMessages.Bind",
+            email,
+            service,
+            i => Task.FromResult(Office365.EmailMessage.Bind(service, item.Id)),
+            Settings));
 
           if (message != null)
           {
@@ -1176,6 +1184,14 @@
       }
 
       service.Url = new Uri(url);
+
+      if (Settings.EWSTrace)
+      {
+        service.TraceEnabled = true;
+        service.TraceFlags = Office365.TraceFlags.EwsRequest |
+          Office365.TraceFlags.EwsResponse;
+        service.TraceListener = new EwsTraceListener();
+      }
 
       return service;
     }
