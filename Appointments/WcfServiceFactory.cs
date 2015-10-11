@@ -98,7 +98,7 @@ namespace Bnhp.Office365
       if (!string.IsNullOrWhiteSpace(value))
       {
         settings.OriginalNotesID = int.Parse(
-          "OriginalNotesID",
+          value,
           NumberStyles.Integer | NumberStyles.AllowHexSpecifier);
       }
 
