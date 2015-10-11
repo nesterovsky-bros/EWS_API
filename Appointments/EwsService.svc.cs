@@ -1443,7 +1443,7 @@
       return result;
     }
 
-    private static List<ExtendedProperty> GetExtendedProperties(
+    private List<ExtendedProperty> GetExtendedProperties(
       Office365.Item item)
     {
       var properties = null as Office365.ExtendedPropertyCollection;
@@ -1462,7 +1462,8 @@
           if (propertyDefinition.PropertySetId !=
             EwsService.ExtendedPropertySetId)
           {
-            isNotesID = propertyDefinition.Tag == EwsService.OriginalNotesID;
+            isNotesID = (propertyDefinition.Tag == Settings.OriginalNotesID) &&
+              (Settings.OriginalNotesID != null);
 
             if (!isNotesID)
             {
@@ -1500,7 +1501,7 @@
       return result;
     }
 
-    private static void SetExtendedProperties(
+    private void SetExtendedProperties(
       Office365.Item item,
       List<ExtendedProperty> properties)
     {
@@ -1508,11 +1509,12 @@
       {
         foreach (var property in properties)
         {
-          if (property.Name == "OriginalNotesID")
+          if ((property.Name == "OriginalNotesID") && 
+            (Settings.OriginalNotesID != null))
           {
             item.SetExtendedProperty(
               new Office365.ExtendedPropertyDefinition(
-                EwsService.OriginalNotesID,
+                Settings.OriginalNotesID.Value,
                 Office365.MapiPropertyType.String),
               property.Value);
           }
@@ -1794,11 +1796,6 @@
     /// </summary>
     private static Guid ExtendedPropertySetId =
       new Guid("{DD12CD36-DB49-4002-A809-56B40E6B60E9}");
-
-    /// <summary>
-    /// The original Notes ID property's tag.
-    /// </summary>
-    private static int OriginalNotesID = 0x63060102;
 
     /// <summary>
     /// Internal counter of number of accesses to GetService() method.

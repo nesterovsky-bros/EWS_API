@@ -13,5 +13,6 @@ namespace Bnhp.Office365
     public int ExchangeListenerRecyclePeriod { get; set; }
     public int RetryCount { get; set; }
     public bool EWSTrace { get; set; }
+    public int? OriginalNotesID { get; set; }
   }
 }

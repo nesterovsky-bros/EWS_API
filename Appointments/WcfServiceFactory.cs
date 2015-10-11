@@ -10,8 +10,9 @@ namespace Bnhp.Office365
   using System.Diagnostics;
   using System.Threading.Tasks;
   using System.Threading;
+  using System.Globalization;
 
-  public class WcfServiceFactory : UnityServiceHostFactory
+  public class WcfServiceFactory: UnityServiceHostFactory
   {
     public ServiceHost Create<T>(params Uri[] baseAddresses)
     {
@@ -91,6 +92,15 @@ namespace Bnhp.Office365
             out boolValue) && boolValue,
         ApplicationUsers = users,
       };
+
+      var value = ConfigurationManager.AppSettings["OriginalNotesID"];
+
+      if (!string.IsNullOrWhiteSpace(value))
+      {
+        settings.OriginalNotesID = int.Parse(
+          "OriginalNotesID",
+          NumberStyles.Integer | NumberStyles.AllowHexSpecifier);
+      }
 
       globalSettings = settings;
 
