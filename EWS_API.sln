@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{E8751EDA-8D3B-4DD8-AE0B-B096314D522E}"
 	ProjectSection(SolutionItems) = preProject
@@ -21,6 +21,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESServiceTest", "ESServiceTest\ESServiceTest.csproj", "{C9765981-0257-4836-8195-B08EF536F3F5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RulesEngine", "EMailHandlers\RulesEngine.csproj", "{5B6619A3-FAFA-4F6D-8A18-C2B5206858AB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mailer", "Mailer\Mailer.csproj", "{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{0225833B-83B9-48BB-8BE5-5D3A14C3C730} = {0225833B-83B9-48BB-8BE5-5D3A14C3C730}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -100,6 +105,22 @@ Global
 		{5B6619A3-FAFA-4F6D-8A18-C2B5206858AB}.Release|ARM.ActiveCfg = Release|Any CPU
 		{5B6619A3-FAFA-4F6D-8A18-C2B5206858AB}.Release|x64.ActiveCfg = Release|Any CPU
 		{5B6619A3-FAFA-4F6D-8A18-C2B5206858AB}.Release|x86.ActiveCfg = Release|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Debug|ARM.Build.0 = Debug|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Debug|x64.Build.0 = Debug|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Debug|x86.Build.0 = Debug|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Release|ARM.ActiveCfg = Release|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Release|ARM.Build.0 = Release|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Release|x64.ActiveCfg = Release|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Release|x64.Build.0 = Release|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Release|x86.ActiveCfg = Release|Any CPU
+		{43F0D83D-50E6-4B2F-977A-CC01E286E1D8}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

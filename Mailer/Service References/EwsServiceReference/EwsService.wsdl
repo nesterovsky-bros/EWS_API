@@ -1,0 +1,438 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy" xmlns:wsa10="http://www.w3.org/2005/08/addressing" xmlns:tns="https://www.bankhapoalim.co.il/" xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex" xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" name="EwsService" targetNamespace="https://www.bankhapoalim.co.il/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xsd:schema targetNamespace="https://www.bankhapoalim.co.il/Imports">
+      <xsd:import schemaLocation="http://localhost:54401/EwsService.svc?xsd=xsd0" namespace="https://www.bankhapoalim.co.il/" />
+      <xsd:import schemaLocation="http://localhost:54401/EwsService.svc?xsd=xsd1" namespace="http://schemas.microsoft.com/2003/10/Serialization/" />
+      <xsd:import schemaLocation="http://localhost:54401/EwsService.svc?xsd=xsd2" namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
+    </xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="IEwsService_CreateAppointment_InputMessage">
+    <wsdl:part name="parameters" element="tns:CreateAppointment" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_CreateAppointment_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CreateAppointmentResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_FindAppointments_InputMessage">
+    <wsdl:part name="parameters" element="tns:FindAppointments" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_FindAppointments_OutputMessage">
+    <wsdl:part name="parameters" element="tns:FindAppointmentsResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetAppointment_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetAppointment" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetAppointment_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetAppointmentResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_UpdateAppointment_InputMessage">
+    <wsdl:part name="parameters" element="tns:UpdateAppointment" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_UpdateAppointment_OutputMessage">
+    <wsdl:part name="parameters" element="tns:UpdateAppointmentResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_CancelAppointment_InputMessage">
+    <wsdl:part name="parameters" element="tns:CancelAppointment" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_CancelAppointment_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CancelAppointmentResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_DeleteAppointment_InputMessage">
+    <wsdl:part name="parameters" element="tns:DeleteAppointment" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_DeleteAppointment_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DeleteAppointmentResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_AcceptAppointment_InputMessage">
+    <wsdl:part name="parameters" element="tns:AcceptAppointment" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_AcceptAppointment_OutputMessage">
+    <wsdl:part name="parameters" element="tns:AcceptAppointmentResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_DeclineAppointment_InputMessage">
+    <wsdl:part name="parameters" element="tns:DeclineAppointment" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_DeclineAppointment_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DeclineAppointmentResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_CreateMessage_InputMessage">
+    <wsdl:part name="parameters" element="tns:CreateMessage" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_CreateMessage_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CreateMessageResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_AddAttachment_InputMessage">
+    <wsdl:part name="parameters" element="tns:AddAttachment" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_AddAttachment_OutputMessage">
+    <wsdl:part name="parameters" element="tns:AddAttachmentResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_SendMessage_InputMessage">
+    <wsdl:part name="parameters" element="tns:SendMessage" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_SendMessage_OutputMessage">
+    <wsdl:part name="parameters" element="tns:SendMessageResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_FindMessages_InputMessage">
+    <wsdl:part name="parameters" element="tns:FindMessages" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_FindMessages_OutputMessage">
+    <wsdl:part name="parameters" element="tns:FindMessagesResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetMessage_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetMessage" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetMessage_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetMessageResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetAttachmentByName_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetAttachmentByName" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetAttachmentByName_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetAttachmentByNameResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetAttachmentByIndex_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetAttachmentByIndex" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetAttachmentByIndex_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetAttachmentByIndexResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetMessageContent_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetMessageContent" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetMessageContent_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetMessageContentResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_DeleteMessage_InputMessage">
+    <wsdl:part name="parameters" element="tns:DeleteMessage" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_DeleteMessage_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DeleteMessageResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_MoveTo_InputMessage">
+    <wsdl:part name="parameters" element="tns:MoveTo" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_MoveTo_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MoveToResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_CopyTo_InputMessage">
+    <wsdl:part name="parameters" element="tns:CopyTo" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_CopyTo_OutputMessage">
+    <wsdl:part name="parameters" element="tns:CopyToResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_Notification_InputMessage">
+    <wsdl:part name="parameters" element="tns:Notification" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_Notification_OutputMessage">
+    <wsdl:part name="parameters" element="tns:NotificationResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetChanges_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetChanges" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetChanges_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetChangesResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetChangeStats_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetChangeStats" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetChangeStats_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetChangeStatsResponse" />
+  </wsdl:message>
+  <wsdl:portType name="IEwsService">
+    <wsdl:operation name="CreateAppointment">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/CreateAppointment" message="tns:IEwsService_CreateAppointment_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/CreateAppointmentResponse" message="tns:IEwsService_CreateAppointment_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="FindAppointments">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/FindAppointments" message="tns:IEwsService_FindAppointments_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsResponse" message="tns:IEwsService_FindAppointments_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetAppointment">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetAppointment" message="tns:IEwsService_GetAppointment_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetAppointmentResponse" message="tns:IEwsService_GetAppointment_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="UpdateAppointment">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/UpdateAppointment" message="tns:IEwsService_UpdateAppointment_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/UpdateAppointmentResponse" message="tns:IEwsService_UpdateAppointment_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CancelAppointment">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/CancelAppointment" message="tns:IEwsService_CancelAppointment_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/CancelAppointmentResponse" message="tns:IEwsService_CancelAppointment_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DeleteAppointment">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/DeleteAppointment" message="tns:IEwsService_DeleteAppointment_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/DeleteAppointmentResponse" message="tns:IEwsService_DeleteAppointment_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="AcceptAppointment">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/AcceptAppointment" message="tns:IEwsService_AcceptAppointment_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/AcceptAppointmentResponse" message="tns:IEwsService_AcceptAppointment_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DeclineAppointment">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/DeclineAppointment" message="tns:IEwsService_DeclineAppointment_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/DeclineAppointmentResponse" message="tns:IEwsService_DeclineAppointment_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CreateMessage">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/CreateMessage" message="tns:IEwsService_CreateMessage_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/CreateMessageResponse" message="tns:IEwsService_CreateMessage_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="AddAttachment">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/AddAttachment" message="tns:IEwsService_AddAttachment_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/AddAttachmentResponse" message="tns:IEwsService_AddAttachment_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="SendMessage">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/SendMessage" message="tns:IEwsService_SendMessage_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/SendMessageResponse" message="tns:IEwsService_SendMessage_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="FindMessages">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/FindMessages" message="tns:IEwsService_FindMessages_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/FindMessagesResponse" message="tns:IEwsService_FindMessages_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetMessage">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetMessage" message="tns:IEwsService_GetMessage_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetMessageResponse" message="tns:IEwsService_GetMessage_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetAttachmentByName">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetAttachmentByName" message="tns:IEwsService_GetAttachmentByName_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetAttachmentByNameResponse" message="tns:IEwsService_GetAttachmentByName_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetAttachmentByIndex">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetAttachmentByIndex" message="tns:IEwsService_GetAttachmentByIndex_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetAttachmentByIndexResponse" message="tns:IEwsService_GetAttachmentByIndex_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetMessageContent">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetMessageContent" message="tns:IEwsService_GetMessageContent_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetMessageContentResponse" message="tns:IEwsService_GetMessageContent_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DeleteMessage">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/DeleteMessage" message="tns:IEwsService_DeleteMessage_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/DeleteMessageResponse" message="tns:IEwsService_DeleteMessage_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MoveTo">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/MoveTo" message="tns:IEwsService_MoveTo_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/MoveToResponse" message="tns:IEwsService_MoveTo_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="CopyTo">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/CopyTo" message="tns:IEwsService_CopyTo_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/CopyToResponse" message="tns:IEwsService_CopyTo_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="Notification">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/Notification" message="tns:IEwsService_Notification_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/NotificationResponse" message="tns:IEwsService_Notification_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetChanges">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetChanges" message="tns:IEwsService_GetChanges_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetChangesResponse" message="tns:IEwsService_GetChanges_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="GetChangeStats">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetChangeStats" message="tns:IEwsService_GetChangeStats_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetChangeStatsResponse" message="tns:IEwsService_GetChangeStats_OutputMessage" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="BasicHttpBinding_IEwsService" type="tns:IEwsService">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="CreateAppointment">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/CreateAppointment" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="FindAppointments">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/FindAppointments" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetAppointment">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/GetAppointment" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="UpdateAppointment">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/UpdateAppointment" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CancelAppointment">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/CancelAppointment" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DeleteAppointment">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/DeleteAppointment" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AcceptAppointment">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/AcceptAppointment" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DeclineAppointment">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/DeclineAppointment" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CreateMessage">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/CreateMessage" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AddAttachment">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/AddAttachment" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="SendMessage">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/SendMessage" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="FindMessages">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/FindMessages" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetMessage">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/GetMessage" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetAttachmentByName">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/GetAttachmentByName" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetAttachmentByIndex">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/GetAttachmentByIndex" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetMessageContent">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/GetMessageContent" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DeleteMessage">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/DeleteMessage" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="MoveTo">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/MoveTo" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="CopyTo">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/CopyTo" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="Notification">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/Notification" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetChanges">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/GetChanges" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetChangeStats">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/GetChangeStats" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="EwsService">
+    <wsdl:port name="BasicHttpBinding_IEwsService" binding="tns:BasicHttpBinding_IEwsService">
+      <soap:address location="http://localhost:54401/EwsService.svc" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

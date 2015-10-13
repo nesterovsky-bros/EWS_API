@@ -1,0 +1,125 @@
+﻿.centered {
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 10px;
+  text-align: center;
+}
+
+.stop_icon {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  background-repeat: no-repeat;
+  background-image: url(../Images/stop_icon.png);
+}
+
+.indicator {
+  display: inline-block;
+  width: 100px;
+  height: 100px;
+  background-repeat: no-repeat;
+  background-image: url(../Images/indicator.gif);
+}
+
+.rtl {
+  text-align: right;
+  direction: rtl;
+}
+
+.rtl th
+{
+  text-align: left;
+  width: 5em;
+}
+
+table.message {
+}
+
+.message .ui-select-container {
+  width: 50em;
+}
+
+.message a:hover
+{
+  cursor: pointer;
+}
+
+.message input.subject
+{
+  width: 100%;
+}
+
+.message td.container {
+  min-height: 10em;
+  /*border: 1px solid #b6b6b6;*/
+}
+
+.message .content 
+{
+  width: 100%;
+  height: 100%;
+}
+
+.message .attachments {
+  font-weight: bold;
+}
+
+a.remove_icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-repeat: no-repeat;
+  background-image: url(../Images/remove.png);
+}
+
+a.remove_icon:hover {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-repeat: no-repeat;
+  background-image: url(../Images/remove.png);
+  background-position: -16px;
+}
+
+.message .separator, .message .separator td {
+  height: 6px;
+}
+
+.message .title {
+  color: white;
+  text-align: center;
+  height: 40px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-right: 15px;
+  padding-left: 15px;
+  background-clip: border-box;
+  background-color: rgb(66, 139, 202);
+  background-image: none;
+  background-origin: padding-box;
+  background-position: 0px 0px;
+  background-repeat: repeat;
+  background-size: auto;
+  border-bottom-color: rgb(255, 255, 255);
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-bottom-style: none;
+  border-bottom-width: 0px;
+  border-collapse: separate;
+  border-left-color: rgb(255, 255, 255);
+  border-left-style: none;
+  border-left-width: 0px;
+  border-right-color: rgb(255, 255, 255);
+  border-right-style: none;
+  border-right-width: 0px;
+  border-top-color: rgb(255, 255, 255);
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  border-top-style: none;
+  border-top-width: 0px;
+  bottom: auto;
+  box-shadow: none;
+  box-sizing: border-box;
+}

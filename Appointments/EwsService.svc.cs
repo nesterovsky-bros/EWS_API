@@ -10,19 +10,21 @@
   using System.Text.RegularExpressions;
   using System.Xml;
   using System.Data.Entity;
+  using System.Threading;
+  using System.Reflection;
+  using System.Threading.Tasks;
+  using System.ServiceModel.Activation;
 
   using Microsoft.Practices.Unity;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
-  using System.Threading;
-  using System.Reflection;
-  using System.Threading.Tasks;
 
   /// <summary>
   /// An implementation of IAppointments interface for CRUD operations with
   /// appointments for Office365.
   /// </summary>
   [ServiceBehavior(Namespace = "https://www.bankhapoalim.co.il/")]
+  [AspNetCompatibilityRequirements(RequirementsMode = AspNetCompatibilityRequirementsMode.Allowed)]
   public class EwsService : IEwsService
   {
     /// <summary>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ReferenceGroup xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ID="9f5d1238-a095-4065-8fea-392a684a5243" xmlns="urn:schemas-microsoft-com:xml-wcfservicemap">
+  <ClientOptions>
+    <GenerateAsynchronousMethods>false</GenerateAsynchronousMethods>
+    <GenerateTaskBasedAsynchronousMethod>true</GenerateTaskBasedAsynchronousMethod>
+    <EnableDataBinding>true</EnableDataBinding>
+    <ExcludedTypes />
+    <ImportXmlTypes>false</ImportXmlTypes>
+    <GenerateInternalTypes>false</GenerateInternalTypes>
+    <GenerateMessageContracts>false</GenerateMessageContracts>
+    <NamespaceMappings />
+    <CollectionMappings />
+    <GenerateSerializableTypes>true</GenerateSerializableTypes>
+    <Serializer>Auto</Serializer>
+    <UseSerializerForFaults>true</UseSerializerForFaults>
+    <ReferenceAllAssemblies>true</ReferenceAllAssemblies>
+    <ReferencedAssemblies />
+    <ReferencedDataContractTypes />
+    <ServiceContractMappings />
+  </ClientOptions>
+  <MetadataSources>
+    <MetadataSource Address="http://localhost:54401/EwsService.svc" Protocol="http" SourceId="1" />
+  </MetadataSources>
+  <Metadata>
+    <MetadataFile FileName="EwsService.disco" MetadataType="Disco" ID="f2effefa-53dc-4549-9a4b-5e5376284d63" SourceId="1" SourceUrl="http://localhost:54401/EwsService.svc?disco" />
+    <MetadataFile FileName="EwsService.xsd" MetadataType="Schema" ID="78ce11f7-a0df-4023-bfea-61cf48518cde" SourceId="1" SourceUrl="http://localhost:54401/EwsService.svc?xsd=xsd1" />
+    <MetadataFile FileName="EwsService.wsdl" MetadataType="Wsdl" ID="d9fd27c9-61a1-45ca-b525-b1c0aff557be" SourceId="1" SourceUrl="http://localhost:54401/EwsService.svc?wsdl" />
+    <MetadataFile FileName="EwsService1.xsd" MetadataType="Schema" ID="be3488b7-da1a-49cc-bf3e-62d08ca97839" SourceId="1" SourceUrl="http://localhost:54401/EwsService.svc?xsd=xsd2" />
+    <MetadataFile FileName="EwsService2.xsd" MetadataType="Schema" ID="031faab3-3154-4627-b032-3abb50bad5ef" SourceId="1" SourceUrl="http://localhost:54401/EwsService.svc?xsd=xsd0" />
+  </Metadata>
+  <Extensions>
+    <ExtensionFile FileName="configuration91.svcinfo" Name="configuration91.svcinfo" />
+    <ExtensionFile FileName="configuration.svcinfo" Name="configuration.svcinfo" />
+  </Extensions>
+</ReferenceGroup>

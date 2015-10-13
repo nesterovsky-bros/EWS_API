@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Error handler dialog</title>
+  <link type="text/css" rel="stylesheet" href="../../../Styles/default.css" />
+</head>
+<body>
+  <div class="modal-header">
+     <h3 class="modal-title error" style="vertical-align: top">
+       <span class="stop_icon">&nbsp;</span> Error
+     </h3>
+  </div>
+  <div class="modal-body">
+    <table border="0" cellpadding="0" cellspacing="0">
+      <tr ng-show="error.id > 0">
+          <th>Error ID:</th><td>{{error.id}}</td>
+      </tr>
+      <tr ng-show="!!error.message">
+          <th style="vertical-align: top;">Message:</th><td>{{error.message}}</td>
+      </tr>
+      <tr ng-show="!!error.type">
+          <th>Type:</th><td>{{error.type}}</td>
+      </tr>
+      <tr ng-show="!!error.details">
+          <th style="vertical-align: top;">Details:</th><td>{{error.details}}</td>
+      </tr>
+      <tr ng-show="!!error.stackTrace">
+          <th style="vertical-align: top;">Stack&nbsp;trace:</th>
+          <td style="max-height: 5em;">
+            <textarea style="height: 7em; width: 100%;" readonly>
+              {{error.stackTrace}}
+            </textarea>
+          </td>
+      </tr>
+    </table>
+  </div>
+  <div class="modal-footer">
+      <button class="btn btn-primary" ng-click="close()">Close</button>
+  </div>
+</body>
+</html>
