@@ -45,6 +45,23 @@ namespace Bnhp.Office365
       int? maxResults);
 
     /// <summary>
+    /// Retrieves appointments that belongs to the specified range of dates.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="start">a start date.</param>
+    /// <param name="end">an optional parameter, determines an end date.</param>
+    /// <param name="maxResults">
+    /// an optional parameter, determines maximum results in resonse.
+    /// </param>
+    /// <returns>a list of Appointment ids.</returns>
+    [OperationContract]
+    Task<IEnumerable<string>> FindAppointmentsEx(
+      string email,
+      DateTime start,
+      DateTime? end,
+      int? maxResults);
+
+    /// <summary>
     /// Gets an proxy by its unique ID.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>

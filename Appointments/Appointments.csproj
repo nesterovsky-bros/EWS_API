@@ -121,6 +121,7 @@
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="LoggingEndPoint.cs" />
+    <Compile Include="EwsTraceListener.cs" />
     <Compile Include="RulesService.svc.cs">
       <DependentUpon>RulesService.svc</DependentUpon>
     </Compile>

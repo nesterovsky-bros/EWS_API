@@ -10,8 +10,9 @@ namespace Bnhp.Office365
   using System.Diagnostics;
   using System.Threading.Tasks;
   using System.Threading;
+  using System.Globalization;
 
-  public class WcfServiceFactory : UnityServiceHostFactory
+  public class WcfServiceFactory: UnityServiceHostFactory
   {
     public ServiceHost Create<T>(params Uri[] baseAddresses)
     {
@@ -67,6 +68,8 @@ namespace Bnhp.Office365
         throw new ApplicationException("No application users are defined.");
       }
 
+      var boolValue = false;
+
       var settings = new Settings
       {
         HangingConnectionLimit =
@@ -83,8 +86,21 @@ namespace Bnhp.Office365
           int.Parse(ConfigurationManager.AppSettings["ExchangeListenerRecyclePeriod"]),
         RetryCount =
           int.Parse(ConfigurationManager.AppSettings["RetryCount"] ?? "3"),
+        EWSTrace =
+          bool.TryParse(
+            ConfigurationManager.AppSettings["EWSTrace"], 
+            out boolValue) && boolValue,
         ApplicationUsers = users,
       };
+
+      var value = ConfigurationManager.AppSettings["OriginalNotesID"];
+
+      if (!string.IsNullOrWhiteSpace(value))
+      {
+        settings.OriginalNotesID = int.Parse(
+          value,
+          NumberStyles.Integer | NumberStyles.AllowHexSpecifier);
+      }
 
       globalSettings = settings;
 

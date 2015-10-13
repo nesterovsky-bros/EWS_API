@@ -184,6 +184,70 @@
       DateTime? end,
       int? maxResults)
     {
+      var service = GetService(email);
+      var appointments = await FindAppointmentsImpl(
+        service,
+        email,
+        start,
+        end,
+        maxResults);
+
+      return await Task.WhenAll(
+        appointments.Select(
+          async appointment =>
+            ConvertAppointment(await EwsUtils.TryAction(
+              "FindAppointments.Bind",
+              email,
+              service,
+              i => Task.FromResult(Office365.Appointment.Bind(service, appointment.Id)),
+              Settings))));
+    }
+
+    /// <summary>
+    /// Retrieves appointments that belongs to the specified range of dates.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="start">a start date.</param>
+    /// <param name="end">an optional parameter, determines an end date.</param>
+    /// <param name="maxResults">
+    /// an optional parameter, determines maximum results in resonse.
+    /// </param>
+    /// <returns>a list of Appointment ids.</returns>
+    public async Task<IEnumerable<string>> FindAppointmentsEx(
+      string email,
+      DateTime start,
+      DateTime? end,
+      int? maxResults)
+    {
+      var service = GetService(email);
+      var appointments = await FindAppointmentsImpl(
+        service,
+        email,
+        start,
+        end,
+        maxResults);
+
+      return appointments.Select(appointment => appointment.Id.ToString());
+    }
+
+    /// <summary>
+    /// Retrieves appointments that belongs to the specified range of dates.
+    /// </summary>
+    /// <param name="service">An exchange service instance.</param>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="start">a start date.</param>
+    /// <param name="end">an optional parameter, determines an end date.</param>
+    /// <param name="maxResults">
+    /// an optional parameter, determines maximum results in resonse.
+    /// </param>
+    /// <returns>a list of Appointment instances.</returns>
+    private async Task<Office365.FindItemsResults<Office365.Appointment>> FindAppointmentsImpl(
+      Office365.ExchangeService service,
+      string email,
+      DateTime start,
+      DateTime? end,
+      int? maxResults)
+    {
       Office365.CalendarView view = new Office365.CalendarView(
         start,
         end.GetValueOrDefault(DateTime.Now),
@@ -192,9 +256,7 @@
       // Item searches do not support Deep traversal.
       view.Traversal = Office365.ItemTraversal.Shallow;
 
-      var service = GetService(email);
-
-      var appointments = await EwsUtils.TryAction(
+      return await EwsUtils.TryAction(
         "FindAppointments",
         email,
         service,
@@ -202,24 +264,6 @@
           service.FindAppointments(
             Office365.WellKnownFolderName.Calendar, view)),
         Settings);
-
-      var result = new List<Appointment>();
-
-      if (appointments != null)
-      {
-        foreach (var appointment in appointments)
-        {
-          var item = ConvertAppointment(
-            Office365.Appointment.Bind(service, appointment.Id));
-
-          if (item != null)
-          {
-            result.Add(item);
-          }
-        }
-      }
-
-      return result;
     }
     #endregion
 
@@ -669,8 +713,12 @@
       {
         foreach (var item in items)
         {
-          var message = ConvertMessage(
-            Office365.EmailMessage.Bind(service, item.Id));
+          var message = ConvertMessage(await EwsUtils.TryAction(
+            "FindMessages.Bind",
+            email,
+            service,
+            i => Task.FromResult(Office365.EmailMessage.Bind(service, item.Id)),
+            Settings));
 
           if (message != null)
           {
@@ -1179,6 +1227,14 @@
 
       service.Url = new Uri(url);
 
+      if (Settings.EWSTrace)
+      {
+        service.TraceEnabled = true;
+        service.TraceFlags = Office365.TraceFlags.EwsRequest |
+          Office365.TraceFlags.EwsResponse;
+        service.TraceListener = new EwsTraceListener();
+      }
+
       return service;
     }
 
@@ -1429,7 +1485,7 @@
       return result;
     }
 
-    private static List<ExtendedProperty> GetExtendedProperties(
+    private List<ExtendedProperty> GetExtendedProperties(
       Office365.Item item)
     {
       var properties = null as Office365.ExtendedPropertyCollection;
@@ -1448,7 +1504,8 @@
           if (propertyDefinition.PropertySetId !=
             EwsService.ExtendedPropertySetId)
           {
-            isNotesID = propertyDefinition.Tag == EwsService.OriginalNotesID;
+            isNotesID = (propertyDefinition.Tag == Settings.OriginalNotesID) &&
+              (Settings.OriginalNotesID != null);
 
             if (!isNotesID)
             {
@@ -1486,7 +1543,7 @@
       return result;
     }
 
-    private static void SetExtendedProperties(
+    private void SetExtendedProperties(
       Office365.Item item,
       List<ExtendedProperty> properties)
     {
@@ -1494,11 +1551,12 @@
       {
         foreach (var property in properties)
         {
-          if (property.Name == "OriginalNotesID")
+          if ((property.Name == "OriginalNotesID") && 
+            (Settings.OriginalNotesID != null))
           {
             item.SetExtendedProperty(
               new Office365.ExtendedPropertyDefinition(
-                EwsService.OriginalNotesID,
+                Settings.OriginalNotesID.Value,
                 Office365.MapiPropertyType.String),
               property.Value);
           }
@@ -1780,11 +1838,6 @@
     /// </summary>
     private static Guid ExtendedPropertySetId =
       new Guid("{DD12CD36-DB49-4002-A809-56B40E6B60E9}");
-
-    /// <summary>
-    /// The original Notes ID property's tag.
-    /// </summary>
-    private static int OriginalNotesID = 0x63060102;
 
     /// <summary>
     /// Internal counter of number of accesses to GetService() method.
