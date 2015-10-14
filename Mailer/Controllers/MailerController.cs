@@ -18,6 +18,7 @@
   using Mailer.Code;
 
   using NesterovskyBros.Code;
+  using System.Web.Hosting;
 
   /// <summary>
   /// Declares API for cloud mailer application.
@@ -31,9 +32,9 @@
     /// <returns>an enumeration of Addressee instances.</returns>
     public async Task<IEnumerable<Addressee>> GetAddresses(string filter)
     {
-      var list = ReadAddresses(filter);
+      var list = await ReadAddresses(filter);
 
-      return await Task.FromResult(list);
+      return list;
     }
 
     /// <summary>
@@ -52,8 +53,7 @@
     {
       var list = new List<Addressee>();
 
-      // DEBUG only:
-      var addresses = ReadAddresses().
+      var addresses = (await ReadAddresses()).
         Where(a => !string.IsNullOrEmpty(a.Id)).
         ToDictionary(a => a.Id);
       
@@ -89,14 +89,15 @@
     /// Read fake data from the App_Data/test_data.xml
     /// </summary>
     /// <returns></returns>
-    private IEnumerable<Addressee> ReadAddresses(string filter = null)
+    private async Task<IEnumerable<Addressee>> ReadAddresses(
+      string filter = null)
     {
-      var path = @"H:\Projects\EWSTests\Mailer\App_Data\test_data.xml";
+      var path = HostingEnvironment.MapPath("~/App_Data/test_data.xml");
       var list = new List<Addressee>();
 
       using (var file = File.OpenText(path))
       {
-        var content = file.ReadToEnd();
+        var content = await file.ReadToEndAsync();
 
         list = FromXmlString<List<Addressee>>(content);
       }

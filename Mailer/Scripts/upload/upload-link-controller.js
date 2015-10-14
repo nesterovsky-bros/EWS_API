@@ -110,7 +110,7 @@ define(
             {
               var url = this.result;
 
-              self.onSuccess({ data: url });
+              self.onSuccess({ data: url, file: file });
             };
 
             reader.readAsDataURL(file);

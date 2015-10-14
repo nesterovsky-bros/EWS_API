@@ -13,148 +13,154 @@
 </head>
 <body ng-controller="MailerController as mailer">
   <div class="centered">
-    <table class="rtl message ng-cloak">
-      <tr>
-        <td colspan="3" class="title">ענן מיילר</td>
-      </tr>
-      <tr>
-        <td colspan="3">&nbsp;</td>
-      </tr>
-      <tr>
-        <th>אל:</th>
-        <td>
-          <ui-select multiple ng-model="mailer.to" tagging="mailer.tagTransform">
-            <ui-select-match placeholder="בחר נמען...">{{mailer.formatItem($item)}}</ui-select-match>
-            <ui-select-choices 
-                repeat="address in mailer.addresses"
-                refresh="mailer.refreshAddresses($select.search)"
-                refresh-delay="0">
-              <div style="font-weight: bold" ng-bind="address.Name"></div>
-              <small ng-if="address.Id">
-                ת.ז: {{address.Id}}<br />
-                דואר"א: {{address.Email}}<br /> 
-              </small>
-              <small ng-if="!address.Id">
-                <span style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
-                <span style="display: block" ng-show="address.Name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
-              </small>
-            </ui-select-choices>
-          </ui-select>
-        </td>
-        <td>
-          <span upload-link 
-            class="btn btn-primary"
-            accept=".txt"
-            ng-disabled="mailer.waiting"
-            server-url="api/Mailer/UploadIdentities"
-            on-success="mailer.add(data, mailer.to)">רשימת ת.ז</span>
-        </td>
-      </tr>
-      <tr>
-        <th>עותק:</th>
-        <td>
-          <ui-select multiple ng-model="mailer.cc" tagging="mailer.tagTransform">
-            <ui-select-match placeholder="בחר נמען...">{{mailer.formatItem($item)}}</ui-select-match>
-            <ui-select-choices 
-                repeat="address in mailer.addresses"
-                refresh="mailer.refreshAddresses($select.search)"
-                refresh-delay="0">
-              <div style="font-weight: bold" ng-bind="address.Name"></div>
-              <small ng-if="address.Id">
-                ת.ז: {{address.Id}}<br />
-                דואר"א: {{address.Email}}<br /> 
-              </small>
-              <small ng-if="!address.Id">
-                <span style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
-                <span style="display: block" ng-show="address.Name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
-              </small>
-            </ui-select-choices>
-          </ui-select>
-        </td>
-        <td>
-          <span upload-link 
-            class="btn btn-primary"
-            accept=".txt"
-            ng-disabled="mailer.waiting"
-            server-url="api/Mailer/UploadIdentities"
-            on-success="mailer.add(data, mailer.cc)">רשימת ת.ז</span>
-        </td>
-      </tr>
-      <tr>
-        <th>עותק סמוי:</th>
-        <td>
-          <ui-select multiple ng-model="mailer.bcc" tagging="mailer.tagTransform">
-            <ui-select-match placeholder="בחר נמען...">{{mailer.formatItem($item)}}</ui-select-match>
-            <ui-select-choices 
-                repeat="address in mailer.addresses"
-                refresh="mailer.refreshAddresses($select.search)"
-                refresh-delay="0">
-              <div style="font-weight: bold" ng-bind="address.Name"></div>
-              <small ng-if="address.Id">
-                ת.ז: {{address.Id}}<br />
-                דואר"א: {{address.Email}}<br /> 
-              </small>
-              <small ng-if="!address.Id">
-                <span style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
-                <span style="display: block" ng-show="address.Name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
-              </small>
-            </ui-select-choices>
-          </ui-select>
-        </td>
-        <td>
-          <span upload-link 
-            class="btn btn-primary"
-            accept=".txt"
-            ng-disabled="mailer.waiting"
-            server-url="api/Mailer/UploadIdentities"
-            on-success="mailer.add(data, mailer.bcc)">רשימת ת.ז</span>
-        </td>
-      </tr>
-      <tr>
-        <th>נושא:</th>
-        <td colspan="2">
-          <input type="text" ng-model="mailer.subject" class="subject form-control"/>
-        </td>
-      </tr>
-      <tr class="separator">
-        <td colspan="3"></td>
-      </tr>
-      <tr>
-        <td colspan="3">
-              TODO: toolbar
-        </td>
-      </tr>
-      <tr>
-        <td colspan="3" class="container">
-          <!--<div text-angular ng-model="mailer.message" class="content"></div>-->
-          <textarea ng-model="mailer.message" class="content form-control" rows="10" cols="40"></textarea>
-        </td>
-      </tr>
-      <tr class="separator">
-        <td colspan="3"></td>
-      </tr>
-      <tr>
-        <td colspan="2" class="attachments">קבצים מצורפים:</td>
-        <td>
-          <button type="button" class="btn btn-primary" ng-click="mailer.upload()">קובץ מצורף חדש</button>
-        </td>
-      </tr>
-      <tr ng-repeat="attachment in mailer.attachments track by $index">
-        <td colspan="2">{{attachment.name}}</td>
-        <td style="text-align: left;">
-          <a href="#" ng-click="mailer.remove(attachment)" class="remove_icon"></a>
-        </td>
-      </tr>
-      <tr class="separator">
-        <td colspan="3"><hr /></td>
-      </tr>
-      <tr>
-        <td colspan="3" style="text-align: left;">
-          <button type="button" class="btn btn-primary" ng-click="mailer.send()">שלח</button>&nbsp;
-          <button type="button" class="btn btn-primary" ng-click="mailer.clean()">נקה</button>
-        </td>
-      </tr>
-    </table>
+    <form name="form" class="css-form" novalidate>
+      <table class="rtl message ng-cloak">
+        <tr>
+          <td colspan="3" class="title">ענן מיילר</td>
+        </tr>
+        <tr>
+          <td colspan="3">&nbsp;</td>
+        </tr>
+        <tr>
+          <th>אל:</th>
+          <td>
+            <ui-select multiple ng-model="mailer.to" tagging="mailer.tagTransform">
+              <ui-select-match placeholder="בחר נמען...">{{mailer.formatItem($item)}}</ui-select-match>
+              <ui-select-choices repeat="address in mailer.addresses"
+                                 refresh="mailer.refreshAddresses($select.search)"
+                                 refresh-delay="0">
+                <div style="font-weight: bold" ng-bind="address.Name"></div>
+                <small ng-if="address.Id">
+                  ת.ז: {{address.Id}}<br />
+                  דואר"א: {{address.Email}}<br />
+                </small>
+                <small ng-if="!address.Id">
+                  <span style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
+                  <span style="display: block" ng-show="address.Name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
+                </small>
+              </ui-select-choices>
+            </ui-select>  
+            <span ng-show="form.$submitted && !mailer.to.length" class="errorMsg">שדה <b>אל</b> הוא שדה חובה</span>
+          </td>
+          <td>
+            <span upload-link
+                class="btn btn-primary"
+                accept=".txt"
+                ng-disabled="mailer.waiting"
+                server-url="api/Mailer/UploadIdentities"
+                on-success="mailer.add(data, mailer.to)">רשימת ת.ז</span>
+          </td>
+        </tr>
+        <tr>
+          <th>עותק:</th>
+          <td>
+            <ui-select multiple ng-model="mailer.cc" tagging="mailer.tagTransform">
+              <ui-select-match placeholder="בחר נמען...">{{mailer.formatItem($item)}}</ui-select-match>
+              <ui-select-choices repeat="address in mailer.addresses"
+                                 refresh="mailer.refreshAddresses($select.search)"
+                                 refresh-delay="0">
+                <div style="font-weight: bold" ng-bind="address.Name"></div>
+                <small ng-if="address.Id">
+                  ת.ז: {{address.Id}}<br />
+                  דואר"א: {{address.Email}}<br />
+                </small>
+                <small ng-if="!address.Id">
+                  <span style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
+                  <span style="display: block" ng-show="address.Name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
+                </small>
+              </ui-select-choices>
+            </ui-select>
+          </td>
+          <td>
+            <span upload-link
+                  class="btn btn-primary"
+                  accept=".txt"
+                  ng-disabled="mailer.waiting"
+                  server-url="api/Mailer/UploadIdentities"
+                  on-success="mailer.add(data, mailer.cc)">רשימת ת.ז</span>
+          </td>
+        </tr>
+        <tr>
+          <th>עותק סמוי:</th>
+          <td>
+            <ui-select multiple ng-model="mailer.bcc" tagging="mailer.tagTransform">
+              <ui-select-match placeholder="בחר נמען...">{{mailer.formatItem($item)}}</ui-select-match>
+              <ui-select-choices repeat="address in mailer.addresses"
+                                 refresh="mailer.refreshAddresses($select.search)"
+                                 refresh-delay="0">
+                <div style="font-weight: bold" ng-bind="address.Name"></div>
+                <small ng-if="address.Id">
+                  ת.ז: {{address.Id}}<br />
+                  דואר"א: {{address.Email}}<br />
+                </small>
+                <small ng-if="!address.Id">
+                  <span style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
+                  <span style="display: block" ng-show="address.Name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
+                </small>
+              </ui-select-choices>
+            </ui-select>
+          </td>
+          <td>
+            <span upload-link
+                  class="btn btn-primary"
+                  accept=".txt"
+                  ng-disabled="mailer.waiting"
+                  server-url="api/Mailer/UploadIdentities"
+                  on-success="mailer.add(data, mailer.bcc)">רשימת ת.ז</span>
+          </td>
+        </tr>
+        <tr> 
+          <th>נושא:</th>
+          <td colspan="2">
+            <input type="text" ng-model="mailer.subject" class="subject form-control" name="subject" required />
+            <span ng-show="form.$submitted && form.subject.$error.required" class="errorMsg"><b>נושא</b> הוא שדה חובה</span>
+          </td>
+        </tr>
+        <tr class="separator">
+          <td colspan="3"></td>
+        </tr>
+        <tr>
+          <td colspan="3">
+            TODO: toolbar
+          </td>
+        </tr>
+        <tr>
+          <td colspan="3" class="container">
+            <!--<div text-angular ng-model="mailer.message" class="content"></div>-->
+            <textarea ng-model="mailer.message" class="content form-control" rows="10" cols="40"></textarea>
+          </td>
+        </tr>
+        <tr class="separator">
+          <td colspan="3"></td>
+        </tr>
+        <tr>
+          <td colspan="2" class="attachments">קבצים מצורפים:</td>
+          <td>
+            <span upload-link
+                  class="btn btn-primary"
+                  accept=".*"
+                  ng-disabled="mailer.waiting"
+                  on-success="mailer.upload(data, file)">קובץ מצורף חדש</span>
+          </td>
+        </tr>
+        <tr ng-repeat="attachment in mailer.attachments track by $index">
+          <td colspan="3" class="attachment">
+            <a href="#" ng-click="mailer.remove(attachment)" class="remove_icon" title="להסיר הקובץ המצורף"></a>
+            <span ng-bind="attachment.name"></span>
+          </td>
+        </tr>
+        <tr class="separator">
+          <td colspan="3"><hr /></td>
+        </tr>
+        <tr>
+          <td colspan="3" style="text-align: left;">
+            <button type="button" class="btn btn-primary" ng-click="mailer.send()">שלח</button>&nbsp;
+            <button type="button" class="btn btn-primary" ng-click="mailer.clean()">נקה</button>
+          </td>
+        </tr>
+      </table>
+      <div ng-show="form.$submitted && mailer.working" class="inProgress"></div>
+    </form>
   </div>
 </body>
 </html>

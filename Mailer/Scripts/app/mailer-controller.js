@@ -4,6 +4,7 @@
     "../injectFn",
     "./services/errorHandler",
     "./services/services",
+    "../b64"
    // "./services/selectRecipients",
   ],
   function (module, injectFn)
@@ -17,14 +18,20 @@
       "errorHandler",
       "services",
       function init() {
-        this.to = [];
-        this.cc = [];
-        this.bcc = [];
-        this.attachments = [];
-        this.addresses = [];
+        this.$reset = function () {
+          this.to = [];
+          this.cc = [];
+          this.bcc = [];
+          this.attachments = [];
+          this.addresses = [];
+          this.message = null;
+          this.subject = null;
+          this.$invalidate = this.$scope.$applyAsync.bind(this.$scope);
+        };
+
+        this.$reset();
       });
-
-
+    
     MailerController.prototype = Object.create(null,
     {
       to: { enumerable: true, value: null, writable: true },
@@ -58,19 +65,23 @@
         {
           var index = -1;
 
-          if (address.Name && ((index = address.Name.indexOf('/')) != -1))
+          if (!address.Name)
           {
+            return null;
+          }
+          else if ((index = address.Name.lastIndexOf('/')) != -1) {
             return address.Name.substr(0, index);
           }
-
-          return null;
+          else {
+            return address.Name;
+          }
         }
       },
       getDivision: {
         value: function (address) {
           var index = -1;
 
-          if (address.Name && ((index = address.Name.indexOf('/')) != -1))
+          if (address.Name && ((index = address.Name.lastIndexOf('/')) != -1))
           {
             return address.Name.substr(index + 1);
           }
@@ -131,26 +142,69 @@
       },
       clean: {
         value: function () {
-          this.to = [];
-          this.cc = [];
-          this.bcc = [];
-          this.attachments = [];
-          this.addresses = [];
-          this.message = null;
-          this.subject = null;
+          this.$reset();
+
+          var form = this.$scope.form;
+
+          form.$setPristine();
+          form.$setUntouched();
         }
       },
       send: {
         value: function () {
-          return;
+          var self = this;
+          var form = self.$scope.form;
+          
+          form.$setSubmitted();
+
+          if (!form.$valid)
+          {
+            return;
+          }
+
+          var timer =
+            self.$timeout(function () { self.working = true; }, 100);
+
+          // TODO: send mail to server
+
         }
       },
       upload: {
-        value: function () {
+        value: function (data, file) {
+          var self = this;
+          var size = file.size;
+
+          self.attachments.forEach(function (item) { size += item.size; });
+
+          if (size > 2000000)
+          {
+            self.errorHandler("Total attachments size is bigger than 2000000 bytes.");
+
+            return;
+          }
+
+          var start = data.lastIndexOf("base64,");
+          var content = base64js.toByteArray(data.substr(start + 7));
+
+          self.attachments.push(
+            {
+              name: file.name,
+              size: file.size,
+              content: content,
+            });
+
+          self.$invalidate();
         }
       },
       remove: {
         value: function (attachment) {
+          var attachments = this.attachments;
+          var index = attachments.indexOf(attachment);
+
+          if (index != -1)
+          {
+            attachments.splice(index, 1);
+          }
         }
       }
     });

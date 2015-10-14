@@ -123,3 +123,29 @@ a.remove_icon:hover {
   box-shadow: none;
   box-sizing: border-box;
 }
+
+.attachment {
+  background-color: #F5F5F5;
+  border-bottom: 1px solid white;
+  vertical-align: baseline;
+}
+
+.errorMsg {
+  font-size: 14px; 
+  color: red;
+}
+
+.inProgress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1050;
+  background-color: #000000;
+  opacity: 0.5;
+  filter: alpha(opacity=50);
+  background-image: url(../Images/indicator.gif);
+  background-position: center;
+  background-repeat: no-repeat;
+}
