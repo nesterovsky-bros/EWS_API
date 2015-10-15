@@ -165,8 +165,31 @@
           var timer =
             self.$timeout(function () { self.working = true; }, 100);
 
-          // TODO: send mail to server
+          self.services.SendMessage(
+            {
+              message: {
+                Subject: self.subject,
+                Content: self.message,
+                To: self.to,
+                Cc: self.cc.length ? self.cc : null,
+                Bcc: self.bcc.length ? self.bcc : null,
+                Attachments: self.attachments.length ? self.attachments : null
+              }
+            },
+            function (addresses) {
+              self.$timeout.cancel(timer);
 
+              self.working = false;
+
+              self.clean();
+            },
+            function (e) {
+              self.$timeout.cancel(timer);
+
+              self.working = false;
+
+              self.errorHandler(e);
+            });
         }
       },
       upload: {
@@ -174,7 +197,7 @@
           var self = this;
           var size = file.size;
 
-          self.attachments.forEach(function (item) { size += item.size; });
+          self.attachments.forEach(function (item) { size += item.Size; });
 
           if (size > 2000000)
           {
@@ -183,14 +206,13 @@
             return;
           }
 
-          var start = data.lastIndexOf("base64,");
-          var content = base64js.toByteArray(data.substr(start + 7));
+          var start = data.indexOf("base64,");
 
           self.attachments.push(
             {
-              name: file.name,
-              size: file.size,
-              content: content,
+              Name: file.name,
+              Size: file.size,
+              Content: data.substr(start + 7),
             });
 
           self.$invalidate();

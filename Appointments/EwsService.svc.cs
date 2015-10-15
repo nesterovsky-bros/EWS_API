@@ -1504,8 +1504,8 @@
           if (propertyDefinition.PropertySetId !=
             EwsService.ExtendedPropertySetId)
           {
-            isNotesID = (propertyDefinition.Tag == Settings.OriginalNotesID) &&
-              (Settings.OriginalNotesID != null);
+            isNotesID = (Settings.OriginalNotesID != null) &&
+              (propertyDefinition.Tag == Settings.OriginalNotesID);
 
             if (!isNotesID)
             {
@@ -1525,7 +1525,8 @@
               new ExtendedProperty
               {
                 Name = "OriginalNotesID",
-                Value = property.Value as string
+                Value = 
+                  property.Value == null ? null : property.Value.ToString()
               });
           }
           else
@@ -1551,14 +1552,17 @@
       {
         foreach (var property in properties)
         {
-          if ((property.Name == "OriginalNotesID") && 
-            (Settings.OriginalNotesID != null))
+          if ((Settings.OriginalNotesID != null) &&
+            (property.Name == "OriginalNotesID"))
           {
-            item.SetExtendedProperty(
-              new Office365.ExtendedPropertyDefinition(
-                Settings.OriginalNotesID.Value,
-                Office365.MapiPropertyType.String),
-              property.Value);
+            if (!string.IsNullOrEmpty(property.Value))
+            {
+              item.SetExtendedProperty(
+                new Office365.ExtendedPropertyDefinition(
+                  Settings.OriginalNotesID.Value,
+                  Office365.MapiPropertyType.Binary),
+                Convert.FromBase64String(property.Value));
+            }
           }
           else
           {

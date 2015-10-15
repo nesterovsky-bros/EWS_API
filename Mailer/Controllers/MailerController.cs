@@ -14,11 +14,12 @@
   using System.Xml;
   using System.Text;
   using System.IO;
+  using System.Web.Hosting;
 
   using Mailer.Code;
+  using Mailer.EwsServiceReference;
 
   using NesterovskyBros.Code;
-  using System.Web.Hosting;
 
   /// <summary>
   /// Declares API for cloud mailer application.
@@ -49,6 +50,7 @@
     ///  the specified identities.
     /// </returns>
     [HttpPost]
+    [ActionName("UploadIdentities")]
     public async Task<IEnumerable<Addressee>> UploadIdentities()
     {
       var list = new List<Addressee>();
@@ -86,6 +88,52 @@
     }
 
     /// <summary>
+    /// Sends an e-mail message to recipients.
+    /// </summary>
+    /// <param name="message">a message to send.</param>
+    /// <returns>true when the message was sent successfully.</returns>
+    [HttpPost]
+    [ActionName("SendMessage")]
+    public async Task<bool> SendMessage(Message message)
+    {
+      var principal = RequestContext.Principal;
+
+      if ((principal == null) || 
+        (principal.Identity == null) || 
+        !principal.Identity.IsAuthenticated)
+      {
+        throw new HttpResponseException(HttpStatusCode.Forbidden);
+      }
+
+      var client = new EwsServiceClient();
+      var emailMessage = new EMailMessage();
+
+      emailMessage.From = await ResolveEmail(principal.Identity.Name);
+      emailMessage.Subject = message.Subject;
+      emailMessage.TextBody = message.Content;
+      emailMessage.ToRecipients = await GetRecipients(message.To);
+      emailMessage.CcRecipients = await GetRecipients(message.Cc);
+      emailMessage.BccRecipients = await GetRecipients(message.Bcc);
+
+      var messageId = 
+        await client.CreateMessageAsync(emailMessage.From.Address, emailMessage);
+
+      if (message.Attachments != null)
+      {
+        foreach (var attachment in message.Attachments)
+        {
+          await client.AddAttachmentAsync(
+            emailMessage.From.Address,
+            messageId,
+            attachment.Name,
+            Convert.FromBase64String(attachment.Content));
+        }
+      }
+
+      return await client.SendMessageAsync(emailMessage.From.Address, messageId);
+    }
+    
+    /// <summary>
     /// Read fake data from the App_Data/test_data.xml
     /// </summary>
     /// <returns></returns>
@@ -111,6 +159,65 @@
 
       return list.AsEnumerable();
     }
+
+    private async Task<EMailAddress[]> GetRecipients(Addressee[] addresses)
+    {
+      // TODO: replace the following code with the real life e-mail resolver
+
+      if ((addresses == null) || (addresses.Length == 0))
+      {
+        return null;
+      }
+
+      var dictionary = (await ReadAddresses()).
+        Where(item => !string.IsNullOrEmpty(item.Email)).
+        ToDictionary(item => item.Name);
+
+      return addresses.Select(
+        a =>
+          {
+            var address = null as Addressee;
+
+            if (a.Name == "אדמיניסטרטור")
+            {
+              var admin = dictionary["Lior Ammar"];
+
+              return new EMailAddress
+              {
+                Name = admin.Name,
+                Address = admin.Email
+              };
+            }
+            else if (dictionary.TryGetValue(a.Name, out address))
+            {
+              return new EMailAddress
+              {
+                Name = address.Name,
+                Address = address.Email
+              };
+            }
+            else
+            {
+              return new EMailAddress
+              {
+                Name = "Noname",
+                Address = "postman@nesterovsky-bros.com"
+              };
+            }
+          }).ToArray();
+    }
+
+    private async Task<EMailAddress> ResolveEmail(string userName)
+    {
+      // TODO: replace with e-mail resolver
+
+      return await Task.FromResult(
+        new EMailAddress
+        {
+          Name = "Arthur Nesterovsky",
+          Address = "anesterovsky@modernsystems.com"
+        });
+    } 
 
     private static string ToXmlString(object result)
     {

@@ -54,6 +54,18 @@
               isArray: true,
               then: resolveAction
             },
+            SendMessage:
+            {
+              params:
+              {
+                action: "SendMessage"
+              },
+              method: "POST",
+              responseType: "json",
+              headers: { 'Content-Type': 'application/json' },
+              interceptor: simpleTypeInterceptor,
+              then: resolveAction
+            },
 /*
             UploadIdentities:
             {
