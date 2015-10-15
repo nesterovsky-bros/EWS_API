@@ -67,7 +67,7 @@
 
             if (e.status && e.statusText)
             {
-              error.message = e.status + " " + e.statusText + " ";
+              error.message = e.status + " " + e.statusText + "\n";
             }
 
             if (e.data && (typeof e.data != "string"))

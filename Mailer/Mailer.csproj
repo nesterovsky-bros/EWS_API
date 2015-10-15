@@ -103,7 +103,6 @@
     <Content Include="Scripts\angular-ui\ui-bootstrap.js" />
     <Content Include="Scripts\angular.js" />
     <Content Include="Scripts\angular.min.js" />
-    <Content Include="Scripts\b64.js" />
     <Content Include="Scripts\r.js" />
     <Content Include="Scripts\require.js" />
     <Content Include="Scripts\ui-select\select.js" />
@@ -173,6 +172,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Code\JsonContractResolver.cs" />
     <Compile Include="Code\Message.cs" />
     <Compile Include="Code\Attachment.cs" />
     <Compile Include="Code\Addressee.cs" />

@@ -4,8 +4,7 @@
     "../injectFn",
     "./services/errorHandler",
     "./services/services",
-    "../b64"
-   // "./services/selectRecipients",
+    // "./services/selectRecipients",
   ],
   function (module, injectFn)
   {
@@ -48,16 +47,16 @@
         value: function (tag)
         {
           return {
-            Name: tag,
-            Id: null,
-            Email: null,
+            name: tag,
+            id: null,
+            email: null,
           };
         }
       },
       formatItem: {
         value: function(item)
         {
-          return item.Name;
+          return item.name;
         }
       },
       getRole: {
@@ -65,15 +64,15 @@
         {
           var index = -1;
 
-          if (!address.Name)
+          if (!address.name)
           {
             return null;
           }
-          else if ((index = address.Name.lastIndexOf('/')) != -1) {
-            return address.Name.substr(0, index);
+          else if ((index = address.name.lastIndexOf('/')) != -1) {
+            return address.name.substr(0, index);
           }
           else {
-            return address.Name;
+            return address.name;
           }
         }
       },
@@ -81,9 +80,9 @@
         value: function (address) {
           var index = -1;
 
-          if (address.Name && ((index = address.Name.lastIndexOf('/')) != -1))
+          if (address.name && ((index = address.name.lastIndexOf('/')) != -1))
           {
-            return address.Name.substr(index + 1);
+            return address.name.substr(index + 1);
           }
 
           return null;
@@ -127,14 +126,14 @@
 
           recipients.forEach(
             function (item) {
-              if (item.Id) {
-                map[item.Id] = item;
+              if (item.id) {
+                map[item.id] = item;
               }
             });
 
           data.forEach(
             function (item) {
-              if (item.Id && !map[item.Id]) {
+              if (item.id && !map[item.id]) {
                 recipients.push(item);
               }
             });
@@ -167,14 +166,12 @@
 
           self.services.SendMessage(
             {
-              message: {
-                Subject: self.subject,
-                Content: self.message,
-                To: self.to,
-                Cc: self.cc.length ? self.cc : null,
-                Bcc: self.bcc.length ? self.bcc : null,
-                Attachments: self.attachments.length ? self.attachments : null
-              }
+              subject: self.subject,
+              content: self.message,
+              to: self.to,
+              cc: self.cc.length ? self.cc : null,
+              bcc: self.bcc.length ? self.bcc : null,
+              attachments: self.attachments.length ? self.attachments : null
             },
             function (addresses) {
               self.$timeout.cancel(timer);
@@ -197,7 +194,7 @@
           var self = this;
           var size = file.size;
 
-          self.attachments.forEach(function (item) { size += item.Size; });
+          self.attachments.forEach(function (item) { size += item.size; });
 
           if (size > 2000000)
           {
@@ -206,13 +203,14 @@
             return;
           }
 
-          var start = data.indexOf("base64,");
+          var marker = "base64,";
+          var start = data.indexOf(marker);
 
           self.attachments.push(
             {
-              Name: file.name,
-              Size: file.size,
-              Content: data.substr(start + 7),
+              name: file.name,
+              size: file.size,
+              content: data.substr(start + marker.length),
             });
 
           self.$invalidate();

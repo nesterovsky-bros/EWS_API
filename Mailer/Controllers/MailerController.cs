@@ -219,22 +219,6 @@
         });
     } 
 
-    private static string ToXmlString(object result)
-    {
-      var data = new StringBuilder();
-      var serializer = new NetDataContractSerializer();
-
-      using (var writer = XmlWriter.Create(data))
-      {
-        if (result != null)
-        {
-          serializer.WriteObject(writer, result);
-        }
-      }
-
-      return data.ToString();
-    }
-
     private static T FromXmlString<T>(string xml)
     {
       if (string.IsNullOrEmpty(xml))
@@ -296,38 +280,6 @@
               await dir.CloseAsync(timeoutSource.Token);
             }
           });
-    }
-
-    /// <summary>
-    /// Reads file into a byte array.
-    /// </summary>
-    /// <param name="path">File path.</param>
-    /// <returns>A task that returns a content in a byte array.</returns>
-    private async Task<byte[]> ReadAllBytes(
-      string path,
-      CancellationToken CancellationToken = default(CancellationToken))
-    {
-      using (var stream = File.OpenRead(path))
-      {
-        var length = checked((int)stream.Length);
-        var offset = 0;
-        var buffer = new byte[length];
-
-        while (offset < length)
-        {
-          var count = await
-            stream.ReadAsync(buffer, offset, length - offset, CancellationToken);
-
-          if (count <= 0)
-          {
-            throw new EndOfStreamException();
-          }
-
-          offset += count;
-        }
-
-        return buffer;
-      }
     }
   }
 }

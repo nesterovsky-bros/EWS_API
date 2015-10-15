@@ -97,9 +97,10 @@ namespace Bnhp.Office365
 
       if (!string.IsNullOrWhiteSpace(value))
       {
-        settings.OriginalNotesID = int.Parse(
-          value,
-          NumberStyles.Integer | NumberStyles.AllowHexSpecifier);
+        settings.OriginalNotesID = 
+          value.StartsWith("0x") || value.StartsWith("&h") ?
+            int.Parse(value.Substring(2), NumberStyles.HexNumber) :
+            int.Parse(value);
       }
 
       globalSettings = settings;

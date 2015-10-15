@@ -29,14 +29,14 @@
               <ui-select-choices repeat="address in mailer.addresses"
                                  refresh="mailer.refreshAddresses($select.search)"
                                  refresh-delay="0">
-                <div style="font-weight: bold" ng-bind="address.Name"></div>
-                <small ng-if="address.Id">
-                  ת.ז: {{address.Id}}<br />
-                  דואר"א: {{address.Email}}<br />
+                <div style="font-weight: bold" ng-bind="address.name"></div>
+                <small ng-if="address.id">
+                  ת.ז: {{address.id}}<br />
+                  דואר"א: {{address.email}}<br />
                 </small>
-                <small ng-if="!address.Id">
+                <small ng-if="!address.id">
                   <span style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
-                  <span style="display: block" ng-show="address.Name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
+                  <span style="display: block" ng-show="address.name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
                 </small>
               </ui-select-choices>
             </ui-select>  
@@ -59,14 +59,14 @@
               <ui-select-choices repeat="address in mailer.addresses"
                                  refresh="mailer.refreshAddresses($select.search)"
                                  refresh-delay="0">
-                <div style="font-weight: bold" ng-bind="address.Name"></div>
-                <small ng-if="address.Id">
-                  ת.ז: {{address.Id}}<br />
-                  דואר"א: {{address.Email}}<br />
+                <div style="font-weight: bold" ng-bind="address.name"></div>
+                <small ng-if="address.id">
+                  ת.ז: {{address.id}}<br />
+                  דואר"א: {{address.email}}<br />
                 </small>
-                <small ng-if="!address.Id">
+                <small ng-if="!address.id">
                   <span style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
-                  <span style="display: block" ng-show="address.Name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
+                  <span style="display: block" ng-show="address.name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
                 </small>
               </ui-select-choices>
             </ui-select>
@@ -88,14 +88,14 @@
               <ui-select-choices repeat="address in mailer.addresses"
                                  refresh="mailer.refreshAddresses($select.search)"
                                  refresh-delay="0">
-                <div style="font-weight: bold" ng-bind="address.Name"></div>
-                <small ng-if="address.Id">
-                  ת.ז: {{address.Id}}<br />
-                  דואר"א: {{address.Email}}<br />
+                <div style="font-weight: bold" ng-bind="address.name"></div>
+                <small ng-if="address.id">
+                  ת.ז: {{address.id}}<br />
+                  דואר"א: {{address.email}}<br />
                 </small>
-                <small ng-if="!address.Id">
+                <small ng-if="!address.id">
                   <span style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
-                  <span style="display: block" ng-show="address.Name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
+                  <span style="display: block" ng-show="address.name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
                 </small>
               </ui-select-choices>
             </ui-select>
@@ -146,7 +146,7 @@
         <tr ng-repeat="attachment in mailer.attachments track by $index">
           <td colspan="3" class="attachment">
             <a href="#" ng-click="mailer.remove(attachment)" class="remove_icon" title="להסיר הקובץ המצורף"></a>
-            <span ng-bind="attachment.Name"></span>
+            <span>{{attachment.name}} ({{attachment.size}} בייתים)</span>
           </td>
         </tr>
         <tr class="separator">

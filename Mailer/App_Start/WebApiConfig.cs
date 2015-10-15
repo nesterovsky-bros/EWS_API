@@ -3,6 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
 
+using NesterovskyBros.Code;
+
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
 namespace Mailer
 {
     public static class WebApiConfig
@@ -11,7 +16,6 @@ namespace Mailer
         {
             // Web API configuration and services
 
-            // Web API routes
             config.MapHttpAttributeRoutes();
 
             config.Routes.MapHttpRoute(
@@ -19,6 +23,13 @@ namespace Mailer
                 routeTemplate: "api/{controller}/{action}",
                 defaults: new { action = RouteParameter.Optional }
             );
-        }
+
+            var jsonSettings = config.Formatters.JsonFormatter.SerializerSettings;
+
+            jsonSettings.NullValueHandling = NullValueHandling.Ignore;
+            jsonSettings.ContractResolver = new JsonContractResolver();
+            jsonSettings.Converters.Add(
+              new StringEnumConverter { CamelCaseText = true });
     }
+  }
 }
