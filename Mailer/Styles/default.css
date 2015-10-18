@@ -149,3 +149,11 @@ a.remove_icon:hover {
   background-position: center;
   background-repeat: no-repeat;
 }
+
+.static-select {
+  border: 1px solid #D8D8D8;
+  height: 30px;
+  border-radius: 4px !important;
+  box-shadow: none;
+  box-sizing: border-box;
+}

@@ -26,6 +26,12 @@ namespace Mailer.Code
     public string Content { get; set; }
 
     /// <summary>
+    /// Gets and sets the message From field.
+    /// </summary>
+    [DataMember]
+    public Addressee From { get; set; }
+
+    /// <summary>
     /// Gets and sets the message To recipients.
     /// </summary>
     [DataMember]

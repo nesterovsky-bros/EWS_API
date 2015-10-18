@@ -54,6 +54,18 @@
               isArray: true,
               then: resolveAction
             },
+            GetSenders:
+            {
+              params:
+              {
+                action: "GetSenders"
+              },
+              method: "GET",
+              responseType: "json",
+              headers: { 'Content-Type': 'application/json' },
+              isArray: true,
+              then: resolveAction
+            },
             SendMessage:
             {
               params:

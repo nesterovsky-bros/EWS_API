@@ -39,6 +39,21 @@
     }
 
     /// <summary>
+    /// Retrieves list of potential senders.
+    /// </summary>
+    /// <param name="filter">a search filter.</param>
+    /// <returns>an enumeration of Addressee instances.</returns>
+    public async Task<IEnumerable<Addressee>> GetSenders(string filter)
+    {
+      // TODO: to implement this method
+
+      var list = (await ReadAddresses(filter)).
+        Where(a => !string.IsNullOrEmpty(a.Email));
+
+      return list;
+    }
+
+    /// <summary>
     /// Uploads a file with identities.
     /// Arguments are passed as mime/multipart.
     /// 
@@ -94,21 +109,26 @@
     /// <returns>true when the message was sent successfully.</returns>
     [HttpPost]
     [ActionName("SendMessage")]
+    [Authorize]
     public async Task<bool> SendMessage(Message message)
     {
-      var principal = RequestContext.Principal;
-
-      if ((principal == null) || 
-        (principal.Identity == null) || 
-        !principal.Identity.IsAuthenticated)
-      {
-        throw new HttpResponseException(HttpStatusCode.Forbidden);
-      }
-
       var client = new EwsServiceClient();
       var emailMessage = new EMailMessage();
 
-      emailMessage.From = await ResolveEmail(principal.Identity.Name);
+      if ((message.From == null) || string.IsNullOrEmpty(message.From.Email))
+      {
+        emailMessage.From =
+          await ResolveEmail(RequestContext.Principal.Identity.Name);
+      }
+      else
+      {
+        emailMessage.From = new EMailAddress
+        {
+          Address = message.From.Email,
+          Name = message.From.Name
+        };
+      }
+
       emailMessage.Subject = message.Subject;
       emailMessage.TextBody = message.Content;
       emailMessage.ToRecipients = await GetRecipients(message.To);
@@ -214,8 +234,8 @@
       return await Task.FromResult(
         new EMailAddress
         {
-          Name = "Arthur Nesterovsky",
-          Address = "anesterovsky@modernsystems.com"
+          Name = "EWS User #1",
+          Address = "ewsuser1@poalimdev.onmicrosoft.com"
         });
     } 
 

@@ -23,6 +23,7 @@
           this.bcc = [];
           this.attachments = [];
           this.addresses = [];
+          this.senders = [];
           this.message = null;
           this.subject = null;
           this.$invalidate = this.$scope.$applyAsync.bind(this.$scope);
@@ -33,6 +34,7 @@
     
     MailerController.prototype = Object.create(null,
     {
+      from: { enumerable: true, value: null, writable: true },
       to: { enumerable: true, value: null, writable: true },
       cc: { enumerable: true, value: null, writable: true },
       bcc: { enumerable: true, value: null, writable: true },
@@ -41,6 +43,7 @@
       message: { enumerable: true, value: null, writable: true },
 
       addresses: { enumerable: true, value: null, writable: true },
+      senders: { enumerable: true, value: null, writable: true },
       working: { enumerable: true, value: false, writable: true },
 
       tagTransform: {
@@ -88,29 +91,53 @@
           return null;
         }
       },
-      refreshAddresses: {
+      refreshSenders: {
         value: function (filter)
         {
           var self = this;
+
+          self.senders = [];
+
           var timer =
             self.$timeout(function () { self.working = true; }, 100);
-            
+          
+          self.services.GetSenders(
+            {
+              filter: filter || ""
+            },
+            function (addresses) {
+              self.$timeout.cancel(timer);
+              self.working = false;
+              self.senders = addresses;
+            },
+            function (e) {
+              self.$timeout.cancel(timer);
+              self.working = false;
+              self.errorHandler(e);
+            });
+        }
+      },
+      refreshAddresses: {
+        value: function (filter) {
+          var self = this;
+
+          self.addresses = [];
+
+          var timer =
+            self.$timeout(function () { self.working = true; }, 100);
+
           self.services.GetAddresses(
             {
               filter: filter || ""
             },
             function (addresses) {
               self.$timeout.cancel(timer);
-
               self.working = false;
-
               self.addresses = addresses;
             },
             function (e) {
               self.$timeout.cancel(timer);
-
               self.working = false;
-
               self.errorHandler(e);
             });
         }
@@ -168,6 +195,7 @@
             {
               subject: self.subject,
               content: self.message,
+              from: self.from.length ? self.from[0] : null,
               to: self.to,
               cc: self.cc.length ? self.cc : null,
               bcc: self.bcc.length ? self.bcc : null,

@@ -22,6 +22,22 @@
           <td colspan="3">&nbsp;</td>
         </tr>
         <tr>
+          <th>מאת:</th>
+          <td colspan="2">
+            <ui-select multiple ng-model="mailer.from" tagging="mailer.tagTransform">
+              <ui-select-match placeholder="משתמש מחובר">{{mailer.formatItem($item)}}</ui-select-match>
+              <ui-select-choices repeat="sender in mailer.senders"
+                                 refresh="mailer.refreshSenders($select.search)"
+                                 refresh-delay="0">
+                <div style="font-weight: bold" ng-bind="sender.name"></div>
+                <small>
+                  דואר"א: {{sender.email}}<br />
+                </small>
+              </ui-select-choices>
+            </ui-select>
+        </td>
+        </tr>
+        <tr>
           <th>אל:</th>
           <td>
             <ui-select multiple ng-model="mailer.to" tagging="mailer.tagTransform">
@@ -39,16 +55,16 @@
                   <span style="display: block" ng-show="address.name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
                 </small>
               </ui-select-choices>
-            </ui-select>  
+            </ui-select>
             <span ng-show="form.$submitted && !mailer.to.length" class="errorMsg">שדה <b>אל</b> הוא שדה חובה</span>
           </td>
           <td>
             <span upload-link
-                class="btn btn-primary"
-                accept=".txt"
-                ng-disabled="mailer.waiting"
-                server-url="api/Mailer/UploadIdentities"
-                on-success="mailer.add(data, mailer.to)">רשימת ת.ז</span>
+                  class="btn btn-primary"
+                  accept=".txt"
+                  ng-disabled="mailer.waiting"
+                  server-url="api/Mailer/UploadIdentities"
+                  on-success="mailer.add(data, mailer.to)">רשימת ת.ז</span>
           </td>
         </tr>
         <tr>
@@ -109,7 +125,7 @@
                   on-success="mailer.add(data, mailer.bcc)">רשימת ת.ז</span>
           </td>
         </tr>
-        <tr> 
+        <tr>
           <th>נושא:</th>
           <td colspan="2">
             <input type="text" ng-model="mailer.subject" class="subject form-control" name="subject" required />
