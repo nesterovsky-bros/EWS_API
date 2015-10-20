@@ -4,10 +4,12 @@ define(
     "angular-resource",
     "angular-ui-bootstrap",
     "ui-select",
-    "textAngular",
+    "../textAngular/textAngularSetup",
   ],
   function (angular) {
     "use strict";
+
+    //window.rangy = require("rangy");
 
     return angular.module(
       "app",

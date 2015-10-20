@@ -2,7 +2,7 @@
 {
   require(
   {
-    //waitSeconds: 3600,
+    waitSeconds: 3600,
 
     paths:
     {
@@ -11,11 +11,11 @@
       "angular-resource": "./angular-resource",
       "angular-ui-bootstrap": "./angular-ui/ui-bootstrap-tpls",
       "ui-select": "./ui-select/select",
-      "rangy-core": "./rangy/rangy-core",
-      "rangy-selectionsaverestore": "./rangy/rangy-selectionsaverestore",
-      "sanitize": "./textAngular/textAngular-sanitize",
-      "textAngular-setup": "./textAngular/textAngularSetup",
-      "textAngular": "./textAngular/textAngular",
+      "rangy": "./rangy/lib/rangy-core",
+      //"rangy-selectionsaverestore": "./rangy/lib/rangy-selectionsaverestore",
+      //"sanitize": "./textAngular/textAngular-sanitize",
+      //"textAngular-setup": "./textAngular/textAngularSetup",
+      //"textAngular": "./textAngular/textAngular",
     },
 
     shim:
@@ -25,11 +25,14 @@
       "angular-touch": ["angular"],
       "angular-ui-bootstrap": ["angular"],
       "ui-select": ["angular"],
-      "rangy-core": ["angular"],
-      "rangy-selectionsaverestore": ["angular"],
-      "sanitize": ["angular"],
-      "textAngular-setup": ["angular"],
-      "textAngular": ["angular", "rangy-core", "rangy-selectionsaverestore", "sanitize", "textAngular-setup"],
+      //"rangy": ["angular"],
+      //"rangy-selectionsaverestore": ["angular"],
+      //"sanitize": ["angular"],
+
+      "./textAngular/textAngular-sanitize": ["angular"],
+      "./textAngular/textAngular": ["./textAngular/textAngular-sanitize", "rangy", "./rangy/lib/rangy-selectionsaverestore"],
+      "./textAngular/textAngularSetup": ["./textAngular/textAngular"],
+      //"textAngular": ["angular", "rangy", "rangy-selectionsaverestore", "sanitize", "textAngular-setup"],
     }
   }); 
 })();

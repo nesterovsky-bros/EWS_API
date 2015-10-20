@@ -123,8 +123,8 @@
     <Content Include="Scripts\angular.js" />
     <Content Include="Scripts\angular.min.js" />
     <Content Include="Scripts\r.js" />
-    <Content Include="Scripts\rangy\rangy-core.js" />
-    <Content Include="Scripts\rangy\rangy-selectionsaverestore.js" />
+    <Content Include="Scripts\rangy\lib\rangy-core.js" />
+    <Content Include="Scripts\rangy\lib\rangy-selectionsaverestore.js" />
     <Content Include="Scripts\require.js" />
     <Content Include="Scripts\textAngular\textAngular-sanitize.js" />
     <Content Include="Scripts\textAngular\textAngular-sanitize.min.js" />
