@@ -167,12 +167,17 @@
         return Task.FromResult<IEnumerable<Addressee>>(new Addressee[0]);
       }
 
-      var p = filter.IndexOfAny(
-        new[] { '/', '\\', ',', ';', ',', ':', '&', '|', '#', '^', '@', '~', '!' });
-      var text1 = p == -1 ? filter : filter.Substring(0, p).Trim();
-      var text2 = p == -1 ? null : filter.Substring(p + 1).Trim();
+      var text1 = filter;
+      var text2 = null as string;
       var tokens = SplitPattern.Split(filter).
         Where(item => item.Length > 1).ToArray();
+      var separator = SeparatorPattern.Match(filter);
+
+      if (separator.Success)
+      {
+        text1 = filter.Substring(0, separator.Index);
+        text2 = filter.Substring(separator.Index + separator.Length);
+      }
 
       using(var context = new TaxonomyEntities())
       {
@@ -219,7 +224,8 @@
 #endif
     }
 
-    private static Regex SplitPattern = new Regex(@"[^\d\w]+0*");
+    private static Regex SeparatorPattern = new Regex(@"[/\\,;:&|#^@~!]|של");
+    private static Regex SplitPattern = new Regex(@"\sשל(?:\s|$)|[^\d\w]+0*");
 
     private static string BuildName(ExtendedRecipient item)
     {
