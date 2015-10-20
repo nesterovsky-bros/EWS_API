@@ -30,5 +30,17 @@ namespace Mailer.Code
     /// </summary>
     [DataMember]
     public string Email { get; set; }
+
+    /// <summary>
+    /// A user or group.
+    /// </summary>
+    [DataMember]
+    public string ItemName { get; set; }
+
+    /// <summary>
+    /// A bank hierarchy ID.
+    /// </summary>
+    [DataMember]
+    public string HierarchyID { get; set; }
   }
 }
