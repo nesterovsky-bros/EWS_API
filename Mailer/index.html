@@ -2,12 +2,14 @@
 <html>
 <head>
  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
- <title>Cloud Mailer</title>
+ <title>ענן מיילר</title>
  <link rel="icon" href="Images/email.ico" type="image/x-icon" />
  <link rel="stylesheet" href="Styles/custom-bootstrap.css" type="text/css" />
  <link rel="stylesheet" href="Styles/default.css" type="text/css" />
+ <link rel="stylesheet" href="Styles/css/font-awesome.css" type="text/css" />
  <link rel="stylesheet" href="Styles/textAngular.css" type="text/css" />
  <link rel="stylesheet" href="Styles/select.min.css" type="text/css" />
+ 
  <style type="text/css">.ng-cloak { display: none; }</style>
  <script data-main="Scripts/main" src="Scripts/require.js"></script>
 </head>
@@ -15,20 +17,20 @@
   <div class="centered">
     <form name="form" class="css-form" novalidate>
       <table class="rtl message ng-cloak">
-        <tr>
+        <!--<tr>
           <td colspan="3" class="title">ענן מיילר</td>
         </tr>
         <tr>
           <td colspan="3">&nbsp;</td>
-        </tr>
+        </tr>-->
         <tr>
           <th>מאת:</th>
           <td colspan="2">
-            <ui-select multiple ng-model="mailer.from" tagging="mailer.tagTransform">
+            <ui-select multiple ng-model="mailer.from" tagging="mailer.tagTransform" style="width: 100%">
               <ui-select-match placeholder="משתמש מחובר">{{mailer.formatItem($item)}}</ui-select-match>
               <ui-select-choices repeat="sender in mailer.senders"
                                  refresh="mailer.refreshSenders($select.search)"
-                                 refresh-delay="0">
+                                 refresh-delay="200">
                 <div style="font-weight: bold" ng-bind="sender.name"></div>
                 <small>
                   דואר"א: {{sender.email}}<br />
@@ -40,11 +42,11 @@
         <tr>
           <th>אל:</th>
           <td>
-            <ui-select multiple ng-model="mailer.to" tagging="mailer.tagTransform">
+            <ui-select multiple ng-model="mailer.to" tagging="mailer.tagTransform" style="width: 100%">
               <ui-select-match placeholder="בחר נמען...">{{mailer.formatItem($item)}}</ui-select-match>
               <ui-select-choices repeat="address in mailer.addresses"
                                  refresh="mailer.refreshAddresses($select.search)"
-                                 refresh-delay="0">
+                                 refresh-delay="200">
                 <div style="font-weight: bold" ng-bind="address.name"></div>
                 <small ng-if="address.id">
                   ת.ז: {{address.id}}<br />
@@ -70,11 +72,11 @@
         <tr>
           <th>עותק:</th>
           <td>
-            <ui-select multiple ng-model="mailer.cc" tagging="mailer.tagTransform">
+            <ui-select multiple ng-model="mailer.cc" tagging="mailer.tagTransform" style="width: 100%">
               <ui-select-match placeholder="בחר נמען...">{{mailer.formatItem($item)}}</ui-select-match>
               <ui-select-choices repeat="address in mailer.addresses"
                                  refresh="mailer.refreshAddresses($select.search)"
-                                 refresh-delay="0">
+                                 refresh-delay="200">
                 <div style="font-weight: bold" ng-bind="address.name"></div>
                 <small ng-if="address.id">
                   ת.ז: {{address.id}}<br />
@@ -99,11 +101,11 @@
         <tr>
           <th>עותק סמוי:</th>
           <td>
-            <ui-select multiple ng-model="mailer.bcc" tagging="mailer.tagTransform">
+            <ui-select multiple ng-model="mailer.bcc" tagging="mailer.tagTransform" style="width: 100%">
               <ui-select-match placeholder="בחר נמען...">{{mailer.formatItem($item)}}</ui-select-match>
               <ui-select-choices repeat="address in mailer.addresses"
                                  refresh="mailer.refreshAddresses($select.search)"
-                                 refresh-delay="0">
+                                 refresh-delay="200">
                 <div style="font-weight: bold" ng-bind="address.name"></div>
                 <small ng-if="address.id">
                   ת.ז: {{address.id}}<br />
@@ -135,15 +137,15 @@
         <tr class="separator">
           <td colspan="3"></td>
         </tr>
-        <tr>
+        <!--<tr>
           <td colspan="3">
             TODO: toolbar
           </td>
-        </tr>
+        </tr>-->
         <tr>
           <td colspan="3" class="container">
-            <!--<div text-angular ng-model="mailer.message" class="content"></div>-->
-            <textarea ng-model="mailer.message" class="content form-control" rows="10" cols="40"></textarea>
+            <div text-angular ng-model="mailer.message" class="content form-control"></div>
+            <!--<textarea ng-model="mailer.message" class="content form-control" rows="10" cols="40"></textarea>-->
           </td>
         </tr>
         <tr class="separator">
