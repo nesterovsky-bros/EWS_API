@@ -167,7 +167,8 @@
         return Task.FromResult<IEnumerable<Addressee>>(new Addressee[0]);
       }
 
-      var p = filter.IndexOfAny(new[] { '/', '\\', ',', ';' });
+      var p = filter.IndexOfAny(
+        new[] { '/', '\\', ',', ';', ',', ':', '&', '|', '#', '^', '@', '~', '!' });
       var text1 = p == -1 ? filter : filter.Substring(0, p).Trim();
       var text2 = p == -1 ? null : filter.Substring(p + 1).Trim();
       var tokens = SplitPattern.Split(filter).

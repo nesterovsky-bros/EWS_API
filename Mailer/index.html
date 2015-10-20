@@ -28,7 +28,7 @@
               <ui-select-match placeholder="משתמש מחובר">{{mailer.formatItem($item)}}</ui-select-match>
               <ui-select-choices repeat="sender in mailer.senders"
                                  refresh="mailer.refreshSenders($select.search)"
-                                 refresh-delay="0">
+                                 refresh-delay="250">
                 <div style="font-weight: bold" ng-bind="sender.name"></div>
                 <small>
                   דואר"א: {{sender.email}}<br />
@@ -44,7 +44,7 @@
               <ui-select-match placeholder="בחר נמען...">{{mailer.formatItem($item)}}</ui-select-match>
               <ui-select-choices repeat="address in mailer.addresses"
                                  refresh="mailer.refreshAddresses($select.search)"
-                                 refresh-delay="0">
+                                 refresh-delay="250">
                 <div style="font-weight: bold" ng-bind="address.name"></div>
                 <small ng-if="address.id">
                   ת.ז: {{address.id}}<br />
@@ -74,7 +74,7 @@
               <ui-select-match placeholder="בחר נמען...">{{mailer.formatItem($item)}}</ui-select-match>
               <ui-select-choices repeat="address in mailer.addresses"
                                  refresh="mailer.refreshAddresses($select.search)"
-                                 refresh-delay="0">
+                                 refresh-delay="250">
                 <div style="font-weight: bold" ng-bind="address.name"></div>
                 <small ng-if="address.id">
                   ת.ז: {{address.id}}<br />
@@ -103,7 +103,7 @@
               <ui-select-match placeholder="בחר נמען...">{{mailer.formatItem($item)}}</ui-select-match>
               <ui-select-choices repeat="address in mailer.addresses"
                                  refresh="mailer.refreshAddresses($select.search)"
-                                 refresh-delay="0">
+                                 refresh-delay="250">
                 <div style="font-weight: bold" ng-bind="address.name"></div>
                 <small ng-if="address.id">
                   ת.ז: {{address.id}}<br />
