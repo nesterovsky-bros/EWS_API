@@ -15,11 +15,12 @@
   using System.Text;
   using System.IO;
   using System.Web.Hosting;
+  using System.Data.Entity;
 
   using Mailer.Code;
   using Mailer.EwsServiceReference;
-
-  using NesterovskyBros.Code;
+  using Mailer.Models;
+  using System.Text.RegularExpressions;
 
   /// <summary>
   /// Declares API for cloud mailer application.
@@ -157,9 +158,46 @@
     /// Read fake data from the App_Data/test_data.xml
     /// </summary>
     /// <returns></returns>
-    private async Task<IEnumerable<Addressee>> ReadAddresses(
-      string filter = null)
+    private Task<IEnumerable<Addressee>> ReadAddresses(
+      string filter = null,
+      int take = 100)
     {
+      if (filter == null)
+      {
+        return Task.FromResult<IEnumerable<Addressee>>(new Addressee[0]);
+      }
+
+      var p = filter.IndexOfAny(
+        new[] { '/', '\\', ',', ';', ',', ':', '&', '|', '#', '^', '@', '~', '!' });
+      var text1 = p == -1 ? filter : filter.Substring(0, p).Trim();
+      var text2 = p == -1 ? null : filter.Substring(p + 1).Trim();
+      var tokens = SplitPattern.Split(filter).
+        Where(item => item.Length > 1).ToArray();
+
+      using(var context = new TaxonomyEntities())
+      {
+        return Task.FromResult<IEnumerable<Addressee>>(
+          context.GetRecipients(text1, text2, take).
+            ToArray().
+            Select(
+              item => new Addressee
+              {
+                Id = item.EmployeeCode,
+                Name = BuildName(item),
+                Email = item.EMail,
+                ItemName = item.ItemName,
+                HierarchyID = item.HierarchyID
+              }).
+            Where(item => !string.IsNullOrWhiteSpace(item.Name)).
+            OrderByDescending(
+              item => 
+                tokens.
+                  Where(token => item.Name.Contains(token)).
+                  Sum(token => token.Length)).
+            Take(take));
+      }
+
+#if _
       var path = HostingEnvironment.MapPath("~/App_Data/test_data.xml");
       var list = new List<Addressee>();
 
@@ -178,6 +216,114 @@
       }
 
       return list.AsEnumerable();
+#endif
+    }
+
+    private static Regex SplitPattern = new Regex(@"[^\d\w]+0*");
+
+    private static string BuildName(ExtendedRecipient item)
+    {
+      var result = new StringBuilder();
+
+      if (item.FirstName != null)
+      {
+        result.Append(item.FirstName);
+      }
+
+      if (item.SecondName != null)
+      {
+        if (result.Length > 0)
+        {
+          result.Append(" ");
+        }
+
+        result.Append(item.SecondName);
+      }
+
+      if ((item.Title != null) && (result.Length == 0))
+      {
+        result.Append(item.Title);
+      }
+
+      if (item.BranchName != null)
+      {
+        result.Append("/").
+          Append(item.BranchID).
+          Append(" ").
+          Append(item.BranchName);
+      }
+      else if (item.GroupName != null)
+      {
+        var parts = item.HierarchyID != null ? 
+          item.HierarchyID.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries) :
+          new string[0];
+
+        if (!string.IsNullOrWhiteSpace(item.GroupName))
+        {
+          result.Append("/");
+
+          if (parts.Length > 1)
+          {
+            var delta = 3 - parts[1].Length;
+
+            if (delta > 0)
+            {
+              result.Append(new string('0', delta));
+            }
+
+            result.Append(parts[1]).Append(" ");
+          }
+
+          result.Append(item.GroupName);
+        }
+
+        if (item.DepartmentName != null)
+        {
+          if (!string.IsNullOrWhiteSpace(item.DepartmentName))
+          {
+            result.Append("/");
+
+            if (parts.Length > 2)
+            {
+              var delta = 3 - parts[2].Length;
+
+              if (delta > 0)
+              {
+                result.Append(new string('0', delta));
+              }
+
+              result.Append(parts[2]).Append(" ");
+            }
+
+            result.Append(item.DepartmentName);
+          }
+
+          if (item.AdministrationName != null)
+          {
+            if (!string.IsNullOrWhiteSpace(item.AdministrationName))
+            {
+              result.Append("/");
+
+              if (parts.Length > 3)
+              {
+                var delta = 3 - parts[3].Length;
+
+                if (delta > 0)
+                {
+                  result.Append(new string('0', delta));
+                }
+
+                result.Append(parts[3]).Append(" ");
+              }
+
+              result.Append(item.AdministrationName);
+            }
+          }
+        }
+      }
+      // No more cases.
+
+      return result.ToString();
     }
 
     private async Task<EMailAddress[]> GetRecipients(Addressee[] addresses)

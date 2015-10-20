@@ -1,4 +1,4 @@
-﻿namespace NesterovskyBros.Code
+﻿namespace Mailer.Code
 {
   using System;
   using System.IO;
