@@ -51,8 +51,8 @@
                   דואר"א: {{address.email}}<br />
                 </small>
                 <small ng-if="!address.id">
-                  <span style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
-                  <span style="display: block" ng-show="address.name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
+                  <span ng-if="mailer.getRole(address)" style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
+                  <span ng-if="mailer.getDivision(address)" style="display: block">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
                 </small>
               </ui-select-choices>
             </ui-select>
@@ -81,8 +81,8 @@
                   דואר"א: {{address.email}}<br />
                 </small>
                 <small ng-if="!address.id">
-                  <span style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
-                  <span style="display: block" ng-show="address.name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
+                  <span ng-if="mailer.getRole(address)" style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
+                  <span ng-if="mailer.getDivision(address)" style="display: block">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
                 </small>
               </ui-select-choices>
             </ui-select>
@@ -110,8 +110,8 @@
                   דואר"א: {{address.email}}<br />
                 </small>
                 <small ng-if="!address.id">
-                  <span style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
-                  <span style="display: block" ng-show="address.name.indexOf('/') != -1">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
+                  <span ng-if="mailer.getRole(address)" style="display: block">תפקיד: <span ng-bind="mailer.getRole(address)"></span></span>
+                  <span ng-if="mailer.getDivision(address)" style="display: block">יחידה ארגוני: <span ng-bind="mailer.getDivision(address)"></span></span>
                 </small>
               </ui-select-choices>
             </ui-select>

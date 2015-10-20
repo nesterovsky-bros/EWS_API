@@ -63,7 +63,7 @@
         }
       },
       getRole: {
-        value: function (address)
+        value: function(address)
         {
           var index = -1;
 
@@ -71,19 +71,23 @@
           {
             return null;
           }
-          else if ((index = address.name.lastIndexOf('/')) != -1) {
+          else if ((index = address.name.indexOf('/')) > 0)
+          {
             return address.name.substr(0, index);
           }
-          else {
-            return address.name;
+          else
+          {
+            return index == -1 ? address.name : null;
           }
         }
       },
-      getDivision: {
-        value: function (address) {
+      getDivision:
+      {
+        value: function(address)
+        {
           var index = -1;
 
-          if (address.name && ((index = address.name.lastIndexOf('/')) != -1))
+          if (address.name && ((index = address.name.indexOf('/')) >= 0))
           {
             return address.name.substr(index + 1);
           }

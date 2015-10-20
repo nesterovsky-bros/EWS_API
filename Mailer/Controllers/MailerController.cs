@@ -252,7 +252,7 @@
           Append(" ").
           Append(item.BranchName);
       }
-      else if (item.GroupName != null)
+      else
       {
         var parts = item.HierarchyID != null ? 
           item.HierarchyID.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries) :
@@ -277,51 +277,44 @@
           result.Append(item.GroupName);
         }
 
-        if (item.DepartmentName != null)
+        if (!string.IsNullOrWhiteSpace(item.DepartmentName))
         {
-          if (!string.IsNullOrWhiteSpace(item.DepartmentName))
+          result.Append("/");
+
+          if (parts.Length > 2)
           {
-            result.Append("/");
+            var delta = 3 - parts[2].Length;
 
-            if (parts.Length > 2)
+            if (delta > 0)
             {
-              var delta = 3 - parts[2].Length;
-
-              if (delta > 0)
-              {
-                result.Append(new string('0', delta));
-              }
-
-              result.Append(parts[2]).Append(" ");
+              result.Append(new string('0', delta));
             }
 
-            result.Append(item.DepartmentName);
+            result.Append(parts[2]).Append(" ");
           }
 
-          if (item.AdministrationName != null)
+          result.Append(item.DepartmentName);
+        }
+
+        if (!string.IsNullOrWhiteSpace(item.AdministrationName))
+        {
+          result.Append("/");
+
+          if (parts.Length > 3)
           {
-            if (!string.IsNullOrWhiteSpace(item.AdministrationName))
+            var delta = 3 - parts[3].Length;
+
+            if (delta > 0)
             {
-              result.Append("/");
-
-              if (parts.Length > 3)
-              {
-                var delta = 3 - parts[3].Length;
-
-                if (delta > 0)
-                {
-                  result.Append(new string('0', delta));
-                }
-
-                result.Append(parts[3]).Append(" ");
-              }
-
-              result.Append(item.AdministrationName);
+              result.Append(new string('0', delta));
             }
+
+            result.Append(parts[3]).Append(" ");
           }
+
+          result.Append(item.AdministrationName);
         }
       }
-      // No more cases.
 
       return result.ToString();
     }
