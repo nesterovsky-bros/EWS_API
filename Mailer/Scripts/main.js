@@ -11,7 +11,7 @@
       "angular-resource": "./angular-resource",
       "angular-ui-bootstrap": "./angular-ui/ui-bootstrap-tpls",
       "ui-select": "./ui-select/select",
-      "rangy": "./rangy/rangy-core",
+      "rangy-core": "./rangy/rangy-core",
       "rangy-selectionsaverestore": "./rangy/rangy-selectionsaverestore",
       "sanitize": "./textAngular/textAngular-sanitize",
       "textAngular-setup": "./textAngular/textAngularSetup",
