@@ -6,16 +6,8 @@
 
     paths:
     {
-      text: "./text",
-      angular: "./angular",
-      "angular-resource": "./angular-resource",
-      "angular-ui-bootstrap": "./angular-ui/ui-bootstrap-tpls",
-      "ui-select": "./ui-select/select",
-      "rangy": "./rangy/lib/rangy-core",
-      //"rangy-selectionsaverestore": "./rangy/lib/rangy-selectionsaverestore",
-      //"sanitize": "./textAngular/textAngular-sanitize",
-      //"textAngular-setup": "./textAngular/textAngularSetup",
-      //"textAngular": "./textAngular/textAngular",
+      "angular-ui-bootstrap": "angular-ui/ui-bootstrap-tpls",
+      "ui-select": "ui-select/select"
     },
 
     shim:
@@ -25,18 +17,22 @@
       "angular-touch": ["angular"],
       "angular-ui-bootstrap": ["angular"],
       "ui-select": ["angular"],
-      //"rangy": ["angular"],
-      //"rangy-selectionsaverestore": ["angular"],
-      //"sanitize": ["angular"],
-
-      "./textAngular/textAngular-sanitize": ["angular"],
-      "./textAngular/textAngular": ["./textAngular/textAngular-sanitize", "rangy", "./rangy/lib/rangy-selectionsaverestore"],
-      "./textAngular/textAngularSetup": ["./textAngular/textAngular"],
-      //"textAngular": ["angular", "rangy", "rangy-selectionsaverestore", "sanitize", "textAngular-setup"],
+      "textAngular/textAngular-sanitize": ["angular"],
+      "textAngular/textAngularSetup": ["angular"],
+      "textAngular/textAngular":
+      {
+        deps:
+        [
+          "rangy/lib/rangy-core",
+          "rangy/lib/rangy-selectionsaverestore",
+          "./textAngular-sanitize",
+          "./textAngularSetup"
+        ],
+        init: function(rangy) { window.rangy = rangy; }
+      }
     }
   }); 
 })();
-
 
 require(
   [
@@ -49,5 +45,17 @@ require(
   {
     "use strict";
     
-    return angular.bootstrap(document, ["app"]);
+    // forbid define during angular bootstrap.
+    var prevDefine;
+
+    define = null;
+
+    try
+    {
+      return angular.bootstrap(document, ["app"]);
+    }
+    finally
+    {
+      define = prevDefine;
+    }
   });
