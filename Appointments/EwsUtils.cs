@@ -60,12 +60,8 @@
       var members = 
         await GetMailboxAuthorizedMembers(email, cancellationToken);
 
-      if (members.Length == 0)
-      {
-        return true;
-      }
-
-      if ((principal == null) || 
+      if ((members.Length == 0) ||
+        (principal == null) || 
         (principal.Identity == null) || 
         !principal.Identity.IsAuthenticated)
       {
@@ -73,10 +69,13 @@
       }
 
       return members.Any(
-        member => member.IsGroup ?
+        member => member.Name == "*" ? true :
+          member.IsGroup ?
           principal.IsInRole(member.Name) :
           string.Compare(principal.Identity.Name, member.Name, true) == 0);
     }
+
+    public class MemberImpl : Member { }
 
     /// <summary>
     /// Gets members authorized to access a mail box.
@@ -94,12 +93,19 @@
           Where(item => item.Email == email).
           Select(item => item.GroupName).
           Distinct().
-          Join(
+          GroupJoin(
             model.BankSystemRights,
             groupName => groupName,
             item => item.GroupName,
-            (groupName, item) => 
-              new Member { Name = item.MemberName, IsGroup = item.IsGroup }).
+            (groupName, items) => items).
+          SelectMany(
+            items => items.DefaultIfEmpty(),
+            (items, item) =>
+              new MemberImpl
+              {
+                Name = item == null ? "*" : item.MemberName,
+                IsGroup = item == null ? true : item.IsGroup
+              }).
           Distinct().
           ToArrayAsync(cancellationToken);
       }
