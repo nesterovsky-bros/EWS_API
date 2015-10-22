@@ -26,6 +26,12 @@
   direction: rtl;
 }
 
+.rtl .editor
+{
+  text-align: left;
+  direction: ltr;
+}
+
 .rtl th
 {
   text-align: left;

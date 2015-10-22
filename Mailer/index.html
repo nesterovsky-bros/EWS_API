@@ -5,16 +5,17 @@
  <title>ענן מיילר</title>
  <link rel="icon" href="Images/email.ico" type="image/x-icon" />
  <link rel="stylesheet" href="Styles/custom-bootstrap.css" type="text/css" />
- <link rel="stylesheet" href="Styles/default.css" type="text/css" />
- <link rel="stylesheet" href="Styles/css/font-awesome.css" type="text/css" />
- <link rel="stylesheet" href="Styles/textAngular.css" type="text/css" />
+ <!--<link rel="stylesheet" href="Styles/css/font-awesome.min.css" type="text/css" />
+ <link rel="stylesheet" href="Styles/textAngular.css" type="text/css" />-->
  <link rel="stylesheet" href="Styles/select.min.css" type="text/css" />
- 
+ <link rel="stylesheet" href="Styles/editor.css" type="text/css" />
+ <link rel="stylesheet" href="Styles/default.css" type="text/css" />
+   
  <style type="text/css">.ng-cloak { display: none; }</style>
  <script data-main="Scripts/main" src="Scripts/require.js"></script>
 </head>
 <body ng-controller="MailerController as mailer">
-  <div class="centered">
+  <wysiwyg-edit class="centered">
     <form name="form" class="css-form" novalidate>
       <table class="rtl message ng-cloak">
         <!--<tr>
@@ -143,9 +144,8 @@
           </td>
         </tr>-->
         <tr>
-          <td colspan="3" class="container">
-            <div text-angular ng-model="mailer.message" class="content form-control"></div>
-            <!--<textarea ng-model="mailer.message" class="content form-control" rows="10" cols="40"></textarea>-->
+          <td colspan="3" class="editor container">
+            <wysiwyg-edit content="mailer.message" api="mailer"></wysiwyg-edit>
           </td>
         </tr>
         <tr class="separator">

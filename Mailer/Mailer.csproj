@@ -99,8 +99,11 @@
     <Content Include="Content\ui-bootstrap-csp.css" />
     <Content Include="Global.asax" />
     <Content Include="Images\email.ico" />
+    <Content Include="Images\header-bg.gif" />
+    <Content Include="Images\icons.png" />
     <Content Include="Images\indicator.gif" />
     <Content Include="Images\remove.png" />
+    <Content Include="Images\resize.gif" />
     <Content Include="Images\stop_icon.png" />
     <Content Include="index.html" />
     <Content Include="Models\Taxonomy.Context.tt">
@@ -122,12 +125,12 @@
     <Content Include="Scripts\angular-ui\ui-bootstrap.js" />
     <Content Include="Scripts\angular.js" />
     <Content Include="Scripts\angular.min.js" />
+    <Content Include="Scripts\ngWYSIWYG\wysiwyg.js" />
     <Content Include="Scripts\r.js" />
     <Content Include="Scripts\rangy\lib\rangy-core.js" />
     <Content Include="Scripts\rangy\lib\rangy-selectionsaverestore.js" />
     <Content Include="Scripts\require.js" />
     <Content Include="Scripts\textAngular\textAngular-sanitize.js" />
-    <Content Include="Scripts\textAngular\textAngular-sanitize.min.js" />
     <Content Include="Scripts\textAngular\textAngularSetup.js" />
     <Content Include="Scripts\ui-select\select.js" />
     <Content Include="Scripts\ui-select\select.min.js" />
@@ -158,9 +161,7 @@
     <Content Include="Scripts\app\templates\selectRecipientsDialog.html" />
     <Content Include="Scripts\require.min.js" />
     <Content Include="Scripts\text.js" />
-    <Content Include="Scripts\textAngular\textAngular-rangy.min.js" />
     <Content Include="Scripts\textAngular\textAngular.js" />
-    <Content Include="Scripts\textAngular\textAngular.min.js" />
     <Content Include="Scripts\upload\upload-link-controller.js" />
     <Content Include="Scripts\upload\upload-link.html" />
     <Content Include="Scripts\upload\upload-link.js" />
@@ -183,10 +184,10 @@
       <Generator>WCF Proxy Generator</Generator>
       <LastGenOutput>Reference.cs</LastGenOutput>
     </None>
-    <Content Include="Styles\css\font-awesome.css" />
     <Content Include="Styles\css\font-awesome.min.css" />
     <Content Include="Styles\custom-bootstrap.css" />
     <Content Include="Styles\default.css" />
+    <Content Include="Styles\editor.css" />
     <Content Include="Styles\fonts\fontawesome-webfont.svg" />
     <Content Include="Styles\select.min.css" />
     <Content Include="Styles\textAngular.css" />

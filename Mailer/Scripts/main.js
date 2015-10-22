@@ -7,7 +7,9 @@
     paths:
     {
       "angular-ui-bootstrap": "angular-ui/ui-bootstrap-tpls",
-      "ui-select": "ui-select/select"
+      "angular-sanitize": "angular-sanitize",
+      "ui-select": "ui-select/select",
+      "ngWYSIWYG": "ngWYSIWYG/wysiwyg",
     },
 
     shim:
@@ -16,20 +18,9 @@
       "angular-resource": ["angular"],
       "angular-touch": ["angular"],
       "angular-ui-bootstrap": ["angular"],
+      "angular-sanitize": ["angular"],
       "ui-select": ["angular"],
-      "textAngular/textAngular-sanitize": ["angular"],
-      "textAngular/textAngularSetup": ["angular"],
-      "textAngular/textAngular":
-      {
-        deps:
-        [
-          "rangy/lib/rangy-core",
-          "rangy/lib/rangy-selectionsaverestore",
-          "./textAngular-sanitize",
-          "./textAngularSetup"
-        ],
-        init: function(rangy) { window.rangy = rangy; }
-      }
+      "ngWYSIWYG": ["angular", "angular-sanitize"],
     }
   }); 
 })();
@@ -40,22 +31,11 @@ require(
     "./app/appModule",
     "./app/mailer-controller",
     "./upload/upload-link",
+    "ngWYSIWYG",
   ],
   function(angular)
   {
     "use strict";
     
-    // forbid define during angular bootstrap.
-    var prevDefine;
-
-    define = null;
-
-    try
-    {
-      return angular.bootstrap(document, ["app"]);
-    }
-    finally
-    {
-      define = prevDefine;
-    }
+    return angular.bootstrap(document, ["app"]);
   });

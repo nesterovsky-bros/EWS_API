@@ -17,6 +17,8 @@
       "errorHandler",
       "services",
       function init() {
+        this.scope = this.$scope;
+
         this.$reset = function () {
           this.to = [];
           this.cc = [];
@@ -258,7 +260,26 @@
             attachments.splice(index, 1);
           }
         }
-      }
+      },
+      insertImage: {
+        balue: function () {
+          var deferred = $q.defer();
+
+          // TODO: upload image
+
+          //$timeout(function () {
+          //  var val = prompt('Enter image url', 'http://');
+          //  if (val) {
+          //    deferred.resolve('<img src="' + val + '" style="width: 30%;">');
+          //  }
+          //  else {
+          //    deferred.reject(null);
+          //  }
+          //}, 1000);
+
+          return deferred.promise;
+        }
+      },
     });
 
     MailerController.prototype.constructor = MailerController;
