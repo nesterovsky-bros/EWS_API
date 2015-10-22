@@ -746,9 +746,11 @@
       var service = GetService(email);
 
       var properties = new Office365.PropertySet(
-        Office365.BasePropertySet.FirstClassProperties,
-        Office365.ItemSchema.ExtendedProperties,
-        Office365.ItemSchema.Categories);
+          Office365.BasePropertySet.FirstClassProperties,
+          new Office365.ExtendedPropertyDefinition(
+            Settings.OriginalNotesID.Value,
+            Office365.MapiPropertyType.Binary),
+          Office365.ItemSchema.Categories);
 
       var message = await EwsUtils.TryAction(
         "GetMessage",
@@ -1276,8 +1278,6 @@
             service, 
             new Office365.ItemId(ID),
             properties);
-
-          //appointment.Load(properties);
 
           return Task.FromResult(appointment);
         }, 
