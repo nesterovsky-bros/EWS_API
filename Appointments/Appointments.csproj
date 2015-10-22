@@ -117,11 +117,17 @@
     <Compile Include="ApplicationUser.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
+    <Compile Include="BankSystemRight.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
     <Compile Include="ChangeStateRequest.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
     <Compile Include="LoggingEndPoint.cs" />
     <Compile Include="EwsTraceListener.cs" />
+    <Compile Include="Member.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
     <Compile Include="RulesService.svc.cs">
       <DependentUpon>RulesService.svc</DependentUpon>
     </Compile>

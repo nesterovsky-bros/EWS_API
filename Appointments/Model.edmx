@@ -39,7 +39,7 @@
           <Property Name="GroupName" Type="nvarchar" MaxLength="128" Nullable="false" />
           <Property Name="Description" Type="nvarchar(max)" />
           <Property Name="Local" Type="bit" Nullable="false" />
-          <Property Name="CallbackURL" Type="nvarchar" MaxLength="512" />
+          <Property Name="CallbackURL" Type="nvarchar" MaxLength="256" />
         </EntityType>
         <EntityType Name="BankSystemMailbox">
           <Key>
@@ -56,6 +56,15 @@
           </Key>
           <Property Name="GroupName" Type="nvarchar" MaxLength="128" Nullable="false" />
           <Property Name="FolderID" Type="nvarchar" MaxLength="128" Nullable="false" />
+        </EntityType>
+        <EntityType Name="BankSystemRight">
+          <Key>
+            <PropertyRef Name="GroupName" />
+            <PropertyRef Name="MemberName" />
+          </Key>
+          <Property Name="GroupName" Type="nvarchar" MaxLength="128" Nullable="false" />
+          <Property Name="MemberName" Type="nvarchar" MaxLength="128" Nullable="false" />
+          <Property Name="IsGroup" Type="bit" Nullable="false" />
         </EntityType>
         <EntityType Name="InvalidMailbox">
           <Key>
@@ -137,6 +146,18 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_BankSystemRight_BankSystem">
+          <End Role="BankSystem" Type="Self.BankSystem" Multiplicity="1" />
+          <End Role="BankSystemRight" Type="Self.BankSystemRight" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="BankSystem">
+              <PropertyRef Name="GroupName" />
+            </Principal>
+            <Dependent Role="BankSystemRight">
+              <PropertyRef Name="GroupName" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <EntityContainer Name="EWSQueueModelStoreContainer">
           <EntitySet Name="ChangeStateRequests" EntityType="Self.ChangeStateRequests" Schema="App" store:Type="Tables" />
           <EntitySet Name="Rules" EntityType="Self.Rules" Schema="App" store:Type="Tables" />
@@ -144,6 +165,7 @@
           <EntitySet Name="BankSystem" EntityType="Self.BankSystem" Schema="Data" store:Type="Tables" />
           <EntitySet Name="BankSystemMailbox" EntityType="Self.BankSystemMailbox" Schema="Data" store:Type="Tables" />
           <EntitySet Name="BankSystemNotification" EntityType="Self.BankSystemNotification" Schema="Data" store:Type="Tables" />
+          <EntitySet Name="BankSystemRight" EntityType="Self.BankSystemRight" Schema="Data" store:Type="Tables" />
           <EntitySet Name="InvalidMailbox" EntityType="Self.InvalidMailbox" Schema="Data" store:Type="Tables" />
           <EntitySet Name="MailboxAffinity" EntityType="Self.MailboxAffinity" Schema="Data" store:Type="Tables" />
           <EntitySet Name="MailboxNotification" EntityType="Self.MailboxNotification" Schema="Data" store:Type="Tables" />
@@ -158,6 +180,10 @@
             <End Role="BankSystem" EntitySet="BankSystem" />
             <End Role="BankSystemNotification" EntitySet="BankSystemNotification" />
           </AssociationSet>
+          <AssociationSet Name="FK_BankSystemRight_BankSystem" Association="Self.FK_BankSystemRight_BankSystem">
+            <End Role="BankSystem" EntitySet="BankSystem" />
+            <End Role="BankSystemRight" EntitySet="BankSystemRight" />
+          </AssociationSet>
         </EntityContainer>
       </Schema></edmx:StorageModels>
     <!-- CSDL content -->
@@ -170,6 +196,7 @@
           <EntitySet Name="BankSystems" EntityType="EWSQueueModel.BankSystem" />
           <EntitySet Name="BankSystemMailboxes" EntityType="EWSQueueModel.BankSystemMailbox" />
           <EntitySet Name="BankSystemNotifications" EntityType="EWSQueueModel.BankSystemNotification" />
+          <EntitySet Name="BankSystemRights" EntityType="EWSQueueModel.BankSystemRight" />
           <EntitySet Name="InvalidMailboxes" EntityType="EWSQueueModel.InvalidMailbox" />
           <EntitySet Name="MailboxAffinities" EntityType="EWSQueueModel.MailboxAffinity" />
           <EntitySet Name="MailboxNotifications" EntityType="EWSQueueModel.MailboxNotification" />
@@ -184,7 +211,15 @@
             <End Role="BankSystem" EntitySet="BankSystems" />
             <End Role="BankSystemNotification" EntitySet="BankSystemNotifications" />
           </AssociationSet>
+          <AssociationSet Name="FK_BankSystemRight_BankSystem" Association="EWSQueueModel.FK_BankSystemRight_BankSystem">
+            <End Role="BankSystem" EntitySet="BankSystems" />
+            <End Role="BankSystemRight" EntitySet="BankSystemRights" />
+          </AssociationSet>
         </EntityContainer>
+        <ComplexType Name="Member" >
+          <Property Type="String" Name="Name" Nullable="false" />
+          <Property Type="Boolean" Name="IsGroup" Nullable="false" />
+        </ComplexType>
         <EntityType Name="ChangeStateRequest">
           <Key>
             <PropertyRef Name="ApplicationId" />
@@ -219,9 +254,10 @@
           <Property Name="GroupName" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
           <Property Name="Description" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="Local" Type="Boolean" Nullable="false" />
-          <Property Name="CallbackURL" Type="String" MaxLength="512" FixedLength="false" Unicode="true" />
+          <Property Name="CallbackURL" Type="String" MaxLength="256" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="BankSystemMailboxes" Relationship="EWSQueueModel.FK_BankSystemMailbox_BankSystem" FromRole="BankSystem" ToRole="BankSystemMailbox" />
           <NavigationProperty Name="BankSystemNotifications" Relationship="EWSQueueModel.FK_BankSystemNotification_BankSystem" FromRole="BankSystem" ToRole="BankSystemNotification" />
+          <NavigationProperty Name="BankSystemRights" Relationship="EWSQueueModel.FK_BankSystemRight_BankSystem" FromRole="BankSystem" ToRole="BankSystemRight" />
         </EntityType>
         <EntityType Name="BankSystemMailbox">
           <Key>
@@ -240,6 +276,16 @@
           <Property Name="GroupName" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
           <Property Name="FolderID" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
           <NavigationProperty Name="BankSystem" Relationship="EWSQueueModel.FK_BankSystemNotification_BankSystem" FromRole="BankSystemNotification" ToRole="BankSystem" />
+        </EntityType>
+        <EntityType Name="BankSystemRight">
+          <Key>
+            <PropertyRef Name="GroupName" />
+            <PropertyRef Name="MemberName" />
+          </Key>
+          <Property Name="GroupName" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
+          <Property Name="MemberName" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
+          <Property Name="IsGroup" Type="Boolean" Nullable="false" />
+          <NavigationProperty Name="BankSystem" Relationship="EWSQueueModel.FK_BankSystemRight_BankSystem" FromRole="BankSystemRight" ToRole="BankSystem" />
         </EntityType>
         <EntityType Name="InvalidMailbox">
           <Key>
@@ -321,6 +367,18 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_BankSystemRight_BankSystem">
+          <End Type="EWSQueueModel.BankSystem" Role="BankSystem" Multiplicity="1" />
+          <End Type="EWSQueueModel.BankSystemRight" Role="BankSystemRight" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="BankSystem">
+              <PropertyRef Name="GroupName" />
+            </Principal>
+            <Dependent Role="BankSystemRight">
+              <PropertyRef Name="GroupName" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -376,6 +434,15 @@
             <EntityTypeMapping TypeName="EWSQueueModel.BankSystemNotification">
               <MappingFragment StoreEntitySet="BankSystemNotification">
                 <ScalarProperty Name="FolderID" ColumnName="FolderID" />
+                <ScalarProperty Name="GroupName" ColumnName="GroupName" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="BankSystemRights">
+            <EntityTypeMapping TypeName="EWSQueueModel.BankSystemRight">
+              <MappingFragment StoreEntitySet="BankSystemRight">
+                <ScalarProperty Name="IsGroup" ColumnName="IsGroup" />
+                <ScalarProperty Name="MemberName" ColumnName="MemberName" />
                 <ScalarProperty Name="GroupName" ColumnName="GroupName" />
               </MappingFragment>
             </EntityTypeMapping>

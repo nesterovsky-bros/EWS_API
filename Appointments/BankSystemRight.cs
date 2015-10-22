@@ -15,12 +15,18 @@ namespace Bnhp.Office365
 using System;
     using System.Collections.Generic;
     
-public partial class ApplicationUser
+public partial class BankSystemRight
 {
 
-    public string Email { get; set; }
+    public string GroupName { get; set; }
 
-    public string Password { get; set; }
+    public string MemberName { get; set; }
+
+    public bool IsGroup { get; set; }
+
+
+
+    public virtual BankSystem BankSystem { get; set; }
 
 }
 

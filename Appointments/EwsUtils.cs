@@ -6,19 +6,105 @@
   using System.Diagnostics;
   using System.Net;
   using System.Collections.Generic;
-  using System.Runtime.Serialization;
   using System.Threading.Tasks;
+  using System.Collections.Concurrent;
   using Microsoft.Exchange.WebServices.Autodiscover;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
-  using System.Runtime.ExceptionServices;
-  using System.Collections.Concurrent;
+  using System.Data.Entity;
+  using System.Security.Principal;
 
   /// <summary>
   /// EWS utility API.
   /// </summary>
   public class EwsUtils
   {
+    /// <summary>
+    /// Verifies that a member is authorized to access a mail box.
+    /// </summary>
+    /// <param name="principal">A principal instance.</param>
+    /// <param name="email">A mail box email.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="Task"/> instance.</returns>
+    /// <exception cref="UnauthorizedAccessException">
+    /// In case a principal is not authorized.
+    /// </exception>
+    public static async Task VerifyMailboxAuthorized(
+      IPrincipal principal,
+      string email,
+      CancellationToken cancellationToken = default(CancellationToken))
+    {
+      if (!await IsMailboxAuthorized(principal, email, cancellationToken))
+      {
+        throw new UnauthorizedAccessException();
+      }
+    }
+
+    /// <summary>
+    /// Tests whether the principal is authorized to access a mail box.
+    /// </summary>
+    /// <param name="principal">A principal instance.</param>
+    /// <param name="email">A mail box email.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>true is action is authorized, and false othewise.</returns>
+    public static async Task<bool> IsMailboxAuthorized(
+      IPrincipal principal, 
+      string email,
+      CancellationToken cancellationToken = default(CancellationToken))
+    {
+      if (email == null)
+      {
+        return true;
+      }
+
+      var members = 
+        await GetMailboxAuthorizedMembers(email, cancellationToken);
+
+      if (members.Length == 0)
+      {
+        return true;
+      }
+
+      if ((principal == null) || 
+        (principal.Identity == null) || 
+        !principal.Identity.IsAuthenticated)
+      {
+        return false;
+      }
+
+      return members.Any(
+        member => member.IsGroup ?
+          principal.IsInRole(member.Name) :
+          string.Compare(principal.Identity.Name, member.Name, true) == 0);
+    }
+
+    /// <summary>
+    /// Gets members authorized to access a mail box.
+    /// </summary>
+    /// <param name="email">A mail box to check.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A enumeration of users or groups authorized to access a mail box.</returns>
+    public static async Task<Member[]> GetMailboxAuthorizedMembers(
+      string email,
+      CancellationToken cancellationToken = default(CancellationToken))
+    {
+      using(var model = new EWSQueueEntities())
+      {
+        return await model.BankSystemMailboxes.
+          Where(item => item.Email == email).
+          Select(item => item.GroupName).
+          Distinct().
+          Join(
+            model.BankSystemRights,
+            groupName => groupName,
+            item => item.GroupName,
+            (groupName, item) => 
+              new Member { Name = item.MemberName, IsGroup = item.IsGroup }).
+          Distinct().
+          ToArrayAsync(cancellationToken);
+      }
+    }
+
     /// <summary>
     /// Gets user settings using AutoDiscovery service.
     /// </summary>
