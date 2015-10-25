@@ -745,19 +745,11 @@
     {
       var service = await GetService(email);
 
-      var properties = new Office365.PropertySet(
-          Office365.BasePropertySet.FirstClassProperties,
-          new Office365.ExtendedPropertyDefinition(
-            Settings.OriginalNotesID.Value,
-            Office365.MapiPropertyType.Binary),
-          Office365.ItemSchema.Categories);
-
       var message = await EwsUtils.TryAction(
         "GetMessage",
         email,
         service,
-        i => Task.FromResult(
-          Office365.EmailMessage.Bind(service, ID, properties)),
+        i => Task.FromResult(Office365.EmailMessage.Bind(service, ID)),
         Settings);
 
       return ConvertMessage(message);
@@ -993,7 +985,22 @@
       int? skip = 0,
       int? take = 0)
     {
-      using (var model = new EWSQueueEntities())
+      if ((systemName == null) && (email == null))
+      {
+        await EwsUtils.VerifyBankSystemAuthorized(Thread.CurrentPrincipal, null);
+      }
+
+      if (systemName != null)
+      {
+        await EwsUtils.VerifyBankSystemAuthorized(Thread.CurrentPrincipal, systemName);
+      }
+
+      if (email != null)
+      {
+        await EwsUtils.VerifyMailboxAuthorized(Thread.CurrentPrincipal, email);
+      }
+
+      using(var model = new EWSQueueEntities())
       {
         var query = GetChangesQuery(
           model,
@@ -1057,6 +1064,21 @@
       int? skip = 0,
       int? take = 0)
     {
+      if ((systemName == null) && (email == null))
+      {
+        await EwsUtils.VerifyBankSystemAuthorized(Thread.CurrentPrincipal, null);
+      }
+
+      if (systemName != null)
+      {
+        await EwsUtils.VerifyBankSystemAuthorized(Thread.CurrentPrincipal, systemName);
+      }
+
+      if (email != null)
+      {
+        await EwsUtils.VerifyMailboxAuthorized(Thread.CurrentPrincipal, email);
+      }
+
       using (var model = new EWSQueueEntities())
       {
         var query = GetChangesQuery(
@@ -1136,6 +1158,148 @@
       }
 
       return query;
+    }
+    #endregion
+
+    #region Manipulations with mailbox groups.
+    /// <summary>
+    /// Enumerates a mailboxes of a specified bank system.
+    /// </summary>
+    /// <param name="systemName">A system name.</param>
+    /// <param name="skip">
+    /// Optional number of record to skip in result.
+    /// </param>
+    /// <param name="take">
+    /// Optional number of records to return from result.
+    /// </param>
+    /// <returns>A enumeration of mailboxes.</returns>
+    public async Task<IEnumerable<string>> GetBankSystemMailboxes(
+      string systemName,
+      int? skip = null,
+      int? take = null)
+    {
+      if (systemName == null)
+      {
+        throw new ArgumentException("systemName");
+      }
+
+      await EwsUtils.VerifyBankSystemAuthorized(Thread.CurrentPrincipal, systemName);
+
+      using(var model = new EWSQueueEntities())
+      {
+        var query = model.BankSystemMailboxes.
+          Where(item => item.GroupName == systemName).
+          Select(item => item.Email);
+
+        if ((skip != null) || (take != null))
+        {
+          query = query.OrderBy(item => item);
+
+          if (skip != null)
+          {
+            query = query.Skip(skip.Value);
+          }
+
+          if (take != null)
+          {
+            query = query.Take(take.Value);
+          }
+        }
+
+        return await query.ToListAsync();
+      }
+    }
+
+    /// <summary>
+    /// Adds mailboxes to a local bank system.
+    /// </summary>
+    /// <param name="systemName">A system name.</param>
+    /// <param name="mailboxes">Mailboxes to add.</param>
+    /// <returns>Action task.</returns>
+    public async Task<bool> AddBankSystemMailboxes(
+      string systemName,
+      string[] mailboxes)
+    {
+      if (systemName == null)
+      {
+        throw new ArgumentException("systemName");
+      }
+
+      await EwsUtils.VerifyBankSystemAuthorized(Thread.CurrentPrincipal, systemName);
+
+      using(var model = new EWSQueueEntities())
+      {
+        if (!model.BankSystems.
+          Any(item => (item.GroupName == systemName) && item.Local))
+        {
+          throw new ArgumentException("systemName");
+        }
+
+        model.BankSystemMailboxes.AddRange(
+          mailboxes.
+            Where(
+              email => !model.BankSystemMailboxes.
+                Any(
+                  inner =>
+                    (inner.GroupName == systemName) &&
+                    (inner.Email == email))).
+            Select(
+              email =>
+                new BankSystemMailbox
+                {
+                  GroupName = systemName,
+                  Email = email
+                }));
+
+        await model.SaveChangesAsync();
+      }
+
+      return true;
+    }
+
+    /// <summary>
+    /// Removes mailboxes from a local bank system.
+    /// </summary>
+    /// <param name="systemName">A system name.</param>
+    /// <param name="mailboxes">Mailboxes to remove.</param>
+    /// <returns>Action task.</returns>
+    public async Task<bool> RemoveBankSystemMailboxes(
+      string systemName,
+      string[] mailboxes)
+    {
+      if (systemName == null)
+      {
+        throw new ArgumentException("systemName");
+      }
+
+      await EwsUtils.VerifyBankSystemAuthorized(Thread.CurrentPrincipal, systemName);
+
+      using(var model = new EWSQueueEntities())
+      {
+        if (!model.BankSystems.
+          Any(item => (item.GroupName == systemName) && item.Local))
+        {
+          throw new ArgumentException("systemName");
+        }
+
+        foreach(var email in mailboxes)
+        {
+          var mailbox = await model.BankSystemMailboxes.Where(
+            item =>
+              (item.GroupName == systemName) &&
+              (item.Email == email)).
+            FirstOrDefaultAsync();
+
+          if (mailbox != null)
+          {
+            model.Entry(mailbox).State = EntityState.Deleted;
+          }
+        }
+
+        await model.SaveChangesAsync();
+      }
+
+      return true;
     }
     #endregion
 
@@ -1265,25 +1429,11 @@
       string email,
       string ID)
     {
-      var properties = new Office365.PropertySet(
-          Office365.BasePropertySet.FirstClassProperties,
-          new Office365.ExtendedPropertyDefinition(
-            Settings.OriginalNotesID.Value,
-            Office365.MapiPropertyType.Binary),
-          Office365.ItemSchema.Categories);
-      
       return await EwsUtils.TryAction(
         "RetrieveAppointment",
         email,
         service,
-        i => {
-          var appointment = Office365.Appointment.Bind(
-            service, 
-            new Office365.ItemId(ID),
-            properties);
-
-          return Task.FromResult(appointment);
-        }, 
+        i => Task.FromResult(Office365.Appointment.Bind(service, new Office365.ItemId(ID))),
         Settings);
     }
 
@@ -1304,14 +1454,10 @@
       var target = result.GetType();
       var source = item.GetType();
 
-      foreach (var definition in item.GetLoadedPropertyDefinitions())
+      foreach (Office365.PropertyDefinition definition in
+        item.GetLoadedPropertyDefinitions())
       {
-        if (!(definition is Office365.PropertyDefinition))
-        {
-          continue;
-        }
-
-        var name = ((Office365.PropertyDefinition)definition).Name;
+        var name = definition.Name;
         var property = source.GetProperty(name);
         var targetProperty = target.GetProperty(name);
 
@@ -1520,83 +1666,57 @@
       var properties = null as Office365.ExtendedPropertyCollection;
       var result = null as List<ExtendedProperty>;
 
-      if (item.ExtendedProperties != null)
+      if (item.TryGetProperty(
+        Office365.ItemSchema.ExtendedProperties,
+        out properties) &&
+        (properties != null))
       {
-        result = new List<ExtendedProperty>();
-
-        foreach (var property in item.ExtendedProperties)
+        foreach (var property in properties)
         {
+          var isNotesID = false;
           var propertyDefinition = property.PropertyDefinition;
-          var propertyName = ((Settings.OriginalNotesID != null) &&
-            (propertyDefinition.Tag == Settings.OriginalNotesID)) ?
-            "OriginalNotesID" : propertyDefinition.Name;
 
-          result.Add(
-            new ExtendedProperty
+          if (propertyDefinition.PropertySetId !=
+            EwsService.ExtendedPropertySetId)
+          {
+            isNotesID = (Settings.OriginalNotesID != null) &&
+              (propertyDefinition.Tag == Settings.OriginalNotesID);
+
+            if (!isNotesID)
             {
-              Name = propertyName,
-              Value = property.Value == null ? null : 
-                property.PropertyDefinition.MapiType == Office365.MapiPropertyType.Binary ?
-                  Convert.ToBase64String(property.Value as byte[]) : 
-                  property.Value.ToString()
-            });
+              // not our extended property, skip it
+              continue;
+            }
+          }
+
+          if (result == null)
+          {
+            result = new List<ExtendedProperty>();
+          }
+
+          if (isNotesID)
+          {
+            result.Add(
+              new ExtendedProperty
+              {
+                Name = "OriginalNotesID",
+                Value = 
+                  property.Value == null ? null : property.Value.ToString()
+              });
+          }
+          else
+          {
+            result.Add(
+              new ExtendedProperty
+              {
+                Name = property.PropertyDefinition.Name,
+                Value = property.Value as string
+              });
+          }
         }
       }
 
-      /*
-        if (item.TryGetProperty(
-          Office365.ItemSchema.ExtendedProperties,
-          out properties) &&
-          (properties != null))
-        {
-          foreach (var property in properties)
-          {
-            var isNotesID = false;
-            var propertyDefinition = property.PropertyDefinition;
-
-            if (propertyDefinition.PropertySetId !=
-              EwsService.ExtendedPropertySetId)
-            {
-              isNotesID = (Settings.OriginalNotesID != null) &&
-                (propertyDefinition.Tag == Settings.OriginalNotesID);
-
-              if (!isNotesID)
-              {
-                // not our extended property, skip it
-                continue;
-              }
-            }
-
-            if (result == null)
-            {
-              result = new List<ExtendedProperty>();
-            }
-
-            if (isNotesID)
-            {
-              result.Add(
-                new ExtendedProperty
-                {
-                  Name = "OriginalNotesID",
-                  Value =
-                    property.Value == null ? null :
-                      UTF8Encoding.UTF8.GetString(property.Value as byte[])
-                });
-            }
-            else
-            {
-              result.Add(
-                new ExtendedProperty
-                {
-                  Name = property.PropertyDefinition.Name,
-                  Value = property.Value as string
-                });
-            }
-          }
-        }
-        */
-
-        return result;
+      return result;
     }
 
     private void SetExtendedProperties(
@@ -1616,7 +1736,7 @@
                 new Office365.ExtendedPropertyDefinition(
                   Settings.OriginalNotesID.Value,
                   Office365.MapiPropertyType.Binary),
-                UTF8Encoding.UTF8.GetBytes(property.Value));
+                Convert.FromBase64String(property.Value));
             }
           }
           else
@@ -1893,15 +2013,15 @@
       RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
 
     /// <summary>
+    /// The GUID for the extended property set.
+    /// </summary>
+    private static Guid ExtendedPropertySetId =
+      new Guid("{DD12CD36-DB49-4002-A809-56B40E6B60E9}");
+
+    /// <summary>
     /// Internal counter of number of accesses to GetService() method.
     /// </summary>
     private static int accessCount;
-
-    /// <summary>
-    /// Unique extended properties set ID.
-    /// </summary>
-    private static Guid ExtendedPropertySetId = 
-      new Guid("{DB04D3EE-8160-45EE-8A77-145D8A042231}");
 
     /// <summary>
     /// A map of property name to a property definition.
