@@ -9,6 +9,7 @@
       "angular-ui-bootstrap": "angular-ui/ui-bootstrap-tpls",
       "angular-sanitize": "angular-sanitize",
       "ui-select": "ui-select/select",
+      "errorHandler": "app/services/errorHandler",
       "ngWYSIWYG": "ngWYSIWYG/wysiwyg",
     },
 

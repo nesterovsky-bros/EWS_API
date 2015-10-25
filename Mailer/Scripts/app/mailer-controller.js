@@ -18,6 +18,8 @@
       "services",
       function init() {
         this.scope = this.$scope;
+        this.editorConfig = {};
+        this.$invalidate = this.$scope.$applyAsync.bind(this.$scope);
 
         this.$reset = function () {
           this.to = [];
@@ -28,7 +30,6 @@
           this.senders = [];
           this.message = null;
           this.subject = null;
-          this.$invalidate = this.$scope.$applyAsync.bind(this.$scope);
         };
 
         this.$reset();
@@ -48,6 +49,8 @@
       senders: { enumerable: true, value: null, writable: true },
       working: { enumerable: true, value: false, writable: true },
 
+      editorConfig: { enumerable: true, value: null, writable: true },
+      
       tagTransform: {
         value: function (tag)
         {

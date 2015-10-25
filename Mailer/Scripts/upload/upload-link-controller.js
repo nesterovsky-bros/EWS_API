@@ -6,7 +6,6 @@ define(
   [
     "angular",
     "../injectFn",
-    "../app/services/errorHandler",
   ],
   function (angular, injectFn)
   {
@@ -19,7 +18,7 @@ define(
       "errorHandler",
       function ()
       {
-        // TODO: initialize controller, if need.
+        this.errorHandler = this.errorHandler || function (e) { alert(e); };
       });
 
     UploadController.prototype = Object.create(null,

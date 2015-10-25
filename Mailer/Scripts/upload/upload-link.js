@@ -5,13 +5,15 @@
 define(
   [
     "angular",
-    "../app/appModule",
+    //"../app/appModule",
     "text!./upload-link.html!strip",
     "./upload-link-controller",
   ],
-  function (angular, module, template, controller)
+  function (angular, template, controller)
   {
     "use strict";
+
+    var module = angular.module('ui-upload', []);
 
     module.directive(
       "uploadLink",

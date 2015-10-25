@@ -6,9 +6,9 @@ body {margin:0; padding:25px; font:12px Verdana,Arial}
 .tinyeditor .resizer { background: url(../images/resize.gif) 15px 15px no-repeat; float: right; height: 32px; width: 32px; cursor: ns-resize; }
 .tinyeditor-header {height:31px; border-bottom:1px solid #bbb; background:url(../images/header-bg.gif) repeat-x; padding-top:1px}
 .tinyeditor-header select {float:left; margin-top:5px}
-.tinyeditor-font {margin-left:12px}
-.tinyeditor-size {margin:0 3px}
-.tinyeditor-style {margin-right:12px}
+.tinyeditor-font {margin-left:12px;width:6em;}
+.tinyeditor-size {margin:0 3px;width:4em;}
+.tinyeditor-style {margin-right:12px;width:5em;}
 .tinyeditor-divider {float:left; width:1px; height:30px; background:#ccc}
 .tinyeditor-control {
     float:left; 
