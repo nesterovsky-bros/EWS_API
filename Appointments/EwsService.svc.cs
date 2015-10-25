@@ -1715,60 +1715,7 @@
         }
       }
 
-      /*
-        if (item.TryGetProperty(
-          Office365.ItemSchema.ExtendedProperties,
-          out properties) &&
-          (properties != null))
-        {
-          foreach (var property in properties)
-          {
-            var isNotesID = false;
-            var propertyDefinition = property.PropertyDefinition;
-
-            if (propertyDefinition.PropertySetId !=
-              EwsService.ExtendedPropertySetId)
-            {
-              isNotesID = (Settings.OriginalNotesID != null) &&
-                (propertyDefinition.Tag == Settings.OriginalNotesID);
-
-              if (!isNotesID)
-              {
-                // not our extended property, skip it
-                continue;
-              }
-            }
-
-            if (result == null)
-            {
-              result = new List<ExtendedProperty>();
-            }
-
-            if (isNotesID)
-            {
-              result.Add(
-                new ExtendedProperty
-                {
-                  Name = "OriginalNotesID",
-                  Value =
-                    property.Value == null ? null :
-                      UTF8Encoding.UTF8.GetString(property.Value as byte[])
-                });
-            }
-            else
-            {
-              result.Add(
-                new ExtendedProperty
-                {
-                  Name = property.PropertyDefinition.Name,
-                  Value = property.Value as string
-                });
-            }
-          }
-        }
-        */
-
-        return result;
+      return result;
     }
 
     private void SetExtendedProperties(
@@ -1788,7 +1735,7 @@
                 new Office365.ExtendedPropertyDefinition(
                   Settings.OriginalNotesID.Value,
                   Office365.MapiPropertyType.Binary),
-                UTF8Encoding.UTF8.GetBytes(property.Value));
+                Convert.FromBase64String(property.Value));
             }
           }
           else
