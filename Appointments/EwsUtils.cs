@@ -20,6 +20,27 @@
   public class EwsUtils
   {
     /// <summary>
+    /// Verifies that a member is authorized to access a bank system.
+    /// </summary>
+    /// <param name="principal">A principal instance.</param>
+    /// <param name="systemName">A bank system.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="Task"/> instance.</returns>
+    /// <exception cref="UnauthorizedAccessException">
+    /// In case a principal is not authorized.
+    /// </exception>
+    public static async Task VerifyBankSystemAuthorized(
+      IPrincipal principal,
+      string systemName,
+      CancellationToken cancellationToken = default(CancellationToken))
+    {
+      if (!await IsBankSystemAuthorized(principal, systemName, cancellationToken))
+      {
+        throw new UnauthorizedAccessException();
+      }
+    }
+
+    /// <summary>
     /// Verifies that a member is authorized to access a mail box.
     /// </summary>
     /// <param name="principal">A principal instance.</param>
@@ -41,6 +62,51 @@
     }
 
     /// <summary>
+    /// Tests whether the principal is authorized to access a bank system.
+    /// </summary>
+    /// <param name="principal">A principal instance.</param>
+    /// <param name="systemName">A bank system.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>true is action is authorized, and false othewise.</returns>
+    public static async Task<bool> IsBankSystemAuthorized(
+      IPrincipal principal,
+      string systemName,
+      CancellationToken cancellationToken = default(CancellationToken))
+    {
+      if (systemName == null)
+      {
+        var bankSystems = null as string[];
+
+        using (var model = new EWSQueueEntities())
+        {
+          bankSystems = await model.BankSystems.
+            Select(item => item.GroupName).
+            ToArrayAsync(cancellationToken);
+        }
+
+        return (await Task.WhenAll(
+          bankSystems.
+            Where(name => name != null).
+            Select(name => IsBankSystemAuthorized(principal, name, cancellationToken)))).
+          All(value => value);
+      }
+
+      var members = await GetBankSystemAuthorizedMembers(systemName, cancellationToken);
+
+      if (members.Length == 0)
+      {
+        return false;
+      }
+
+      return members.Any(
+        member => member.Name == "*" ? true :
+        principal == null ? false :
+        member.IsGroup ? principal.IsInRole(member.Name) :
+        principal.Identity == null ? false :
+        string.Compare(principal.Identity.Name, member.Name, true) == 0);
+    }
+
+    /// <summary>
     /// Tests whether the principal is authorized to access a mail box.
     /// </summary>
     /// <param name="principal">A principal instance.</param>
@@ -54,28 +120,58 @@
     {
       if (email == null)
       {
-        return true;
+        return false;
       }
 
-      var members = 
-        await GetMailboxAuthorizedMembers(email, cancellationToken);
+      var members = await GetMailboxAuthorizedMembers(email, cancellationToken);
 
-      if ((members.Length == 0) ||
-        (principal == null) || 
-        (principal.Identity == null) || 
-        !principal.Identity.IsAuthenticated)
+      if (members.Length == 0)
       {
         return false;
       }
 
       return members.Any(
         member => member.Name == "*" ? true :
-          member.IsGroup ?
-          principal.IsInRole(member.Name) :
-          string.Compare(principal.Identity.Name, member.Name, true) == 0);
+        principal == null ? false :
+        member.IsGroup ? principal.IsInRole(member.Name) :
+        principal.Identity == null ? false :
+        string.Compare(principal.Identity.Name, member.Name, true) == 0);
     }
 
     public class MemberImpl : Member { }
+
+    /// <summary>
+    /// Gets members authorized to access a bank system.
+    /// </summary>
+    /// <param name="systemName">A bank system to check.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A enumeration of users or groups authorized to access a mail box.</returns>
+    public static async Task<Member[]> GetBankSystemAuthorizedMembers(
+      string systemName,
+      CancellationToken cancellationToken = default(CancellationToken))
+    {
+      using (var model = new EWSQueueEntities())
+      {
+        return await model.BankSystems.
+          Where(item => item.GroupName == systemName).
+          Select(item => item.GroupName).
+          GroupJoin(
+            model.BankSystemRights,
+            groupName => groupName,
+            item => item.GroupName,
+            (groupName, items) => items).
+          SelectMany(
+            items => items.DefaultIfEmpty(),
+            (items, item) =>
+              new MemberImpl
+              {
+                Name = item == null ? "*" : item.MemberName,
+                IsGroup = item == null ? true : item.IsGroup
+              }).
+          Distinct().
+          ToArrayAsync(cancellationToken);
+      }
+    }
 
     /// <summary>
     /// Gets members authorized to access a mail box.

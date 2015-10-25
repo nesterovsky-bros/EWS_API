@@ -310,7 +310,7 @@ namespace Bnhp.Office365
     /// <param name="startDate">Optional start date.</param>
     /// <param name="endDate">Optional end date.</param>
     /// <param name="skip">
-    /// Optional number of record to skip in result.
+    /// Optional number of records to skip in result.
     /// </param>
     /// <param name="take">
     /// Optional number of records to return from result.
@@ -335,7 +335,7 @@ namespace Bnhp.Office365
     /// <param name="startDate">Optional start date.</param>
     /// <param name="endDate">Optional end date.</param>
     /// <param name="skip">
-    /// Optional number of record to skip in result.
+    /// Optional number of records to skip in result.
     /// </param>
     /// <param name="take">
     /// Optional number of records to return from result.
@@ -350,6 +350,47 @@ namespace Bnhp.Office365
       DateTime? endDate,
       int? skip = 0,
       int? take = 0);
+    #endregion
+
+    #region Manipulations with mailbox groups.
+    /// <summary>
+    /// Enumerates a mailboxes of a specified bank system.
+    /// </summary>
+    /// <param name="systemName">A system name.</param>
+    /// <param name="skip">
+    /// Optional number of record to skip in result.
+    /// </param>
+    /// <param name="take">
+    /// Optional number of records to return from result.
+    /// </param>
+    /// <returns>A enumeration of mailboxes.</returns>
+    [OperationContract]
+    Task<IEnumerable<string>> GetBankSystemMailboxes(
+      string systemName,
+      int? skip = null,
+      int? take = null);
+
+    /// <summary>
+    /// Adds mailboxes to a local bank system.
+    /// </summary>
+    /// <param name="systemName">A system name.</param>
+    /// <param name="mailboxes">Mailboxes to add.</param>
+    /// <returns>Action task.</returns>
+    [OperationContract]
+    Task<bool> AddBankSystemMailboxes(
+      string systemName, 
+      string[] mailboxes);
+
+    /// <summary>
+    /// Removes mailboxes from a local bank system.
+    /// </summary>
+    /// <param name="systemName">A system name.</param>
+    /// <param name="mailboxes">Mailboxes to remove.</param>
+    /// <returns>Action task.</returns>
+    [OperationContract]
+    Task<bool> RemoveBankSystemMailboxes(
+      string systemName,
+      string[] mailboxes);
     #endregion
   }
 }

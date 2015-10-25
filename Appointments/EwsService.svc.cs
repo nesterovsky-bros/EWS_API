@@ -993,7 +993,22 @@
       int? skip = 0,
       int? take = 0)
     {
-      using (var model = new EWSQueueEntities())
+      if ((systemName == null) && (email == null))
+      {
+        await EwsUtils.VerifyBankSystemAuthorized(Thread.CurrentPrincipal, null);
+      }
+
+      if (systemName != null)
+      {
+        await EwsUtils.VerifyBankSystemAuthorized(Thread.CurrentPrincipal, systemName);
+      }
+
+      if (email != null)
+      {
+        await EwsUtils.VerifyMailboxAuthorized(Thread.CurrentPrincipal, email);
+      }
+
+      using(var model = new EWSQueueEntities())
       {
         var query = GetChangesQuery(
           model,
@@ -1057,6 +1072,21 @@
       int? skip = 0,
       int? take = 0)
     {
+      if ((systemName == null) && (email == null))
+      {
+        await EwsUtils.VerifyBankSystemAuthorized(Thread.CurrentPrincipal, null);
+      }
+
+      if (systemName != null)
+      {
+        await EwsUtils.VerifyBankSystemAuthorized(Thread.CurrentPrincipal, systemName);
+      }
+
+      if (email != null)
+      {
+        await EwsUtils.VerifyMailboxAuthorized(Thread.CurrentPrincipal, email);
+      }
+
       using (var model = new EWSQueueEntities())
       {
         var query = GetChangesQuery(
@@ -1136,6 +1166,148 @@
       }
 
       return query;
+    }
+    #endregion
+
+    #region Manipulations with mailbox groups.
+    /// <summary>
+    /// Enumerates a mailboxes of a specified bank system.
+    /// </summary>
+    /// <param name="systemName">A system name.</param>
+    /// <param name="skip">
+    /// Optional number of record to skip in result.
+    /// </param>
+    /// <param name="take">
+    /// Optional number of records to return from result.
+    /// </param>
+    /// <returns>A enumeration of mailboxes.</returns>
+    public async Task<IEnumerable<string>> GetBankSystemMailboxes(
+      string systemName,
+      int? skip = null,
+      int? take = null)
+    {
+      if (systemName == null)
+      {
+        throw new ArgumentException("systemName");
+      }
+
+      await EwsUtils.VerifyBankSystemAuthorized(Thread.CurrentPrincipal, systemName);
+
+      using(var model = new EWSQueueEntities())
+      {
+        var query = model.BankSystemMailboxes.
+          Where(item => item.GroupName == systemName).
+          Select(item => item.Email);
+
+        if ((skip != null) || (take != null))
+        {
+          query = query.OrderBy(item => item);
+
+          if (skip != null)
+          {
+            query = query.Skip(skip.Value);
+          }
+
+          if (take != null)
+          {
+            query = query.Take(take.Value);
+          }
+        }
+
+        return await query.ToListAsync();
+      }
+    }
+
+    /// <summary>
+    /// Adds mailboxes to a local bank system.
+    /// </summary>
+    /// <param name="systemName">A system name.</param>
+    /// <param name="mailboxes">Mailboxes to add.</param>
+    /// <returns>Action task.</returns>
+    public async Task<bool> AddBankSystemMailboxes(
+      string systemName,
+      string[] mailboxes)
+    {
+      if (systemName == null)
+      {
+        throw new ArgumentException("systemName");
+      }
+
+      await EwsUtils.VerifyBankSystemAuthorized(Thread.CurrentPrincipal, systemName);
+
+      using(var model = new EWSQueueEntities())
+      {
+        if (!model.BankSystems.
+          Any(item => (item.GroupName == systemName) && item.Local))
+        {
+          throw new ArgumentException("systemName");
+        }
+
+        model.BankSystemMailboxes.AddRange(
+          mailboxes.
+            Where(
+              email => !model.BankSystemMailboxes.
+                Any(
+                  inner =>
+                    (inner.GroupName == systemName) &&
+                    (inner.Email == email))).
+            Select(
+              email =>
+                new BankSystemMailbox
+                {
+                  GroupName = systemName,
+                  Email = email
+                }));
+
+        await model.SaveChangesAsync();
+      }
+
+      return true;
+    }
+
+    /// <summary>
+    /// Removes mailboxes from a local bank system.
+    /// </summary>
+    /// <param name="systemName">A system name.</param>
+    /// <param name="mailboxes">Mailboxes to remove.</param>
+    /// <returns>Action task.</returns>
+    public async Task<bool> RemoveBankSystemMailboxes(
+      string systemName,
+      string[] mailboxes)
+    {
+      if (systemName == null)
+      {
+        throw new ArgumentException("systemName");
+      }
+
+      await EwsUtils.VerifyBankSystemAuthorized(Thread.CurrentPrincipal, systemName);
+
+      using(var model = new EWSQueueEntities())
+      {
+        if (!model.BankSystems.
+          Any(item => (item.GroupName == systemName) && item.Local))
+        {
+          throw new ArgumentException("systemName");
+        }
+
+        foreach(var email in mailboxes)
+        {
+          var mailbox = await model.BankSystemMailboxes.Where(
+            item =>
+              (item.GroupName == systemName) &&
+              (item.Email == email)).
+            FirstOrDefaultAsync();
+
+          if (mailbox != null)
+          {
+            model.Entry(mailbox).State = EntityState.Deleted;
+          }
+        }
+
+        await model.SaveChangesAsync();
+      }
+
+      return true;
     }
     #endregion
 
@@ -1893,7 +2065,7 @@
       RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
 
     /// <summary>
-    /// Internal counter of number of accesses to GetService() method.
+    /// The GUID for the extended property set.
     /// </summary>
     private static int accessCount;
 
