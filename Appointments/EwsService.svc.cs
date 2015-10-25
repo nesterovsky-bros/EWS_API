@@ -199,7 +199,7 @@
               "FindAppointments.Bind",
               email,
               service,
-              i => Task.FromResult(Office365.Appointment.Bind(service, appointment.Id)),
+              i => RetrieveAppointment(service, email, appointment.Id.ToString()),
               Settings))));
     }
 
@@ -713,12 +713,12 @@
       {
         foreach (var item in items)
         {
-          var message = ConvertMessage(await EwsUtils.TryAction(
+          var message = await EwsUtils.TryAction(
             "FindMessages.Bind",
             email,
             service,
-            i => Task.FromResult(Office365.EmailMessage.Bind(service, item.Id)),
-            Settings));
+            i => GetMessage(email, item.Id.ToString()),
+            Settings);
 
           if (message != null)
           {
