@@ -15,7 +15,7 @@
  <script data-main="Scripts/main" src="Scripts/require.js"></script>
 </head>
 <body ng-controller="MailerController as mailer">
-  <wysiwyg-edit class="centered">
+  <div class="centered">
     <form name="form" class="css-form" novalidate>
       <table class="rtl message ng-cloak">
         <!--<tr>
@@ -67,7 +67,8 @@
                   accept=".txt"
                   ng-disabled="mailer.waiting"
                   server-url="api/Mailer/UploadIdentities"
-                  on-success="mailer.add(data, mailer.to)">רשימת ת.ז</span>
+                  on-success="mailer.add(data, mailer.to)"
+                  on-error="mailer.errorHandler(e)">רשימת ת.ז</span>
           </td>
         </tr>
         <tr>
@@ -96,7 +97,8 @@
                   accept=".txt"
                   ng-disabled="mailer.waiting"
                   server-url="api/Mailer/UploadIdentities"
-                  on-success="mailer.add(data, mailer.cc)">רשימת ת.ז</span>
+                  on-success="mailer.add(data, mailer.cc)"
+                  on-error="mailer.errorHandler(e)">רשימת ת.ז</span>
           </td>
         </tr>
         <tr>
@@ -125,7 +127,8 @@
                   accept=".txt"
                   ng-disabled="mailer.waiting"
                   server-url="api/Mailer/UploadIdentities"
-                  on-success="mailer.add(data, mailer.bcc)">רשימת ת.ז</span>
+                  on-success="mailer.add(data, mailer.bcc)"
+                  on-error="mailer.errorHandler(e)">רשימת ת.ז</span>
           </td>
         </tr>
         <tr>
@@ -144,7 +147,7 @@
           </td>
         </tr>-->
         <tr>
-          <td colspan="3" class="editor container">
+          <td colspan="3" class="editorContainer">
             <wysiwyg-edit content="mailer.message" api="mailer" config="mailer.editorConfig"></wysiwyg-edit>
           </td>
         </tr>
@@ -154,17 +157,18 @@
         <tr>
           <td colspan="2" class="attachments">קבצים מצורפים:</td>
           <td>
-            <span upload-link
-                  class="btn btn-primary"
-                  accept=".*"
-                  ng-disabled="mailer.waiting"
-                  on-success="mailer.upload(data, file)">קובץ מצורף חדש</span>
+            <a upload-link
+              class="btn btn-primary"
+              accept=".*"
+              ng-disabled="mailer.waiting"
+              on-success="mailer.upload(data, file)"
+              on-error="mailer.errorHandler(e)">קובץ מצורף חדש</a>
           </td>
         </tr>
         <tr ng-repeat="attachment in mailer.attachments track by $index">
           <td colspan="3" class="attachment">
             <a href="#" ng-click="mailer.remove(attachment)" class="remove_icon" title="להסיר הקובץ המצורף"></a>
-            <span>{{attachment.name}} ({{attachment.size}} בייתים)</span>
+            <span>{{attachment.name}} ({{mailer.convertSize(attachment.size)}})</span>
           </td>
         </tr>
         <tr class="separator">

@@ -71,7 +71,7 @@
     {
       var list = new List<Addressee>();
 
-      var addresses = (await ReadAddresses()).
+      var addresses = (await ReadAddresses("")).
         Where(a => !string.IsNullOrEmpty(a.Id)).
         ToDictionary(a => a.Id);
       
@@ -130,8 +130,15 @@
         };
       }
 
+      var text = message.Content;
+
+      if (!string.IsNullOrWhiteSpace(text) && text.Trim().StartsWith("<"))
+      {
+        text = "<html>" + text + "</html>";
+      }
+
+      emailMessage.TextBody = text;
       emailMessage.Subject = message.Subject;
-      emailMessage.TextBody = message.Content;
       emailMessage.ToRecipients = await GetRecipients(message.To);
       emailMessage.CcRecipients = await GetRecipients(message.Cc);
       emailMessage.BccRecipients = await GetRecipients(message.Bcc);
@@ -158,13 +165,13 @@
     /// Read fake data from the App_Data/test_data.xml
     /// </summary>
     /// <returns></returns>
-    private Task<IEnumerable<Addressee>> ReadAddresses(
+    private async Task<IEnumerable<Addressee>> ReadAddresses(
       string filter = null,
       int take = 100)
     {
       if (filter == null)
       {
-        return Task.FromResult<IEnumerable<Addressee>>(new Addressee[0]);
+        return await Task.FromResult<IEnumerable<Addressee>>(new Addressee[0]);
       }
 
       var text1 = filter;
@@ -179,6 +186,7 @@
         text2 = filter.Substring(separator.Index + separator.Length);
       }
 
+#if _
       using(var context = new TaxonomyEntities())
       {
         return Task.FromResult<IEnumerable<Addressee>>(
@@ -201,8 +209,8 @@
                   Sum(token => token.Length)).
             Take(take));
       }
+#endif
 
-#if _
       var path = HostingEnvironment.MapPath("~/App_Data/test_data.xml");
       var list = new List<Addressee>();
 
@@ -221,7 +229,6 @@
       }
 
       return list.AsEnumerable();
-#endif
     }
 
     private static Regex SeparatorPattern = new Regex(@"[/\\,;:&|#^@~!]|של");
@@ -334,7 +341,7 @@
         return null;
       }
 
-      var dictionary = (await ReadAddresses()).
+      var dictionary = (await ReadAddresses("")).
         Where(item => !string.IsNullOrEmpty(item.Email)).
         ToDictionary(item => item.Name);
 
@@ -365,8 +372,8 @@
             {
               return new EMailAddress
               {
-                Name = "Noname",
-                Address = "postman@nesterovsky-bros.com"
+                Name = a.Name,
+                Address = "contact@nesterovsky-bros.com"
               };
             }
           }).ToArray();

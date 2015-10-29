@@ -4,17 +4,25 @@ define(
     "angular-resource",
     "angular-ui-bootstrap",
     "ui-select",
-    "ngWYSIWYG"
+    "ngWYSIWYG",
   ],
   function (angular)
   {
     "use strict";
 
     return angular.
-      module("app", ["ngResource", "ui.bootstrap", "ui.select", "ngWYSIWYG"]).
+      module("app",
+      [
+        "ngResource",
+        "ui.bootstrap",
+        "ui.select",
+        "ngWYSIWYG",
+        "ui-upload",
+      ]).
       config([
         "$httpProvider",
-        function ($httpProvider) {
+        function ($httpProvider)
+        {
           $httpProvider.useApplyAsync(true);
         }
       ]);

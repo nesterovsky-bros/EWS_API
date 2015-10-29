@@ -11,6 +11,7 @@
       "ui-select": "ui-select/select",
       "errorHandler": "app/services/errorHandler",
       "ngWYSIWYG": "ngWYSIWYG/wysiwyg",
+      "ngWYSIWYG-fix": "ngWYSIWYG/wysiwygFix",
     },
 
     shim:
@@ -31,7 +32,7 @@ require(
     "angular",
     "./app/appModule",
     "./app/mailer-controller",
-    "./upload/upload-link",
+    "./upload/ui-upload",
     "ngWYSIWYG",
   ],
   function(angular)

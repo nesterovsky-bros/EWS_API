@@ -26,7 +26,7 @@
   direction: rtl;
 }
 
-.rtl .editor
+.rtl .editorContainer
 {
   text-align: left;
   direction: ltr;
@@ -55,8 +55,9 @@ table.message {
   width: 100%;
 }
 
-.message td.container {
+.message td.editorContainer {
   min-height: 10em;
+  min-width: 90em;
   /*border: 1px solid #b6b6b6;*/
 }
 
