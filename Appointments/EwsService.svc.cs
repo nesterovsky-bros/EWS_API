@@ -360,6 +360,11 @@
         SetExtendedProperties(officeAppointment, proxy.ExtendedProperties);
         SetCategories(officeAppointment, proxy.Categories);
 
+        UpdateAttendees(
+          officeAppointment.RequiredAttendees, proxy.RequiredAttendees);
+        UpdateAttendees(
+          officeAppointment.OptionalAttendees, proxy.OptionalAttendees);
+
         // TODO: update more properties
 
         // Unless explicitly specified, the default is to use SendToAllAndSaveCopy.
@@ -1442,7 +1447,9 @@
           new Office365.ExtendedPropertyDefinition(
             Settings.OriginalNotesID.Value,
             Office365.MapiPropertyType.Binary),
-          Office365.ItemSchema.Categories);
+          Office365.ItemSchema.Categories,
+          Office365.AppointmentSchema.RequiredAttendees,
+          Office365.AppointmentSchema.OptionalAttendees);
       
       return await EwsUtils.TryAction(
         "RetrieveAppointment",
@@ -2001,6 +2008,29 @@
       }
 
       return false;
+    }
+
+    private static void UpdateAttendees(
+      Office365.AttendeeCollection collection,
+      List<Attendee> attendees)
+    {
+      if ((attendees == null) || (attendees.Count == 0))
+      {
+        return;
+      }
+
+      collection.Clear();
+
+      foreach (var item in attendees)
+      {
+        collection.Add(
+          new Office365.Attendee
+          {
+            Address = item.Address,
+            MailboxType = Office365.MailboxType.Mailbox,
+            Name = item.Name
+          });
+      }
     }
     #endregion
 
