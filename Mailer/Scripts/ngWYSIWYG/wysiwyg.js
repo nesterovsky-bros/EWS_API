@@ -159,9 +159,9 @@
             100/*ms*/, true /*invoke apply*/);
           }
           
-          $body.bind('blur click keyup change paste', invalidateContent);
-          angular.element($body[0].window).bind("blur", invalidateContent);
-
+          $body.bind("blur click keyup change paste", invalidateContent);
+          angular.element($element[0].contentWindow).bind("blur", invalidateContent);
+          
           scope.range = null;
           scope.getSelection = function ()
           {

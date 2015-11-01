@@ -231,7 +231,13 @@
             return;
           }
 
-          alert(self.message);
+          setTimeout(
+            function ()
+            {
+              alert(self.message);
+            },
+            200
+          );
 
           return ;
 
