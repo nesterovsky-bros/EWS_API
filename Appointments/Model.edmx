@@ -110,7 +110,7 @@
           <Property Name="Response" Type="xml" />
           <Property Name="Error" Type="xml" />
           <Property Name="CreatedAt" Type="datetime2" Precision="7" Nullable="false" />
-          <Property Name="ExpiresAt" Type="datetime2" Precision="7" />
+          <Property Name="User" Type="nvarchar" MaxLength="128" />
         </EntityType>
         <EntityType Name="TraceMessage">
           <Key>
@@ -331,7 +331,7 @@
           <Property Name="Response" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="Error" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="7" />
-          <Property Name="ExpiresAt" Type="DateTime" Precision="7" />
+          <Property Name="User" Type="String" MaxLength="128" FixedLength="false" Unicode="true" />
         </EntityType>
         <EntityType Name="TraceMessage">
           <Key>
@@ -487,7 +487,7 @@
           <EntitySetMapping Name="Queues">
             <EntityTypeMapping TypeName="EWSQueueModel.Queue">
               <MappingFragment StoreEntitySet="Queue">
-                <ScalarProperty Name="ExpiresAt" ColumnName="ExpiresAt" />
+                <ScalarProperty Name="User" ColumnName="User" />
                 <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
                 <ScalarProperty Name="Error" ColumnName="Error" />
                 <ScalarProperty Name="Response" ColumnName="Response" />

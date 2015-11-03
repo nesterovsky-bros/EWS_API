@@ -9,6 +9,7 @@
   using System.ServiceModel.Dispatcher;
   using System.Text;
   using System.Xml;
+  using System.Threading;
 
   public class LoggingMessageInspector : IDispatchMessageInspector
   {
@@ -39,6 +40,8 @@
 
       try
       {
+        var principal = Thread.CurrentPrincipal;
+
         using (var model = new EWSQueueEntities())
         {
           var item = new Queue
@@ -46,7 +49,10 @@
             Operation = copy.Headers.Action,
             Request = builder.ToString(),
             CreatedAt = DateTime.Now,
-            //ExpiresAt = DateTime.Now.AddMinutes(Settings.RequestTimeout)
+            User = (principal == null) ||
+              (principal.Identity == null) ||
+              string.IsNullOrEmpty(principal.Identity.Name) ?
+                null : principal.Identity.Name
           };
 
           request.Properties[RequestIDName] = item.ID;

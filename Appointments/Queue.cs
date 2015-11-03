@@ -30,7 +30,7 @@ public partial class Queue
 
     public System.DateTime CreatedAt { get; set; }
 
-    public Nullable<System.DateTime> ExpiresAt { get; set; }
+    public string User { get; set; }
 
 }
 

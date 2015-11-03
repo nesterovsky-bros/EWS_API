@@ -64,6 +64,16 @@
     <Compile Include="CUDAppointmentSetupCoded.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="FindAndDeleteAppointment.webtest">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="CreateAppointmentLoadTest.loadtest">
+      <SubType>Designer</SubType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="CreateAppointment2.webtest">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="FindAppointmentLoadTest.loadtest">
       <SubType>Designer</SubType>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

@@ -13,13 +13,26 @@
           </RuleParameters>
         </ValidationRule>
       </ValidationRules>
+      <ExtractionRules>
+        <ExtractionRule Classname="Microsoft.VisualStudio.TestTools.WebTesting.ExtractHtmlTagInnerText, Microsoft.VisualStudio.QualityTools.WebTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" VariableName="$ItemId" DisplayName="Tag Inner Text" Description="Extracts the inner text from the specified HTML tag.">
+          <RuleParameters>
+            <RuleParameter Name="TagName" Value="Id" />
+            <RuleParameter Name="AttributeName" Value="" />
+            <RuleParameter Name="AttributeValue" Value="" />
+            <RuleParameter Name="RemoveInnerTags" Value="True" />
+            <RuleParameter Name="HasClosingTags" Value="True" />
+            <RuleParameter Name="CollapseWhiteSpace" Value="True" />
+            <RuleParameter Name="Index" Value="0" />
+          </RuleParameters>
+        </ExtractionRule>
+      </ExtractionRules>
       <StringHttpBody ContentType="text/xml; charset=utf-8" InsertByteOrderMark="False">PABzADoARQBuAHYAZQBsAG8AcABlACAAeABtAGwAbgBzADoAcwA9ACIAaAB0AHQAcAA6AC8ALwBzAGMAaABlAG0AYQBzAC4AeABtAGwAcwBvAGEAcAAuAG8AcgBnAC8AcwBvAGEAcAAvAGUAbgB2AGUAbABvAHAAZQAvACIAPgANAAoAIAAgADwAcwA6AEIAbwBkAHkAPgANAAoAIAAgACAAIAA8AEYAaQBuAGQAQQBwAHAAbwBpAG4AdABtAGUAbgB0AHMAIAB4AG0AbABuAHMAPQAiAGgAdAB0AHAAcwA6AC8ALwB3AHcAdwAuAGIAYQBuAGsAaABhAHAAbwBhAGwAaQBtAC4AYwBvAC4AaQBsAC8AIgA+AA0ACgAgACAAIAAgACAAIAA8AGUAbQBhAGkAbAA+AHsAewAkAEUAbQBhAGkAbAB9AH0APAAvAGUAbQBhAGkAbAA+AA0ACgAgACAAIAAgACAAIAA8AHMAdABhAHIAdAA+AHsAewAkAEEAcABwAG8AaQBuAHQAbQBlAG4AdABTAHQAYQByAHQARABhAHQAZQB9AH0APAAvAHMAdABhAHIAdAA+AA0ACgAgACAAIAAgACAAIAA8AGUAbgBkAD4AewB7ACQAQQBwAHAAbwBpAG4AdABtAGUAbgB0AEUAbgBkAEQAYQB0AGUAfQB9ADwALwBlAG4AZAA+AA0ACgAgACAAIAAgACAAIAA8AG0AYQB4AFIAZQBzAHUAbAB0AHMAPgAxADAAPAAvAG0AYQB4AFIAZQBzAHUAbAB0AHMAPgANAAoAIAAgACAAIAAgACAAPABwAHIAbwBwAGUAcgB0AGkAZQBzACAAeABtAGwAbgBzADoAZAA0AHAAMQA9ACIAaAB0AHQAcAA6AC8ALwBzAGMAaABlAG0AYQBzAC4AbQBpAGMAcgBvAHMAbwBmAHQALgBjAG8AbQAvADIAMAAwADMALwAxADAALwBTAGUAcgBpAGEAbABpAHoAYQB0AGkAbwBuAC8AQQByAHIAYQB5AHMAIgAgAHgAbQBsAG4AcwA6AGkAPQAiAGgAdAB0AHAAOgAvAC8AdwB3AHcALgB3ADMALgBvAHIAZwAvADIAMAAwADEALwBYAE0ATABTAGMAaABlAG0AYQAtAGkAbgBzAHQAYQBuAGMAZQAiACAALwA+AA0ACgAgACAAIAAgADwALwBGAGkAbgBkAEEAcABwAG8AaQBuAHQAbQBlAG4AdABzAD4ADQAKACAAIAA8AC8AcwA6AEIAbwBkAHkAPgANAAoAPAAvAHMAOgBFAG4AdgBlAGwAbwBwAGUAPgA=</StringHttpBody>
     </Request>
   </Items>
   <ContextParameters>
-    <ContextParameter Name="$Email" Value="sharedMailbox1@poalimdev.onmicrosoft.com" />
+    <ContextParameter Name="$Email" Value="sharedMailbox10@poalimdev.onmicrosoft.com" />
     <ContextParameter Name="$WebServer" Value="http://localhost:54401" />
-    <ContextParameter Name="$AppointmentStartDate" Value="2016-05-07" />
-    <ContextParameter Name="$AppointmentEndDate" Value="2016-05-08" />
+    <ContextParameter Name="$AppointmentStartDate" Value="2015-11-03" />
+    <ContextParameter Name="$AppointmentEndDate" Value="2015-11-04" />
   </ContextParameters>
 </WebTest>
