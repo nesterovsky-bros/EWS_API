@@ -42,18 +42,6 @@
           "../api/Mailer/:action",
           {},
           {
-            GetAddresses:
-            {
-              params:
-              {
-                action: "GetAddresses"
-              },
-              method: "GET",
-              responseType: "json",
-              headers: { 'Content-Type': 'application/json' },
-              isArray: true,
-              then: resolveAction
-            },
             GetSenders:
             {
               params:
@@ -61,6 +49,54 @@
                 action: "GetSenders"
               },
               method: "GET",
+              responseType: "json",
+              headers: { 'Content-Type': 'application/json' },
+              isArray: true,
+              then: resolveAction
+            },
+            GetBankUnits:
+            {
+              params:
+              {
+                action: "GetBankUnits"
+              },
+              method: "GET",
+              responseType: "json",
+              headers: { 'Content-Type': 'application/json' },
+              isArray: true,
+              then: resolveAction
+            },
+            GetRoles:
+            {
+              params:
+              {
+                action: "GetRoles"
+              },
+              method: "GET",
+              responseType: "json",
+              headers: { 'Content-Type': 'application/json' },
+              isArray: true,
+              then: resolveAction
+            },
+            GetTaxonomy:
+            {
+              params:
+              {
+                action: "GetTaxonomy"
+              },
+              method: "GET",
+              responseType: "json",
+              headers: { 'Content-Type': 'application/json' },
+              isArray: true,
+              then: resolveAction
+            },
+            GetRecipients:
+            {
+              params:
+              {
+                action: "GetRecipients"
+              },
+              method: "POST",
               responseType: "json",
               headers: { 'Content-Type': 'application/json' },
               isArray: true,

@@ -4,41 +4,89 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-    <Schema Namespace="TaxonomyModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
-        <Function Name="LogError" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="Log">
-          <Parameter Name="address" Type="nvarchar" Mode="In" />
-          <Parameter Name="userid" Type="nvarchar" Mode="In" />
-          <Parameter Name="request" Type="nvarchar(max)" Mode="In" />
-          <Parameter Name="message" Type="nvarchar" Mode="In" />
-          <Parameter Name="details" Type="nvarchar(max)" Mode="In" />
+      <Schema Namespace="TaxonomyModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <Function Name="GetBranches" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="Taxonomy">
+          <Parameter Name="text" Type="nvarchar" Mode="In" />
+          <Parameter Name="take" Type="int" Mode="In" />
         </Function>
         <Function Name="GetRecipients" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="Taxonomy">
           <Parameter Name="text1" Type="nvarchar" Mode="In" />
           <Parameter Name="text2" Type="nvarchar" Mode="In" />
           <Parameter Name="take" Type="int" Mode="In" />
         </Function>
+        <Function Name="GetUsersEx" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="Taxonomy">
+          <Parameter Name="hierarchyIDs" Type="nvarchar(max)" Mode="In" />
+          <Parameter Name="itemNames" Type="nvarchar(max)" Mode="In" />
+          <ReturnType>
+            <CollectionType>
+              <RowType>
+                <Property Name="ItemName" Type="nvarchar" MaxLength="65" Nullable="false" />
+                <Property Name="EmployeeCode" Type="nvarchar" MaxLength="64" Nullable="false" />
+                <Property Name="FirstName" Type="nvarchar" MaxLength="128" />
+                <Property Name="SecondName" Type="nvarchar" MaxLength="128" />
+                <Property Name="FirstNameEN" Type="nvarchar" MaxLength="128" />
+                <Property Name="SecondNameEN" Type="nvarchar" MaxLength="128" />
+                <Property Name="Email" Type="nvarchar" MaxLength="128" />
+                <Property Name="Title" Type="nvarchar" MaxLength="128" />
+                <Property Name="HierarchyID" Type="nvarchar" MaxLength="128" Nullable="false" />
+              </RowType>
+            </CollectionType>
+          </ReturnType>
+        </Function>
+        <Function Name="GetUsersOrGroups" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="Taxonomy">
+          <Parameter Name="text" Type="nvarchar" Mode="In" />
+          <Parameter Name="take" Type="int" Mode="In" />
+          <Parameter Name="options" Type="int" Mode="In" />
+        </Function>
         <EntityContainer Name="TaxonomyModelStoreContainer" />
-      </Schema></edmx:StorageModels>
+      </Schema>
+    </edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="TaxonomyModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
-        <EntityContainer Name="TaxonomyEntities" annotation:LazyLoadingEnabled="true" >
-          <FunctionImport Name="LogError" ReturnType="Collection(Int32)">
-            <Parameter Name="address" Mode="In" Type="String" />
-            <Parameter Name="userid" Mode="In" Type="String" />
-            <Parameter Name="request" Mode="In" Type="String" />
-            <Parameter Name="message" Mode="In" Type="String" />
-            <Parameter Name="details" Mode="In" Type="String" />
+        <ComplexType Name="BankUser">
+          <Property Name="ItemName" Type="String" MaxLength="65" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="EmployeeCode" Type="String" MaxLength="64" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="FirstName" Type="String" MaxLength="128" FixedLength="false" Unicode="true" Nullable="true" />
+          <Property Name="SecondName" Type="String" MaxLength="128" FixedLength="false" Unicode="true" Nullable="true" />
+          <Property Name="FirstNameEN" Type="String" MaxLength="128" FixedLength="false" Unicode="true" Nullable="true" />
+          <Property Name="SecondNameEN" Type="String" MaxLength="128" FixedLength="false" Unicode="true" Nullable="true" />
+          <Property Name="Email" Type="String" MaxLength="128" FixedLength="false" Unicode="true" Nullable="true" />
+          <Property Name="Title" Type="String" MaxLength="128" FixedLength="false" Unicode="true" Nullable="true" />
+          <Property Name="HierarchyID" Type="String" MaxLength="128" FixedLength="false" Unicode="true" Nullable="false" />
+        </ComplexType>
+        <EntityContainer Name="Taxonomy1" annotation:LazyLoadingEnabled="true">
+          <FunctionImport Name="GetUsersEx" IsComposable="true" ReturnType="Collection(TaxonomyModel.BankUser)">
+            <Parameter Name="hierarchyIDs" Mode="In" Type="String" />
+            <Parameter Name="itemNames" Mode="In" Type="String" />
+          </FunctionImport>
+          <FunctionImport Name="GetBranches" ReturnType="Collection(TaxonomyModel.BankUnit)">
+            <Parameter Name="text" Mode="In" Type="String" />
+            <Parameter Name="take" Mode="In" Type="Int32" />
           </FunctionImport>
           <FunctionImport Name="GetRecipients" ReturnType="Collection(TaxonomyModel.ExtendedRecipient)">
             <Parameter Name="text1" Mode="In" Type="String" />
             <Parameter Name="text2" Mode="In" Type="String" />
             <Parameter Name="take" Mode="In" Type="Int32" />
           </FunctionImport>
+          <FunctionImport Name="GetUsersOrGroups" ReturnType="Collection(TaxonomyModel.BankUser)">
+            <Parameter Name="text" Mode="In" Type="String" />
+            <Parameter Name="take" Mode="In" Type="Int32" />
+            <Parameter Name="options" Mode="In" Type="Int32" />
+          </FunctionImport>
         </EntityContainer>
+        <ComplexType Name="BankUnit">
+          <Property Type="Int16" Name="BranchID" Nullable="true" />
+          <Property Type="String" Name="HierarchyID" Nullable="true" MaxLength="4000" />
+          <Property Type="String" Name="BranchName" Nullable="true" MaxLength="128" />
+          <Property Type="String" Name="BranchNameEN" Nullable="true" MaxLength="128" />
+          <Property Type="String" Name="GroupName" Nullable="true" MaxLength="128" />
+          <Property Type="String" Name="DepartmentName" Nullable="true" MaxLength="128" />
+          <Property Type="String" Name="AdministrationName" Nullable="true" MaxLength="128" />
+        </ComplexType>
         <ComplexType Name="ExtendedRecipient">
           <Property Type="String" Name="ItemName" Nullable="true" MaxLength="64" />
-          <Property Type="String" Name="EmployeeCode" Nullable="true" MaxLength="64" />
+          <Property Type="String" Name="EmployeeCode" Nullable="false" MaxLength="64" />
           <Property Type="Int16" Name="BranchID" Nullable="true" />
           <Property Type="String" Name="FirstName" Nullable="true" MaxLength="128" />
           <Property Type="String" Name="SecondName" Nullable="true" MaxLength="128" />
@@ -58,10 +106,37 @@
     <!-- C-S mapping content -->
     <edmx:Mappings>
       <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
-        <EntityContainerMapping StorageEntityContainer="TaxonomyModelStoreContainer" CdmEntityContainer="TaxonomyEntities" >
-          <FunctionImportMapping FunctionImportName="LogError" FunctionName="TaxonomyModel.Store.LogError" />
+        <EntityContainerMapping StorageEntityContainer="TaxonomyModelStoreContainer" CdmEntityContainer="Taxonomy1">
+          <FunctionImportMapping FunctionName="TaxonomyModel.Store.GetUsersEx" FunctionImportName="GetUsersEx">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="TaxonomyModel.BankUser">
+                <ScalarProperty Name="ItemName" ColumnName="ItemName" />
+                <ScalarProperty Name="EmployeeCode" ColumnName="EmployeeCode" />
+                <ScalarProperty Name="FirstName" ColumnName="FirstName" />
+                <ScalarProperty Name="SecondName" ColumnName="SecondName" />
+                <ScalarProperty Name="FirstNameEN" ColumnName="FirstNameEN" />
+                <ScalarProperty Name="SecondNameEN" ColumnName="SecondNameEN" />
+                <ScalarProperty Name="Email" ColumnName="Email" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="HierarchyID" ColumnName="HierarchyID" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="GetBranches" FunctionName="TaxonomyModel.Store.GetBranches">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="TaxonomyModel.BankUnit">
+                <ScalarProperty Name="BranchID" ColumnName="BranchID" />
+                <ScalarProperty Name="HierarchyID" ColumnName="HierarchyID" />
+                <ScalarProperty Name="BranchName" ColumnName="BranchName" />
+                <ScalarProperty Name="BranchNameEN" ColumnName="BranchNameEN" />
+                <ScalarProperty Name="GroupName" ColumnName="GroupName" />
+                <ScalarProperty Name="DepartmentName" ColumnName="DepartmentName" />
+                <ScalarProperty Name="AdministrationName" ColumnName="AdministrationName" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
           <FunctionImportMapping FunctionImportName="GetRecipients" FunctionName="TaxonomyModel.Store.GetRecipients">
-          <ResultMapping>
+            <ResultMapping>
               <ComplexTypeMapping TypeName="TaxonomyModel.ExtendedRecipient">
                 <ScalarProperty Name="ItemName" ColumnName="ItemName" />
                 <ScalarProperty Name="EmployeeCode" ColumnName="EmployeeCode" />
@@ -78,6 +153,21 @@
                 <ScalarProperty Name="GroupName" ColumnName="GroupName" />
                 <ScalarProperty Name="DepartmentName" ColumnName="DepartmentName" />
                 <ScalarProperty Name="AdministrationName" ColumnName="AdministrationName" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="GetUsersOrGroups" FunctionName="TaxonomyModel.Store.GetUsersOrGroups">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="TaxonomyModel.BankUser">
+                <ScalarProperty Name="ItemName" ColumnName="ItemName" />
+                <ScalarProperty Name="EmployeeCode" ColumnName="EmployeeCode" />
+                <ScalarProperty Name="FirstName" ColumnName="FirstName" />
+                <ScalarProperty Name="SecondName" ColumnName="SecondName" />
+                <ScalarProperty Name="FirstNameEN" ColumnName="FirstNameEN" />
+                <ScalarProperty Name="SecondNameEN" ColumnName="SecondNameEN" />
+                <ScalarProperty Name="Email" ColumnName="Email" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="HierarchyID" ColumnName="HierarchyID" />
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>

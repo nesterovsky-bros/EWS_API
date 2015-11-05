@@ -28,30 +28,139 @@
   public class MailerController : ApiController
   {
     /// <summary>
-    /// Retrieves list of addresses that suits the specified filter.
-    /// </summary>
-    /// <param name="filter">a search filter.</param>
-    /// <returns>an enumeration of Addressee instances.</returns>
-    public async Task<IEnumerable<Addressee>> GetAddresses(string filter)
-    {
-      var list = await ReadAddresses(filter);
-
-      return list;
-    }
-
-    /// <summary>
     /// Retrieves list of potential senders.
     /// </summary>
     /// <param name="filter">a search filter.</param>
+    /// <param name="take">how match items to return (maximum).</param>
     /// <returns>an enumeration of Addressee instances.</returns>
-    public async Task<IEnumerable<Addressee>> GetSenders(string filter)
+    [Authorize]
+    public async Task<IEnumerable<BankUser>> GetSenders(
+      string filter, 
+      int take = 100)
     {
-      // TODO: to implement this method
+      using (var context = new Taxonomy())
+      {
+        var result = await Task.FromResult(
+          context.GetUsersOrGroups(filter, take, 1).
+            ToArray());
 
-      var list = (await ReadAddresses(filter)).
-        Where(a => !string.IsNullOrEmpty(a.Email));
+        return result;
+      }
+    }
 
-      return list;
+    /// <summary>
+    /// Retrieves list of bank's units that suits the specified filter.
+    /// </summary>
+    /// <param name="units">
+    /// determines type of units. 
+    /// Possible values are: branches, administrations, departments and groups.
+    /// </param>
+    /// <param name="filter">a search filter.</param>
+    /// <returns>an enumeration of BankUnit instances.</returns>
+    public async Task<IEnumerable<BankUnit>> GetBankUnits(
+      string units = "branches", 
+      string filter = null, 
+      int take = 100)
+    {
+      units = units.ToLower();
+
+      var level = units == "groups" ? 
+        4 : units == "departments" ? 
+          5 : units == "administrations" ? 
+            6 : 7;
+
+      using (var context = new Taxonomy())
+      {
+        var result = await Task.FromResult(
+          context.GetBranches(filter, int.MaxValue).
+            Where(item => item.HierarchyID.Split('/').Length == level).
+            Take(take).
+            ToArray());
+
+        return result;
+      }
+    }
+
+    /// <summary>
+    /// Retrieves the bank's taxonomy.
+    /// </summary>
+    /// <returns>an enumeration of BankUnit instances.</returns>
+    [Authorize]
+    public IEnumerable<BankUnit> GetTaxonomy()
+    {
+      return BankUnits.Get().Values;
+    }
+
+    /// <summary>
+    /// Retrieves enumeration of bank's roles.
+    /// </summary>
+    /// <param name="filter">a search filter.</param>
+    /// <param name="take">how match items to return (maximum).</param>
+    /// <returns>an enumeration of Role instances.</returns>
+    [Authorize]
+    public async Task<IEnumerable<BankUser>> GetRoles(
+      string filter, 
+      int take = 100)
+    {
+      using (var context = new Taxonomy())
+      {
+        var result = await Task.FromResult(
+          context.GetUsersOrGroups(filter, take, 2).
+            ToArray());
+
+        return result;
+      }
+    }
+
+    /// <summary>
+    /// Retrieves enumeration of recipients.
+    /// </summary>
+    /// <param name="filter">a search filter.</param>
+    /// <param name="take">how match items to return (maximum).</param>
+    /// <returns>an enumeration of Role instances.</returns>
+    [HttpPost]
+    [ActionName("GetRecipients")]
+    [Authorize]
+    public async Task<IEnumerable<BankUser>> GetRecipients(
+      RecipientsRequest request)
+    {
+      var hierarchyIDs = new StringBuilder();
+      var itemNames = new StringBuilder();
+
+      foreach (var item in request.HierarchyIDs)
+      {
+        if (hierarchyIDs.Length > 0)
+        {
+          hierarchyIDs.Append(',').Append(item);
+        }
+        else
+        {
+          hierarchyIDs.Append(item);
+        }
+      }
+
+      foreach (var item in request.Roles)
+      {
+        if (itemNames.Length > 0)
+        {
+          itemNames.Append(',').Append(item);
+        }
+        else
+        {
+          itemNames.Append(item);
+        }
+      }
+
+      using (var context = new Taxonomy())
+      {
+        var result = await Task.FromResult(
+          context.GetUsersEx(
+            hierarchyIDs.ToString(), 
+            itemNames.ToString()).
+          ToArray());
+
+        return result;
+      }
     }
 
     /// <summary>
@@ -139,9 +248,7 @@
 
       emailMessage.TextBody = text;
       emailMessage.Subject = message.Subject;
-      emailMessage.ToRecipients = await GetRecipients(message.To);
-      emailMessage.CcRecipients = await GetRecipients(message.Cc);
-      emailMessage.BccRecipients = await GetRecipients(message.Bcc);
+      emailMessage.ToRecipients = await ResolveRecipients(message.To);
 
       var messageId = 
         await client.CreateMessageAsync(emailMessage.From.Address, emailMessage);
@@ -186,11 +293,31 @@
         text2 = filter.Substring(separator.Index + separator.Length);
       }
 
-#if _
-      using(var context = new TaxonomyEntities())
+      return (await ReadRecipients(text1, text2)).
+        OrderByDescending(
+          item =>
+            tokens.
+              Where(token => item.Name.Contains(token)).
+              Sum(token => token.Length)).
+        Take(take);
+    }
+
+    /// <summary>
+    /// Reads all recipients according with the specified filters.
+    /// </summary>
+    /// <param name="text1">a first filter.</param>
+    /// <param name="text2">a second filter.</param>
+    /// <returns>
+    /// a collection of Addressee instances that suit to the specified filter.
+    /// </returns>
+    private async Task<IEnumerable<Addressee>> ReadRecipients(
+      string text1,
+      string text2)
+    {
+      using (var context = new Taxonomy())
       {
-        return Task.FromResult<IEnumerable<Addressee>>(
-          context.GetRecipients(text1, text2, take).
+        return await Task.FromResult<IEnumerable<Addressee>>(
+          context.GetRecipients(text1, text2, int.MaxValue).
             ToArray().
             Select(
               item => new Addressee
@@ -201,34 +328,8 @@
                 ItemName = item.ItemName,
                 HierarchyID = item.HierarchyID
               }).
-            Where(item => !string.IsNullOrWhiteSpace(item.Name)).
-            OrderByDescending(
-              item => 
-                tokens.
-                  Where(token => item.Name.Contains(token)).
-                  Sum(token => token.Length)).
-            Take(take));
+            Where(item => !string.IsNullOrWhiteSpace(item.Name)));
       }
-#endif
-
-      var path = HostingEnvironment.MapPath("~/App_Data/test_data.xml");
-      var list = new List<Addressee>();
-
-      using (var file = File.OpenText(path))
-      {
-        var content = await file.ReadToEndAsync();
-
-        list = FromXmlString<List<Addressee>>(content);
-      }
-
-      if (!string.IsNullOrEmpty(filter))
-      {
-        return list.Where(a =>
-          ((a.Id != null) && a.Id.Contains(filter)) ||
-          ((a.Name != null) && a.Name.Contains(filter)));
-      }
-
-      return list.AsEnumerable();
     }
 
     private static Regex SeparatorPattern = new Regex(@"[/\\,;:&|#^@~!]|של");
@@ -332,7 +433,7 @@
       return result.ToString();
     }
 
-    private async Task<EMailAddress[]> GetRecipients(Addressee[] addresses)
+    private async Task<EMailAddress[]> ResolveRecipients(Addressee[] addresses)
     {
       // TODO: replace the following code with the real life e-mail resolver
 
@@ -453,5 +554,23 @@
             }
           });
     }
+
+    /// <summary>
+    /// Defines cache of bank units.
+    /// </summary>
+    private static Cache<Dictionary<string, BankUnit>> BankUnits = 
+      new Cache<Dictionary<string, BankUnit>>.Builder
+      {
+        Key = "BankUnits",
+        Expiration = Cache.LongDelay,
+        Factory = () => 
+        {
+          using (var context = new Taxonomy())
+          {
+            return context.GetBranches(null, int.MaxValue).
+              ToDictionary(item => item.HierarchyID);
+          }
+        }
+    };
   }
 }

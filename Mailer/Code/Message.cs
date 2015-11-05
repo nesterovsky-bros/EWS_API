@@ -38,18 +38,6 @@ namespace Mailer.Code
     public Addressee[] To { get; set; }
 
     /// <summary>
-    /// Gets and sets the message Cc recipients.
-    /// </summary>
-    [DataMember]
-    public Addressee[] Cc { get; set; }
-
-    /// <summary>
-    /// Gets and sets the message Bcc recipients.
-    /// </summary>
-    [DataMember]
-    public Addressee[] Bcc { get; set; }
-
-    /// <summary>
     /// Gets and sets the message file attachments.
     /// </summary>
     [DataMember]

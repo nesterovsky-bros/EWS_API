@@ -15,10 +15,10 @@ namespace Mailer.Models
     using System.Data.Entity.Core.Objects;
     using System.Linq;
     
-    public partial class TaxonomyEntities : DbContext
+    public partial class Taxonomy : DbContext
     {
-        public TaxonomyEntities()
-            : base("name=TaxonomyEntities")
+        public Taxonomy()
+            : base("name=Taxonomy1")
         {
         }
     
@@ -28,29 +28,31 @@ namespace Mailer.Models
         }
     
     
-        public virtual ObjectResult<Nullable<int>> LogError(string address, string userid, string request, string message, string details)
+        [DbFunction("Taxonomy1", "GetUsersEx")]
+        public virtual IQueryable<BankUser> GetUsersEx(string hierarchyIDs, string itemNames)
         {
-            var addressParameter = address != null ?
-                new ObjectParameter("address", address) :
-                new ObjectParameter("address", typeof(string));
+            var hierarchyIDsParameter = hierarchyIDs != null ?
+                new ObjectParameter("hierarchyIDs", hierarchyIDs) :
+                new ObjectParameter("hierarchyIDs", typeof(string));
     
-            var useridParameter = userid != null ?
-                new ObjectParameter("userid", userid) :
-                new ObjectParameter("userid", typeof(string));
+            var itemNamesParameter = itemNames != null ?
+                new ObjectParameter("itemNames", itemNames) :
+                new ObjectParameter("itemNames", typeof(string));
     
-            var requestParameter = request != null ?
-                new ObjectParameter("request", request) :
-                new ObjectParameter("request", typeof(string));
+            return ((IObjectContextAdapter)this).ObjectContext.CreateQuery<BankUser>("[Taxonomy1].[GetUsersEx](@hierarchyIDs, @itemNames)", hierarchyIDsParameter, itemNamesParameter);
+        }
     
-            var messageParameter = message != null ?
-                new ObjectParameter("message", message) :
-                new ObjectParameter("message", typeof(string));
+        public virtual ObjectResult<BankUnit> GetBranches(string text, Nullable<int> take)
+        {
+            var textParameter = text != null ?
+                new ObjectParameter("text", text) :
+                new ObjectParameter("text", typeof(string));
     
-            var detailsParameter = details != null ?
-                new ObjectParameter("details", details) :
-                new ObjectParameter("details", typeof(string));
+            var takeParameter = take.HasValue ?
+                new ObjectParameter("take", take) :
+                new ObjectParameter("take", typeof(int));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<Nullable<int>>("LogError", addressParameter, useridParameter, requestParameter, messageParameter, detailsParameter);
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<BankUnit>("GetBranches", textParameter, takeParameter);
         }
     
         public virtual ObjectResult<ExtendedRecipient> GetRecipients(string text1, string text2, Nullable<int> take)
@@ -68,6 +70,23 @@ namespace Mailer.Models
                 new ObjectParameter("take", typeof(int));
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<ExtendedRecipient>("GetRecipients", text1Parameter, text2Parameter, takeParameter);
+        }
+    
+        public virtual ObjectResult<BankUser> GetUsersOrGroups(string text, Nullable<int> take, Nullable<int> options)
+        {
+            var textParameter = text != null ?
+                new ObjectParameter("text", text) :
+                new ObjectParameter("text", typeof(string));
+    
+            var takeParameter = take.HasValue ?
+                new ObjectParameter("take", take) :
+                new ObjectParameter("take", typeof(int));
+    
+            var optionsParameter = options.HasValue ?
+                new ObjectParameter("options", options) :
+                new ObjectParameter("options", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<BankUser>("GetUsersOrGroups", textParameter, takeParameter, optionsParameter);
         }
     }
 }

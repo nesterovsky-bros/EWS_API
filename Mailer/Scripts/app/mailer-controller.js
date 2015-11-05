@@ -4,7 +4,6 @@
     "../injectFn",
     "./services/errorHandler",
     "./services/services",
-    // "./services/selectRecipients",
   ],
   function (module, injectFn)
   {
@@ -14,159 +13,240 @@
       "$scope",
       "$timeout",
       "$q",
-//      "selectRecipients",
       "errorHandler",
       "services",
       "fileUploader",
       function init()
       {
-        var scope = this.scope = this.$scope;
-        this.$invalidate = scope.$applyAsync.bind(scope);
-        this.insertImage = this.insertImage.bind(this);
-        this.editorConfig = {
-          sanitize: false
-        };
+        var self = this;
+        var scope = self.scope = self.$scope;
 
-        this.$reset = function ()
+        self.$invalidate = scope.$applyAsync.bind(scope);
+        self.insertImage = self.insertImage.bind(self);
+        self.editorConfig = { sanitize: false };
+        self.taxonomy = {};
+
+        self.$reset = function ()
         {
-          this.to = [];
-          this.cc = [];
-          this.bcc = [];
-          this.attachments = [];
-          this.addresses = [];
-          this.senders = [];
-          this.message = null;
-          this.subject = null;
+          self.to = [];
+          self.attachments = [];
+          self.senders = [];
+          self.message = null;
+          self.subject = null;
+          self.group = [];
+          self.department = [];
+          self.administration = [];
+          self.branch = [];
+          self.role = [];
         };
 
-        this.$reset();
+        self.$reset();
+
+        self.$timeout(
+          function ()
+          {
+            self.services.GetTaxonomy(
+              function (data)
+              {
+                for (var i = 0, c = data.length; i < c; i++)
+                {
+                  var item = data[i];
+
+                  self.taxonomy[item.hierarchyID] = item;
+                }
+              },
+              self.errorHandler);
+          }, 0);
       });
 
     MailerController.prototype = Object.create(null,
     {
       from: { enumerable: true, value: null, writable: true },
       to: { enumerable: true, value: null, writable: true },
-      cc: { enumerable: true, value: null, writable: true },
-      bcc: { enumerable: true, value: null, writable: true },
+
+      group: { enumerable: true, value: null, writable: true },
+      department: { enumerable: true, value: null, writable: true },
+      administration: { enumerable: true, value: null, writable: true },
+      branch: { enumerable: true, value: null, writable: true },
+      role: { enumerable: true, value: null, writable: true },
+
+      groups: { enumerable: true, value: null, writable: true },
+      departments: { enumerable: true, value: null, writable: true },
+      administrations: { enumerable: true, value: null, writable: true },
+      branches: { enumerable: true, value: null, writable: true },
+      roles: { enumerable: true, value: null, writable: true },
+
+      taxonomy: { enumerable: true, value: null, writable: true },
+
       attachments: { enumerable: true, value: null, writable: true },
       subject: { enumerable: true, value: null, writable: true },
       message: { enumerable: true, value: null, writable: true },
 
-      addresses: { enumerable: true, value: null, writable: true },
       senders: { enumerable: true, value: null, writable: true },
       working: { enumerable: true, value: false, writable: true },
 
       editorConfig: { enumerable: true, value: {}, writable: true },
 
+      $updateTimer: { enumerable: false, value: null, writable: true },
       $size: {
         enumerable: false,
         value: ['n/a', 'bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
         writable: true
       },
 
-      tagTransform: {
-        value: function (tag)
+      refreshData: {
+        value: function (name, filter)
         {
-          return {
-            name: tag,
-            id: null,
-            email: null,
-          };
-        }
-      },
-      formatItem: {
-        value: function (item)
-        {
-          return item.name;
-        }
-      },
-      getRole: {
-        value: function (address)
-        {
-          var index = -1;
+          var self = this;
 
-          if (!address.name)
+          self[name] = [];
+
+          function handleData(data)
           {
-            return null;
+            self.$timeout.cancel(timer);
+            self.working = false;
+
+            for (var i = 0, c = data.length; i < c; i++)
+            {
+              var item = data[i];
+
+              item.name = "";
+
+              if (item.branchID)
+              {
+                item.name = item.branchID + " - ";
+              }
+              else if (item.employeeCode)
+              {
+                item.name = item.firstName + " " + item.secondName;
+              }
+              else if (item.title)
+              {
+                item.name = item.title;
+              }
+              
+              if (item.branchName)
+              {
+                item.name = item.name.length ?
+                  item.name + item.branchName : item.branchName;
+              }
+              else if (item.administrationName)
+              {
+                item.name = item.name.length ?
+                  item.name + item.administrationName : item.administrationName;
+              }
+              else if (item.departmentName)
+              {
+                item.name = item.name.length ?
+                  item.name + item.departmentName : item.departmentName;
+              }
+              else if (item.groupName)
+              {
+                item.name = item.name.length ?
+                  item.name + item.groupName : item.groupName;
+              }
+            }
+
+            self[name] = data;
+
+            return data;
           }
-          else if ((index = address.name.indexOf('/')) > 0)
+
+          function handleError(e)
           {
-            return address.name.substr(0, index);
+            self.$timeout.cancel(timer);
+            self.working = false;
+            self.errorHandler(e);
+          }
+
+          var request =
+          {
+            filter: filter || ""
+          };
+
+          var timer =
+            self.$timeout(function () { self.working = true; }, 100);
+
+          if (name == "senders")
+          {
+            self.services.GetSenders(
+              request,
+              handleData,
+              handleError);
+          }
+          else if (name == "roles")
+          {
+            self.services.GetRoles(
+              request,
+              handleData,
+              handleError);
           }
           else
           {
-            return index == -1 ? address.name : null;
+            request.units = name;
+
+            self.services.GetBankUnits(
+              request,
+              handleData,
+              handleError);
           }
         }
       },
-      getDivision:
-      {
-        value: function (address)
+      updateRecipients: {
+        value: function ($item, $model)
         {
-          var index = -1;
+          var self = this;
 
-          if (address.name && ((index = address.name.indexOf('/')) >= 0))
+          if (!self.$updateTimer)
           {
-            return address.name.substr(index + 1);
+            self.$timeout.cancel(self.$updateTimer);
           }
 
-          return null;
+          self.$updateTimer = self.$timeout(
+            function()
+            {
+              var request =
+              {
+                hierarchyIDs: [],
+                roles: []
+              };
+
+              function appendHierarchyID(item)
+              {
+                request.hierarchyIDs.push(item.hierarchyID);
+              }
+
+              self.group.forEach(appendHierarchyID);
+              self.department.forEach(appendHierarchyID);
+              self.administration.forEach(appendHierarchyID);
+              self.branch.forEach(appendHierarchyID);
+
+              self.role.forEach(function (item) { roles.push(item.itemName); });
+
+              self.services.GetRecipients(
+                request,
+                function (data)
+                {
+                  data.forEach(function (item)
+                  {
+                    item.selected = true;
+                  });
+
+                  self.to = data;
+                },
+                self.errorHandler);
+            }, 200);
         }
       },
-      refreshSenders: {
-        value: function (filter)
+      toggleSelection: {
+        value: function(collection)
         {
           var self = this;
 
-          self.senders = [];
-
-          var timer =
-            self.$timeout(function () { self.working = true; }, 100);
-
-          self.services.GetSenders(
-            {
-              filter: filter || ""
-            },
-            function (addresses)
-            {
-              self.$timeout.cancel(timer);
-              self.working = false;
-              self.senders = addresses;
-            },
-            function (e)
-            {
-              self.$timeout.cancel(timer);
-              self.working = false;
-              self.errorHandler(e);
-            });
-        }
-      },
-      refreshAddresses: {
-        value: function (filter)
-        {
-          var self = this;
-
-          self.addresses = [];
-
-          var timer =
-            self.$timeout(function () { self.working = true; }, 100);
-
-          self.services.GetAddresses(
-            {
-              filter: filter || ""
-            },
-            function (addresses)
-            {
-              self.$timeout.cancel(timer);
-              self.working = false;
-              self.addresses = addresses;
-            },
-            function (e)
-            {
-              self.$timeout.cancel(timer);
-              self.working = false;
-              self.errorHandler(e);
-            });
+          for (var i = 0, c = collection.length; i < c; i++)
+          {
+            collection[i].selected = self.selectAll;
+          }
         }
       },
       convertSize: {
@@ -244,14 +324,30 @@
           var timer =
             self.$timeout(function () { self.working = true; }, 100);
 
+          var recipients = [];
+
+          for (var i = 0, c = self.to.length; i < c; i++)
+          {
+            var item = self.to[i];
+
+            if (!item.selected)
+            {
+              continue;
+            }
+
+            recipients.push(
+              {
+                email: item.email,
+                name: item.name
+              });
+          }
+
           self.services.SendMessage(
             {
               subject: self.subject,
               content: self.message,
               from: self.from && self.from.length ? self.from[0] : null,
-              to: self.to,
-              cc: self.cc.length ? self.cc : null,
-              bcc: self.bcc.length ? self.bcc : null,
+              to: recipients,
               attachments: self.attachments.length ? self.attachments : null
             },
             function (addresses)
@@ -312,8 +408,7 @@
           }
         }
       },
-      insertImage:
-      {
+      insertImage: {
         writable: true,
         value: function ()
         {
