@@ -21,6 +21,8 @@ namespace ESServiceTest
   [DataBinding("DataSource", "CreateAndUpdateAppointment", "Email", "$Email")]
   [DataBinding("DataSource", "CreateAndUpdateAppointment", "RequiredAttendee", "$RequiredAttendee")]
   [DataBinding("DataSource", "CreateAndUpdateAppointment", "AppointmentDate", "$AppointmentDate")]
+  [DataBinding("DataSource", "CreateAndUpdateAppointment", "AppointmentDate", "$AppointmentStartDate")]
+  [DataBinding("DataSource", "CreateAndUpdateAppointment", "AppointmentDate", "$AppointmentEndDate")]
   [DataBinding("DataSource", "CreateAndUpdateAppointment", "AppointmentSubject", "$AppointmentSubject")]
   [DataBinding("DataSource", "CreateAndUpdateAppointment", "Text", "$Text")]
   public class CUDAppointmentSetupCoded : WebTest
