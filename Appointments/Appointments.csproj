@@ -123,6 +123,9 @@
     <Compile Include="ChangeStateRequest.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>
+    <Compile Include="Configuration\ExtendedPropertyElement.cs" />
+    <Compile Include="Configuration\PropertiesCollectionElement.cs" />
+    <Compile Include="Configuration\ExtendedPropertiesConfigurationSection.cs" />
     <Compile Include="LoggingEndPoint.cs" />
     <Compile Include="EwsTraceListener.cs" />
     <Compile Include="Member.cs">

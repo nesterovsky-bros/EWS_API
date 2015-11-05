@@ -11,6 +11,9 @@ namespace Bnhp.Office365
   using System.Threading.Tasks;
   using System.Threading;
   using System.Globalization;
+  using System.Collections.Generic;
+  using Microsoft.Exchange.WebServices.Data;
+  using Configuration;
 
   public class WcfServiceFactory: UnityServiceHostFactory
   {
@@ -91,16 +94,36 @@ namespace Bnhp.Office365
             ConfigurationManager.AppSettings["EWSTrace"], 
             out boolValue) && boolValue,
         ApplicationUsers = users,
+        ExtendedPropertyDefinitions = 
+          new Dictionary<string, ExtendedPropertyDefinition>()
       };
 
-      var value = ConfigurationManager.AppSettings["OriginalNotesID"];
+      var config =
+        ConfigurationManager.GetSection("extendedProperties") as
+        ExtendedPropertiesConfigurationSection;
 
-      if (!string.IsNullOrWhiteSpace(value))
+      if ((config != null) && (config.PropertiesCollection != null))
       {
-        settings.OriginalNotesID = 
-          value.StartsWith("0x") || value.StartsWith("&h") ?
-            int.Parse(value.Substring(2), NumberStyles.HexNumber) :
-            int.Parse(value);
+        for (int i = 0, c = config.PropertiesCollection.Count; i < c; i++)
+        {
+          var item = config.PropertiesCollection[i];
+          var propertyDefinition = null as ExtendedPropertyDefinition;
+
+          if (item.Tag.HasValue)
+          {
+            propertyDefinition = 
+              new ExtendedPropertyDefinition(item.Tag.Value, item.MapiType);
+          }
+          else
+          {
+            propertyDefinition = new ExtendedPropertyDefinition(
+              Settings.ExtendedPropertySetId,
+              item.Name, 
+              item.MapiType);
+          }
+
+          settings.ExtendedPropertyDefinitions.Add(item.Name, propertyDefinition);
+        }
       }
 
       globalSettings = settings;
@@ -108,7 +131,7 @@ namespace Bnhp.Office365
       return settings;
     }
 
-    private static async Task Start(EwsListener listener)
+    private static async System.Threading.Tasks.Task Start(EwsListener listener)
     {
       if (globalListener != null)
       {

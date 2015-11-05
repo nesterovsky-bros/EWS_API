@@ -751,11 +751,10 @@
       var service = await GetService(email);
 
       var properties = new Office365.PropertySet(
-          Office365.BasePropertySet.FirstClassProperties,
-          new Office365.ExtendedPropertyDefinition(
-            Settings.OriginalNotesID.Value,
-            Office365.MapiPropertyType.Binary),
-          Office365.ItemSchema.Categories);
+        Office365.BasePropertySet.FirstClassProperties,
+        Office365.ItemSchema.Categories);
+
+      properties.AddRange(Settings.ExtendedPropertyDefinitions.Values);
 
       var message = await EwsUtils.TryAction(
         "GetMessage",
@@ -1443,14 +1442,13 @@
       string ID)
     {
       var properties = new Office365.PropertySet(
-          Office365.BasePropertySet.FirstClassProperties,
-          new Office365.ExtendedPropertyDefinition(
-            Settings.OriginalNotesID.Value,
-            Office365.MapiPropertyType.Binary),
-          Office365.ItemSchema.Categories,
-          Office365.AppointmentSchema.RequiredAttendees,
-          Office365.AppointmentSchema.OptionalAttendees);
-      
+        Office365.BasePropertySet.FirstClassProperties,
+        Office365.ItemSchema.Categories,
+        Office365.AppointmentSchema.RequiredAttendees,
+        Office365.AppointmentSchema.OptionalAttendees);
+
+      properties.AddRange(Settings.ExtendedPropertyDefinitions.Values);
+
       return await EwsUtils.TryAction(
         "RetrieveAppointment",
         email,
@@ -1706,10 +1704,16 @@
         foreach (var property in item.ExtendedProperties)
         {
           var propertyDefinition = property.PropertyDefinition;
-          var propertyName = ((Settings.OriginalNotesID != null) &&
-            (propertyDefinition.Tag == Settings.OriginalNotesID)) ?
-            "OriginalNotesID" : propertyDefinition.Name;
+          var propertyName = propertyDefinition.Name;
 
+          if (string.IsNullOrWhiteSpace(propertyName))
+          {
+            propertyName = Settings.ExtendedPropertyDefinitions.Values.
+              Where(prop => prop.Tag == propertyDefinition.Tag).
+              Select(prop => prop.Name).
+              FirstOrDefault();
+          }
+                    
           result.Add(
             new ExtendedProperty
             {
@@ -1733,26 +1737,69 @@
       {
         foreach (var property in properties)
         {
-          if ((Settings.OriginalNotesID != null) &&
-            (property.Name == "OriginalNotesID"))
+          var propertyDefinition = null as Office365.ExtendedPropertyDefinition;
+
+          if (Settings.ExtendedPropertyDefinitions.TryGetValue(
+            property.Name, out propertyDefinition))
           {
-            if (!string.IsNullOrEmpty(property.Value))
+            switch (propertyDefinition.MapiType)
             {
-              item.SetExtendedProperty(
-                new Office365.ExtendedPropertyDefinition(
-                  Settings.OriginalNotesID.Value,
-                  Office365.MapiPropertyType.Binary),
-                Convert.FromBase64String(property.Value));
+              case Office365.MapiPropertyType.Binary:
+              {
+                item.SetExtendedProperty(
+                  propertyDefinition,
+                  Convert.FromBase64String(property.Value));
+
+                break;
+              }
+              case Office365.MapiPropertyType.Boolean:
+              {
+                item.SetExtendedProperty(
+                  propertyDefinition, 
+                  Convert.ToBoolean(property.Value));
+
+                break;
+              }
+              case Office365.MapiPropertyType.Short:
+              {
+                item.SetExtendedProperty(
+                  propertyDefinition,
+                  Convert.ToInt16(property.Value));
+
+                break;
+              }
+              case Office365.MapiPropertyType.Integer:
+              {
+                item.SetExtendedProperty(
+                  propertyDefinition,
+                  Convert.ToInt32(property.Value));
+
+                break;
+              }
+              case Office365.MapiPropertyType.Long:
+              {
+                item.SetExtendedProperty(
+                  propertyDefinition,
+                  Convert.ToInt64(property.Value));
+
+                break;
+              }
+              case Office365.MapiPropertyType.Float:
+              case Office365.MapiPropertyType.Double:
+              {
+                item.SetExtendedProperty(
+                  propertyDefinition,
+                  Convert.ToDouble(property.Value));
+
+                break;
+              }
+              default:
+              {
+                item.SetExtendedProperty(propertyDefinition, property.Value);
+
+                break;
+              }
             }
-          }
-          else
-          {
-            item.SetExtendedProperty(
-              new Office365.ExtendedPropertyDefinition(
-                EwsService.ExtendedPropertySetId,
-                property.Name,
-                Office365.MapiPropertyType.String),
-              property.Value);
           }
         }
       }
@@ -2045,12 +2092,6 @@
     /// The GUID for the extended property set.
     /// </summary>
     private static int accessCount;
-
-    /// <summary>
-    /// Unique extended properties set ID.
-    /// </summary>
-    private static Guid ExtendedPropertySetId = 
-      new Guid("{DB04D3EE-8160-45EE-8A77-145D8A042231}");
 
     /// <summary>
     /// A map of property name to a property definition.
