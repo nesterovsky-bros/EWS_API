@@ -1708,10 +1708,15 @@
 
           if (string.IsNullOrWhiteSpace(propertyName))
           {
-            propertyName = Settings.ExtendedPropertyDefinitions.Values.
-              Where(prop => prop.Tag == propertyDefinition.Tag).
-              Select(prop => prop.Name).
-              FirstOrDefault();
+            foreach (var entry in Settings.ExtendedPropertyDefinitions)
+            {
+              if (propertyDefinition.Tag == entry.Value.Tag)
+              {
+                propertyName = entry.Key;
+
+                break;
+              }
+            }
           }
                     
           result.Add(
