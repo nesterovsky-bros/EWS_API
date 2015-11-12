@@ -7,21 +7,6 @@
   {
     "use strict";
 
-    module.controller(
-      "errorHandlerController",
-      [
-        "$scope", "$modalInstance", "error",
-        function($scope, $modalInstance, error)
-        {
-          $scope.error = error;
-
-          $scope.close = function()
-          {
-            $modalInstance.dismiss('cancel');
-          };
-        }
-      ]);
-
     /**
      * errorHandler service writes to a console log a messages and provides a common way
      *  to handle (display and post process) errors.
@@ -34,8 +19,8 @@
      */
     module.factory(
       "errorHandler",
-      ["$q", "$log", "$modal", 
-      function($q, $log, $modal)
+      ["$q", "$log", "$uibModal", "$rootScope",
+      function ($q, $log, $modal, $rootScope)
       {
         return function(e)
         {
@@ -103,15 +88,15 @@
 
           $log.error(JSON.stringify(error));
 
+          var scope = $rootScope.$new();
+
+          scope.error = error;
+
           return $modal.open(
           {
             template: template,
-            controller: 'errorHandlerController',
             size: "sm",
-            resolve:
-            {
-              error: function() { return error;  }
-            }
+            scope: scope
           }).result;
         };
       }]);

@@ -28,7 +28,7 @@
       <tr ng-show="!!error.stackTrace">
           <th style="vertical-align: top;">Stack&nbsp;trace:</th>
           <td style="max-height: 5em;">
-            <textarea style="height: 7em; width: 100%;" readonly>
+            <textarea style="height: 7em; width: 38em;" readonly>
               {{error.stackTrace}}
             </textarea>
           </td>
@@ -36,7 +36,7 @@
     </table>
   </div>
   <div class="modal-footer">
-      <button class="btn btn-primary" ng-click="close()">Close</button>
+      <button class="btn btn-primary" ng-click="$close()">Close</button>
   </div>
 </body>
 </html>

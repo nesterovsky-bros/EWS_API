@@ -98,6 +98,7 @@
   <ItemGroup>
     <Content Include="Content\ui-bootstrap-csp.css" />
     <Content Include="Global.asax" />
+    <Content Include="Images\arrows-indicator.gif" />
     <Content Include="Images\email.ico" />
     <Content Include="Images\header-bg.gif" />
     <Content Include="Images\icons.png" />
@@ -125,6 +126,8 @@
     <Content Include="Scripts\angular-ui\ui-bootstrap.js" />
     <Content Include="Scripts\angular.js" />
     <Content Include="Scripts\angular.min.js" />
+    <Content Include="Scripts\app\services\selectRecipients.js" />
+    <Content Include="Scripts\app\templates\selectRecipientsDialog.html" />
     <Content Include="Scripts\ngWYSIWYG\wysiwyg.js" />
     <Content Include="Scripts\r.js" />
     <Content Include="Scripts\require.js" />
@@ -181,7 +184,6 @@
     <Content Include="Styles\editor.css" />
     <Content Include="Styles\fonts\fontawesome-webfont.svg" />
     <Content Include="Styles\select.min.css" />
-    <Content Include="Styles\textAngular.css" />
     <Content Include="Web.config" />
     <None Include="Service References\EwsServiceReference\EwsService.wsdl" />
     <None Include="Service References\EwsServiceReference\EwsService.xsd">

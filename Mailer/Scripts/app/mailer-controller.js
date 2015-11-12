@@ -4,6 +4,7 @@
     "../injectFn",
     "./services/errorHandler",
     "./services/services",
+    "./services/selectRecipients",
   ],
   function (module, injectFn)
   {
@@ -16,6 +17,7 @@
       "errorHandler",
       "services",
       "fileUploader",
+      "selectRecipients",
       function init()
       {
         var self = this;
@@ -24,7 +26,7 @@
         self.$invalidate = scope.$applyAsync.bind(scope);
         self.insertImage = self.insertImage.bind(self);
         self.editorConfig = { sanitize: false };
-        self.taxonomy = {};
+        self.from = null;
 
         self.$reset = function ()
         {
@@ -33,61 +35,26 @@
           self.senders = [];
           self.message = null;
           self.subject = null;
-          self.group = [];
-          self.department = [];
-          self.administration = [];
-          self.branch = [];
-          self.role = [];
         };
 
         self.$reset();
 
         self.$timeout(
-          function ()
-          {
-            self.services.GetTaxonomy(
-              function (data)
-              {
-                for (var i = 0, c = data.length; i < c; i++)
-                {
-                  var item = data[i];
-
-                  self.taxonomy[item.hierarchyID] = item;
-                }
-              },
-              self.errorHandler);
-          }, 0);
+          self.getRecipients.bind(self),
+          500);
       });
 
     MailerController.prototype = Object.create(null,
     {
+      senders: { enumerable: true, value: null, writable: true },
       from: { enumerable: true, value: null, writable: true },
       to: { enumerable: true, value: null, writable: true },
-
-      group: { enumerable: true, value: null, writable: true },
-      department: { enumerable: true, value: null, writable: true },
-      administration: { enumerable: true, value: null, writable: true },
-      branch: { enumerable: true, value: null, writable: true },
-      role: { enumerable: true, value: null, writable: true },
-
-      groups: { enumerable: true, value: null, writable: true },
-      departments: { enumerable: true, value: null, writable: true },
-      administrations: { enumerable: true, value: null, writable: true },
-      branches: { enumerable: true, value: null, writable: true },
-      roles: { enumerable: true, value: null, writable: true },
-
-      taxonomy: { enumerable: true, value: null, writable: true },
-
       attachments: { enumerable: true, value: null, writable: true },
       subject: { enumerable: true, value: null, writable: true },
       message: { enumerable: true, value: null, writable: true },
-
-      senders: { enumerable: true, value: null, writable: true },
       working: { enumerable: true, value: false, writable: true },
-
       editorConfig: { enumerable: true, value: {}, writable: true },
 
-      $updateTimer: { enumerable: false, value: null, writable: true },
       $size: {
         enumerable: false,
         value: ['n/a', 'bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
@@ -95,158 +62,77 @@
       },
 
       refreshData: {
-        value: function (name, filter)
+        value: function (filter)
         {
           var self = this;
-
-          self[name] = [];
-
-          function handleData(data)
-          {
-            self.$timeout.cancel(timer);
-            self.working = false;
-
-            for (var i = 0, c = data.length; i < c; i++)
-            {
-              var item = data[i];
-
-              item.name = "";
-
-              if (item.branchID)
-              {
-                item.name = item.branchID + " - ";
-              }
-              else if (item.employeeCode)
-              {
-                item.name = item.firstName + " " + item.secondName;
-              }
-              else if (item.title)
-              {
-                item.name = item.title;
-              }
-              
-              if (item.branchName)
-              {
-                item.name = item.name.length ?
-                  item.name + item.branchName : item.branchName;
-              }
-              else if (item.administrationName)
-              {
-                item.name = item.name.length ?
-                  item.name + item.administrationName : item.administrationName;
-              }
-              else if (item.departmentName)
-              {
-                item.name = item.name.length ?
-                  item.name + item.departmentName : item.departmentName;
-              }
-              else if (item.groupName)
-              {
-                item.name = item.name.length ?
-                  item.name + item.groupName : item.groupName;
-              }
-            }
-
-            self[name] = data;
-
-            return data;
-          }
-
-          function handleError(e)
-          {
-            self.$timeout.cancel(timer);
-            self.working = false;
-            self.errorHandler(e);
-          }
-
+          
           var request =
           {
-            filter: filter || ""
+            filter: filter || "",
+            take: 20
           };
 
           var timer =
             self.$timeout(function () { self.working = true; }, 100);
 
-          if (name == "senders")
-          {
-            self.services.GetSenders(
-              request,
-              handleData,
-              handleError);
-          }
-          else if (name == "roles")
-          {
-            self.services.GetRoles(
-              request,
-              handleData,
-              handleError);
-          }
-          else
-          {
-            request.units = name;
-
-            self.services.GetBankUnits(
-              request,
-              handleData,
-              handleError);
-          }
-        }
-      },
-      updateRecipients: {
-        value: function ($item, $model)
-        {
-          var self = this;
-
-          if (!self.$updateTimer)
-          {
-            self.$timeout.cancel(self.$updateTimer);
-          }
-
-          self.$updateTimer = self.$timeout(
-            function()
+          self.services.GetSenders(
+            request,
+            function(data)
             {
-              var request =
+              self.$timeout.cancel(timer);
+              self.working = false;
+              self.senders = [];
+
+              for (var i = 0, c = data.length; i < c; i++)
               {
-                hierarchyIDs: [],
-                roles: []
-              };
+                var item = data[i];
 
-              function appendHierarchyID(item)
-              {
-                request.hierarchyIDs.push(item.hierarchyID);
-              }
+                item.name = "";
 
-              self.group.forEach(appendHierarchyID);
-              self.department.forEach(appendHierarchyID);
-              self.administration.forEach(appendHierarchyID);
-              self.branch.forEach(appendHierarchyID);
-
-              self.role.forEach(function (item) { roles.push(item.itemName); });
-
-              self.services.GetRecipients(
-                request,
-                function (data)
+                if (item.branchID)
                 {
-                  data.forEach(function (item)
-                  {
-                    item.selected = true;
-                  });
+                  item.name = item.branchID + " - ";
+                }
+                else if (item.employeeCode)
+                {
+                  item.name = item.firstName + " " + item.secondName;
+                }
+                else if (item.title)
+                {
+                  item.name = item.title;
+                }
 
-                  self.to = data;
-                },
-                self.errorHandler);
-            }, 200);
-        }
-      },
-      toggleSelection: {
-        value: function(collection)
-        {
-          var self = this;
+                if (item.branchName)
+                {
+                  item.name = item.name.length ?
+                    item.name + item.branchName : item.branchName;
+                }
+                else if (item.administrationName)
+                {
+                  item.name = item.name.length ?
+                    item.name + item.administrationName : item.administrationName;
+                }
+                else if (item.departmentName)
+                {
+                  item.name = item.name.length ?
+                    item.name + item.departmentName : item.departmentName;
+                }
+                else if (item.groupName)
+                {
+                  item.name = item.name.length ?
+                    item.name + item.groupName : item.groupName;
+                }
 
-          for (var i = 0, c = collection.length; i < c; i++)
-          {
-            collection[i].selected = self.selectAll;
-          }
+                self.senders.push(item);
+              }
+            },
+            function(e)
+            {
+              self.$timeout.cancel(timer);
+              self.working = false;
+              self.errorHandler(e);
+            });
+
         }
       },
       convertSize: {
@@ -256,35 +142,6 @@
 
           return (bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0) + ' ' +
             this.$size[isNaN(bytes) ? 0 : i + 1];
-        }
-      },
-      select: {
-        value: function (recipients)
-        {
-        }
-      },
-      add: {
-        value: function (data, recipients)
-        {
-          var map = {};
-
-          recipients.forEach(
-            function (item)
-            {
-              if (item.id)
-              {
-                map[item.id] = item;
-              }
-            });
-
-          data.forEach(
-            function (item)
-            {
-              if (item.id && !map[item.id])
-              {
-                recipients.push(item);
-              }
-            });
         }
       },
       clean: {
@@ -346,24 +203,20 @@
             {
               subject: self.subject,
               content: self.message,
-              from: self.from && self.from.length ? self.from[0] : null,
+              from: self.from || null,
               to: recipients,
               attachments: self.attachments.length ? self.attachments : null
             },
-            function (addresses)
+            function()
             {
               self.$timeout.cancel(timer);
-
               self.working = false;
-
               self.clean();
             },
-            function (e)
+            function(e)
             {
               self.$timeout.cancel(timer);
-
               self.working = false;
-
               self.errorHandler(e);
             });
         }
@@ -424,6 +277,18 @@
               },
               function(e) { self.errorHandler(e).then(reject); });
           });
+        }
+      },
+      getRecipients: {
+        value: function()
+        {
+          var self = this;
+
+          self.selectRecipients(self.to).then(
+            function (data)
+            {
+              self.to = data;
+            });
         }
       },
     });

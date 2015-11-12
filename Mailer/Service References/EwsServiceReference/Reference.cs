@@ -1810,6 +1810,12 @@ namespace Mailer.EwsServiceReference {
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/FindAppointments", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsResponse")]
         System.Threading.Tasks.Task<Mailer.EwsServiceReference.Appointment[]> FindAppointmentsAsync(string email, System.DateTime start, System.Nullable<System.DateTime> end, System.Nullable<int> maxResults);
         
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsEx", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsExResponse")]
+        string[] FindAppointmentsEx(string email, System.DateTime start, System.Nullable<System.DateTime> end, System.Nullable<int> maxResults);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsEx", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsExResponse")]
+        System.Threading.Tasks.Task<string[]> FindAppointmentsExAsync(string email, System.DateTime start, System.Nullable<System.DateTime> end, System.Nullable<int> maxResults);
+        
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetAppointment", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetAppointmentResponse")]
         Mailer.EwsServiceReference.Appointment GetAppointment(string email, string ID);
         
@@ -1929,6 +1935,24 @@ namespace Mailer.EwsServiceReference {
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetChangeStats", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetChangeStatsResponse")]
         System.Threading.Tasks.Task<Mailer.EwsServiceReference.ChangeStats[]> GetChangeStatsAsync(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetBankSystemMailboxes", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetBankSystemMailboxesResponse")]
+        string[] GetBankSystemMailboxes(string systemName, System.Nullable<int> skip, System.Nullable<int> take);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetBankSystemMailboxes", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetBankSystemMailboxesResponse")]
+        System.Threading.Tasks.Task<string[]> GetBankSystemMailboxesAsync(string systemName, System.Nullable<int> skip, System.Nullable<int> take);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/AddBankSystemMailboxes", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/AddBankSystemMailboxesResponse")]
+        bool AddBankSystemMailboxes(string systemName, string[] mailboxes);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/AddBankSystemMailboxes", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/AddBankSystemMailboxesResponse")]
+        System.Threading.Tasks.Task<bool> AddBankSystemMailboxesAsync(string systemName, string[] mailboxes);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/RemoveBankSystemMailboxes", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/RemoveBankSystemMailboxesResponse")]
+        bool RemoveBankSystemMailboxes(string systemName, string[] mailboxes);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/RemoveBankSystemMailboxes", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/RemoveBankSystemMailboxesResponse")]
+        System.Threading.Tasks.Task<bool> RemoveBankSystemMailboxesAsync(string systemName, string[] mailboxes);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -1972,6 +1996,14 @@ namespace Mailer.EwsServiceReference {
         
         public System.Threading.Tasks.Task<Mailer.EwsServiceReference.Appointment[]> FindAppointmentsAsync(string email, System.DateTime start, System.Nullable<System.DateTime> end, System.Nullable<int> maxResults) {
             return base.Channel.FindAppointmentsAsync(email, start, end, maxResults);
+        }
+        
+        public string[] FindAppointmentsEx(string email, System.DateTime start, System.Nullable<System.DateTime> end, System.Nullable<int> maxResults) {
+            return base.Channel.FindAppointmentsEx(email, start, end, maxResults);
+        }
+        
+        public System.Threading.Tasks.Task<string[]> FindAppointmentsExAsync(string email, System.DateTime start, System.Nullable<System.DateTime> end, System.Nullable<int> maxResults) {
+            return base.Channel.FindAppointmentsExAsync(email, start, end, maxResults);
         }
         
         public Mailer.EwsServiceReference.Appointment GetAppointment(string email, string ID) {
@@ -2132,6 +2164,30 @@ namespace Mailer.EwsServiceReference {
         
         public System.Threading.Tasks.Task<Mailer.EwsServiceReference.ChangeStats[]> GetChangeStatsAsync(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take) {
             return base.Channel.GetChangeStatsAsync(systemName, email, folderID, startDate, endDate, skip, take);
+        }
+        
+        public string[] GetBankSystemMailboxes(string systemName, System.Nullable<int> skip, System.Nullable<int> take) {
+            return base.Channel.GetBankSystemMailboxes(systemName, skip, take);
+        }
+        
+        public System.Threading.Tasks.Task<string[]> GetBankSystemMailboxesAsync(string systemName, System.Nullable<int> skip, System.Nullable<int> take) {
+            return base.Channel.GetBankSystemMailboxesAsync(systemName, skip, take);
+        }
+        
+        public bool AddBankSystemMailboxes(string systemName, string[] mailboxes) {
+            return base.Channel.AddBankSystemMailboxes(systemName, mailboxes);
+        }
+        
+        public System.Threading.Tasks.Task<bool> AddBankSystemMailboxesAsync(string systemName, string[] mailboxes) {
+            return base.Channel.AddBankSystemMailboxesAsync(systemName, mailboxes);
+        }
+        
+        public bool RemoveBankSystemMailboxes(string systemName, string[] mailboxes) {
+            return base.Channel.RemoveBankSystemMailboxes(systemName, mailboxes);
+        }
+        
+        public System.Threading.Tasks.Task<bool> RemoveBankSystemMailboxesAsync(string systemName, string[] mailboxes) {
+            return base.Channel.RemoveBankSystemMailboxesAsync(systemName, mailboxes);
         }
     }
 }

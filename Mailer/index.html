@@ -5,8 +5,6 @@
  <title>ענן מיילר</title>
  <link rel="icon" href="Images/email.ico" type="image/x-icon" />
  <link rel="stylesheet" href="Styles/custom-bootstrap.css" type="text/css" />
- <!--<link rel="stylesheet" href="Styles/css/font-awesome.min.css" type="text/css" />
- <link rel="stylesheet" href="Styles/textAngular.css" type="text/css" />-->
  <link rel="stylesheet" href="Styles/select.min.css" type="text/css" />
  <link rel="stylesheet" href="Styles/editor.css" type="text/css" />
  <link rel="stylesheet" href="Styles/default.css" type="text/css" />
@@ -16,17 +14,17 @@
 </head>
 <body ng-controller="MailerController as mailer">
   <div class="centered">
-    <form name="form" class="css-form" novalidate>
+    <form name="form" class="css-form" novalidate autocomplete="off">
       <table class="rtl message ng-cloak">
         <tr>
           <th>מאת:</th>
           <td colspan="2">
-            <ui-select multiple ng-model="mailer.from" style="width: 100%">
-              <ui-select-match placeholder="משתמש מחובר">{{$item.name}}</ui-select-match>
+            <ui-select ng-model="mailer.from" style="width: 100%">
+              <ui-select-match placeholder="משתמש מחובר">{{$select.selected.name}}</ui-select-match>
               <ui-select-choices repeat="sender in mailer.senders"
-                                 refresh="mailer.refreshData('senders', $select.search)"
+                                 refresh="mailer.refreshData($select.search)"
                                  refresh-delay="200">
-                <div style="font-weight: bold" ng-bind="sender.name"></div>
+                <div style="font-weight: bold">{{sender.name}}</div>
                 <small>
                   דואר"א: {{sender.email}}<br />
                 </small>
@@ -37,114 +35,14 @@
         <tr>
           <th style="vertical-align: top">אל:</th>
           <td>
-            <table style="width: 100%">
-              <tr>
-                <th>חטיבה:</th>
-                <td>
-                  <ui-select multiple ng-model="mailer.group" style="width: 100%" 
-                    on-select="mailer.updateRecipients($item, $model)">
-                    <ui-select-match placeholder="בחר חטיבה...">{{$item.name}}</ui-select-match>
-                    <ui-select-choices repeat="group in mailer.groups"
-                                       refresh="mailer.refreshData('groups', $select.search)"
-                                       refresh-delay="200">
-                      <div style="font-weight: bold" ng-bind="group.name"></div>
-                    </ui-select-choices>
-                  </ui-select>
-                </td>
-              </tr>
-              <tr>
-                <th>אגף:</th>
-                <td>
-                  <ui-select multiple ng-model="mailer.department" style="width: 100%"
-                    on-select="mailer.updateRecipients($item, $model)">
-                    <ui-select-match placeholder="בחר אגף...">{{$item.name}}</ui-select-match>
-                    <ui-select-choices repeat="department in mailer.departments"
-                                       refresh="mailer.refreshData('departments', $select.search)"
-                                       refresh-delay="200">
-                      <div style="font-weight: bold" ng-bind="department.name"></div>
-                    </ui-select-choices>
-                  </ui-select>
-                </td>
-              </tr>
-              <tr>
-                <th>אזור:</th>
-                <td>
-                  <ui-select multiple ng-model="mailer.administration" style="width: 100%"
-                    on-select="mailer.updateRecipients($item, $model)">
-                    <ui-select-match placeholder="בחר אזור...">{{$item.name}}</ui-select-match>
-                    <ui-select-choices repeat="administration in mailer.administrations"
-                                       refresh="mailer.refreshData('administrations', $select.search)"
-                                       refresh-delay="200">
-                      <div style="font-weight: bold" ng-bind="administration.name"></div>
-                    </ui-select-choices>
-                  </ui-select>
-                </td>
-              </tr>
-              <tr>
-                <th>סניף:</th>
-                <td>
-                  <ui-select multiple ng-model="mailer.branch" style="width: 100%"
-                    on-select="mailer.updateRecipients($item, $model)">
-                    <ui-select-match placeholder="בחר סניף...">{{$item.name}}</ui-select-match>
-                    <ui-select-choices repeat="branch in mailer.branches"
-                                       refresh="mailer.refreshData('branches', $select.search)"
-                                       refresh-delay="200">
-                      <div style="font-weight: bold">{{branch.name}}</div>
-                    </ui-select-choices>
-                  </ui-select>
-                </td>
-              </tr>
-              <tr>
-                <th>תפקיד:</th>
-                <td>
-                  <ui-select multiple ng-model="mailer.role" style="width: 100%"
-                    on-select="mailer.updateRecipients($item, $model)">
-                    <ui-select-match placeholder="בחר תפקיד...">{{$item.name}}</ui-select-match>
-                    <ui-select-choices repeat="role in mailer.roles"
-                                       refresh="mailer.refreshData('roles', $select.search)"
-                                       refresh-delay="200">
-                      <div style="font-weight: bold" ng-bind="role.name"></div>
-                    </ui-select-choices>
-                  </ui-select>
-                </td>
-              </tr>
-              <tr>
-                  <td colspan="2">
-                    <div style="height: 7em; overflow-y: auto; border-bottom: 1px silver solid;">
-                      <table border="1" style="width: 100%; border: 1px solid silver; direction: rtl; text-align: right;">
-                          <tr style="background-color: silver">
-                              <th style="width: 1em"><input type="checkbox" ng-model="mailer.selectAll" ng-click="mailer.toggleSelection(mailer.to)" /></th>
-                              <th style="width: 7em; text-align: right">שם</th>
-                              <th style="width: 5em; text-align: right">תפקיד</th>
-                              <th style="width: 10em; text-align: right">סניף</th>
-                              <th style="width: 10em; text-align: right">אזור</th>
-                              <th style="width: 10em; text-align: right">אגף</th>
-                              <th style="text-align: right">חטיבה</th>
-                          </tr>
-                          <tr ng-repeat="employee in mailer.to">
-                              <td><input type="checkbox" ng-model="employee.selected" /></td>
-                              <td title="{{employee.email}}">{{employee.firstName + " " + employee.secondName}}</td>
-                              <td>{{employee.itemName}}</td>
-                              <td>{{mailer.taxonomy[employee.hierarchyID].branchID + " - " + mailer.taxonomy[employee.hierarchyID].branchName}}</td>
-                              <td>{{mailer.taxonomy[employee.hierarchyID].administrationName}}</td>
-                              <td>{{mailer.taxonomy[employee.hierarchyID].departmentName}}</td>
-                              <td>{{mailer.taxonomy[employee.hierarchyID].groupName}}</td>
-                          </tr>
-                      </table>
-                    </div>
-                    <div>סה"כ: {{mailer.to.length}}</div>
-                  </td>
-              </tr>
-            </table>
+            <div class="recipients">
+              <div ng-repeat="address in mailer.to">
+                {{address.name}} &lt;{{address.email}}&gt;
+              </div>
+            </div>
           </td>
-          <td style="vertical-align: top">
-            <span upload-link
-                  class="btn btn-primary"
-                  accept=".txt"
-                  ng-disabled="mailer.waiting"
-                  server-url="api/Mailer/UploadIdentities"
-                  on-success="mailer.add(data, mailer.to)"
-                  on-error="mailer.errorHandler(e)">רשימת ת.ז</span>
+          <td style="vertical-align: top; width: 5em;">
+            <button type="button" class="btn btn-primary" ng-click="mailer.getRecipients()">בחר</button>
           </td>
         </tr>
         <tr>
@@ -157,11 +55,6 @@
         <tr class="separator">
           <td colspan="3"></td>
         </tr>
-        <!--<tr>
-          <td colspan="3">
-            TODO: toolbar
-          </td>
-        </tr>-->
         <tr>
           <td colspan="3" class="editorContainer">
             <wysiwyg-edit content="mailer.message" api="mailer" config="mailer.editorConfig"></wysiwyg-edit>

@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Select recipients dialog</title>
+  <link type="text/css" rel="stylesheet" href="../../../Styles/default.css" />
+</head>
+<body>
+  <div class="modal-header">
+     <h3 class="modal-title" style="text-align: right">
+       בחר את הנמענים 
+       <span class="small_indicator" ng-show="ctrl.working">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+     </h3>
+  </div>
+  <div class="modal-body">
+    <table style="width: 100%; direction: rtl;">
+      <tr>
+        <th>חטיבה:</th>
+        <td>
+          <ui-select multiple ng-model="ctrl.group" style="width: 100%">
+            <ui-select-match placeholder="בחר חטיבה...">{{$item.name}}</ui-select-match>
+            <ui-select-choices repeat="group in ctrl.groups"
+                               refresh="ctrl.refreshData('groups', $select.search)"
+                               refresh-delay="200">
+              <div style="font-weight: bold" ng-bind="group.name"></div>
+            </ui-select-choices>
+          </ui-select>
+        </td>
+      </tr>
+      <tr>
+        <th>אגף:</th>
+        <td>
+          <ui-select multiple ng-model="ctrl.department" style="width: 100%">
+            <ui-select-match placeholder="בחר אגף...">{{$item.name}}</ui-select-match>
+            <ui-select-choices repeat="department in ctrl.departments"
+                               refresh="ctrl.refreshData('departments', $select.search)"
+                               refresh-delay="200">
+              <div style="font-weight: bold" ng-bind="department.name"></div>
+            </ui-select-choices>
+          </ui-select>
+        </td>
+      </tr>
+      <tr>
+        <th>אזור:</th>
+        <td>
+          <ui-select multiple ng-model="ctrl.administration" style="width: 100%">
+            <ui-select-match placeholder="בחר אזור...">{{$item.name}}</ui-select-match>
+            <ui-select-choices repeat="administration in ctrl.administrations"
+                               refresh="ctrl.refreshData('administrations', $select.search)"
+                               refresh-delay="200">
+              <div style="font-weight: bold" ng-bind="administration.name"></div>
+            </ui-select-choices>
+          </ui-select>
+        </td>
+      </tr>
+      <tr>
+        <th>סניף:</th>
+        <td>
+          <ui-select multiple ng-model="ctrl.branch" style="width: 100%">
+            <ui-select-match placeholder="בחר סניף...">{{$item.name}}</ui-select-match>
+            <ui-select-choices repeat="branch in ctrl.branches"
+                               refresh="ctrl.refreshData('branches', $select.search)"
+                               refresh-delay="200">
+              <div style="font-weight: bold">{{branch.name}}</div>
+            </ui-select-choices>
+          </ui-select>
+        </td>
+      </tr>
+      <tr>
+        <th>תפקיד:</th>
+        <td>
+          <ui-select multiple ng-model="ctrl.role" style="width: 100%">
+            <ui-select-match placeholder="בחר תפקיד...">{{$item.name}}</ui-select-match>
+            <ui-select-choices repeat="role in ctrl.roles"
+                               refresh="ctrl.refreshData('roles', $select.search)"
+                               refresh-delay="200">
+              <div style="font-weight: bold" ng-bind="role.name"></div>
+            </ui-select-choices>
+          </ui-select>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2">
+          <div style="direction: ltr; padding: 3px;">
+            <a class="btn btn-primary"
+               ng-disabled="ctrl.working"
+               ng-click="ctrl.updateRecipients()">הצג רשימה</a>&nbsp;
+            <a upload-link
+               class="btn btn-primary"
+               accept=".txt"
+               ng-disabled="ctrl.working"
+               server-url="api/Mailer/UploadIdentities"
+               on-success="ctrl.add(data, mailer.to)"
+               on-error="ctrl.errorHandler(e)">להוסיף ת.ז. מקובץ</a>
+            <button class="btn btn-primary" ng-click="ctrl.clear()" ng-disabled="ctrl.working">מחק</button>
+          </div>
+          <div style="height: 15em; overflow-y: auto; border: 1px silver solid;">
+            <table border="1" style="width: 100%; border: 1px solid silver; direction: rtl; text-align: right;">
+              <tr style="background-color: silver">
+                <th style="width: 1em"><input type="checkbox" ng-model="ctrl.selectAll" ng-click="ctrl.toggleSelection(ctrl.to)" /></th>
+                <th style="width: 7em; text-align: right">שם</th>
+                <th style="width: 5em; text-align: right">תפקיד</th>
+                <th style="width: 10em; text-align: right">סניף</th>
+                <th style="width: 10em; text-align: right">אזור</th>
+                <th style="width: 10em; text-align: right">אגף</th>
+                <th style="text-align: right">חטיבה</th>
+              </tr>
+              <tr ng-repeat="employee in ctrl.to">
+                <td><input type="checkbox" ng-model="employee.selected" /></td>
+                <td title="{{employee.email}}">{{employee.name}}</td>
+                <td>{{employee.itemName}}</td>
+                <td>{{employee.branchName}}</td>
+                <td>{{employee.administrationName}}</td>
+                <td>{{employee.departmentName}}</td>
+                <td>{{employee.groupName}}</td>
+              </tr>
+            </table>
+          </div>
+          <div>סה"כ: {{ctrl.to.length}}</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <div class="modal-footer" style="direction: rtl;">
+    <button class="btn btn-primary" ng-click="ctrl.ok()" 
+        ng-disabled="ctrl.working || !ctrl.to.length">בחר</button>
+    <button class="btn btn-primary" ng-click="$dismiss('cancel')">בטל</button>
+  </div>
+</body>
+</html>

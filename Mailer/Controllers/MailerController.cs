@@ -2,19 +2,16 @@
 {
   using System;
   using System.Collections.Generic;
-  using System.Collections.Concurrent;
   using System.Linq;
   using System.Threading;
   using System.Threading.Tasks;
   using System.Web.Http;
   using System.Net;
   using System.Net.Http;
-  using System.Diagnostics;
   using System.Runtime.Serialization;
   using System.Xml;
   using System.Text;
   using System.IO;
-  using System.Web.Hosting;
   using System.Data.Entity;
 
   using Mailer.Code;
@@ -36,15 +33,13 @@
     [Authorize]
     public async Task<IEnumerable<BankUser>> GetSenders(
       string filter, 
-      int take = 100)
+      int take = 50)
     {
       using (var context = new Taxonomy())
       {
-        var result = await Task.FromResult(
+        return await Task.FromResult(
           context.GetUsersOrGroups(filter, take, 1).
-            ToArray());
-
-        return result;
+          ToList());
       }
     }
 
@@ -60,7 +55,7 @@
     public async Task<IEnumerable<BankUnit>> GetBankUnits(
       string units = "branches", 
       string filter = null, 
-      int take = 100)
+      int take = 50)
     {
       units = units.ToLower();
 
@@ -71,13 +66,11 @@
 
       using (var context = new Taxonomy())
       {
-        var result = await Task.FromResult(
+        return await Task.FromResult(
           context.GetBranches(filter, int.MaxValue).
             Where(item => item.HierarchyID.Split('/').Length == level).
             Take(take).
-            ToArray());
-
-        return result;
+            ToList());
       }
     }
 
@@ -100,15 +93,13 @@
     [Authorize]
     public async Task<IEnumerable<BankUser>> GetRoles(
       string filter, 
-      int take = 100)
+      int take = 50)
     {
       using (var context = new Taxonomy())
       {
-        var result = await Task.FromResult(
+        return await Task.FromResult(
           context.GetUsersOrGroups(filter, take, 2).
-            ToArray());
-
-        return result;
+          ToList());
       }
     }
 
@@ -124,42 +115,35 @@
     public async Task<IEnumerable<BankUser>> GetRecipients(
       RecipientsRequest request)
     {
-      var hierarchyIDs = new StringBuilder();
-      var itemNames = new StringBuilder();
+      var hierarchyIDs = "";
+      var itemNames = "";
 
       foreach (var item in request.HierarchyIDs)
       {
-        if (hierarchyIDs.Length > 0)
-        {
-          hierarchyIDs.Append(',').Append(item);
-        }
-        else
-        {
-          hierarchyIDs.Append(item);
-        }
+        hierarchyIDs += item + ",";
+      }
+
+      if (hierarchyIDs.Length > 0)
+      {
+        hierarchyIDs = hierarchyIDs.Substring(0, hierarchyIDs.Length - 1);
       }
 
       foreach (var item in request.Roles)
       {
-        if (itemNames.Length > 0)
-        {
-          itemNames.Append(',').Append(item);
-        }
-        else
-        {
-          itemNames.Append(item);
-        }
+        itemNames += item + ",";
+      }
+
+      if (itemNames.Length > 0)
+      {
+        itemNames = itemNames.Substring(0, itemNames.Length - 1);
       }
 
       using (var context = new Taxonomy())
       {
-        var result = await Task.FromResult(
-          context.GetUsersEx(
-            hierarchyIDs.ToString(), 
-            itemNames.ToString()).
-          ToArray());
-
-        return result;
+        return await Task.FromResult(
+          context.GetUsersEx(hierarchyIDs, itemNames).
+            Take(500). // maximum allowed recipients
+            ToList()); 
       }
     }
 
@@ -176,14 +160,10 @@
     /// </returns>
     [HttpPost]
     [ActionName("UploadIdentities")]
-    public async Task<IEnumerable<Addressee>> UploadIdentities()
+    public async Task<IEnumerable<BankUser>> UploadIdentities()
     {
-      var list = new List<Addressee>();
+      var list = new List<BankUser>();
 
-      var addresses = (await ReadAddresses("")).
-        Where(a => !string.IsNullOrEmpty(a.Id)).
-        ToDictionary(a => a.Id);
-      
       await UploadAction(
         async provider =>
         {
@@ -194,16 +174,18 @@
             throw new HttpResponseException(HttpStatusCode.BadRequest);
           }
 
+          var bankUsers = BankUsers.Get();
+
           using (var reader = File.OpenText(file.LocalFileName))
           {
             var line = null as string;
-            var address = null as Addressee;
+            var bankUser = null as BankUser;
 
             while ((line = await reader.ReadLineAsync()) != null)
             {
-              if (addresses.TryGetValue(line.Trim(), out address))
+              if (bankUsers.TryGetValue(line.Trim(), out bankUser))
               {
-                list.Add(address);
+                list.Add(bankUser);
               }
             }
           }
@@ -572,5 +554,34 @@
           }
         }
     };
+
+    /// <summary>
+    /// Defines cache of bank users.
+    /// </summary>
+    private static Cache<Dictionary<string, BankUser>> BankUsers =
+      new Cache<Dictionary<string, BankUser>>.Builder
+      {
+        Key = "BankUsers",
+        Expiration = Cache.LongDelay,
+        Factory = () =>
+        {
+          var users = new Dictionary<string, BankUser>();
+
+          using (var context = new Taxonomy())
+          {
+            foreach (var user in 
+              context.GetUsersOrGroups("", int.MaxValue, 1).
+                Where(user => !string.IsNullOrEmpty(user.EmployeeCode)))
+            {
+              if (!users.ContainsKey(user.EmployeeCode))
+              {
+                users.Add(user.EmployeeCode, user);
+              }
+            }
+
+            return users;
+          }
+        }
+      };
   }
 }

@@ -19,6 +19,12 @@
   <wsdl:message name="IEwsService_FindAppointments_OutputMessage">
     <wsdl:part name="parameters" element="tns:FindAppointmentsResponse" />
   </wsdl:message>
+  <wsdl:message name="IEwsService_FindAppointmentsEx_InputMessage">
+    <wsdl:part name="parameters" element="tns:FindAppointmentsEx" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_FindAppointmentsEx_OutputMessage">
+    <wsdl:part name="parameters" element="tns:FindAppointmentsExResponse" />
+  </wsdl:message>
   <wsdl:message name="IEwsService_GetAppointment_InputMessage">
     <wsdl:part name="parameters" element="tns:GetAppointment" />
   </wsdl:message>
@@ -139,6 +145,24 @@
   <wsdl:message name="IEwsService_GetChangeStats_OutputMessage">
     <wsdl:part name="parameters" element="tns:GetChangeStatsResponse" />
   </wsdl:message>
+  <wsdl:message name="IEwsService_GetBankSystemMailboxes_InputMessage">
+    <wsdl:part name="parameters" element="tns:GetBankSystemMailboxes" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_GetBankSystemMailboxes_OutputMessage">
+    <wsdl:part name="parameters" element="tns:GetBankSystemMailboxesResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_AddBankSystemMailboxes_InputMessage">
+    <wsdl:part name="parameters" element="tns:AddBankSystemMailboxes" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_AddBankSystemMailboxes_OutputMessage">
+    <wsdl:part name="parameters" element="tns:AddBankSystemMailboxesResponse" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_RemoveBankSystemMailboxes_InputMessage">
+    <wsdl:part name="parameters" element="tns:RemoveBankSystemMailboxes" />
+  </wsdl:message>
+  <wsdl:message name="IEwsService_RemoveBankSystemMailboxes_OutputMessage">
+    <wsdl:part name="parameters" element="tns:RemoveBankSystemMailboxesResponse" />
+  </wsdl:message>
   <wsdl:portType name="IEwsService">
     <wsdl:operation name="CreateAppointment">
       <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/CreateAppointment" message="tns:IEwsService_CreateAppointment_InputMessage" />
@@ -147,6 +171,10 @@
     <wsdl:operation name="FindAppointments">
       <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/FindAppointments" message="tns:IEwsService_FindAppointments_InputMessage" />
       <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsResponse" message="tns:IEwsService_FindAppointments_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="FindAppointmentsEx">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsEx" message="tns:IEwsService_FindAppointmentsEx_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsExResponse" message="tns:IEwsService_FindAppointmentsEx_OutputMessage" />
     </wsdl:operation>
     <wsdl:operation name="GetAppointment">
       <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetAppointment" message="tns:IEwsService_GetAppointment_InputMessage" />
@@ -228,6 +256,18 @@
       <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetChangeStats" message="tns:IEwsService_GetChangeStats_InputMessage" />
       <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetChangeStatsResponse" message="tns:IEwsService_GetChangeStats_OutputMessage" />
     </wsdl:operation>
+    <wsdl:operation name="GetBankSystemMailboxes">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetBankSystemMailboxes" message="tns:IEwsService_GetBankSystemMailboxes_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/GetBankSystemMailboxesResponse" message="tns:IEwsService_GetBankSystemMailboxes_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="AddBankSystemMailboxes">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/AddBankSystemMailboxes" message="tns:IEwsService_AddBankSystemMailboxes_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/AddBankSystemMailboxesResponse" message="tns:IEwsService_AddBankSystemMailboxes_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="RemoveBankSystemMailboxes">
+      <wsdl:input wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/RemoveBankSystemMailboxes" message="tns:IEwsService_RemoveBankSystemMailboxes_InputMessage" />
+      <wsdl:output wsaw:Action="https://www.bankhapoalim.co.il/IEwsService/RemoveBankSystemMailboxesResponse" message="tns:IEwsService_RemoveBankSystemMailboxes_OutputMessage" />
+    </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="BasicHttpBinding_IEwsService" type="tns:IEwsService">
     <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
@@ -242,6 +282,15 @@
     </wsdl:operation>
     <wsdl:operation name="FindAppointments">
       <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/FindAppointments" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="FindAppointmentsEx">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsEx" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>
@@ -422,6 +471,33 @@
     </wsdl:operation>
     <wsdl:operation name="GetChangeStats">
       <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/GetChangeStats" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="GetBankSystemMailboxes">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/GetBankSystemMailboxes" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="AddBankSystemMailboxes">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/AddBankSystemMailboxes" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="RemoveBankSystemMailboxes">
+      <soap:operation soapAction="https://www.bankhapoalim.co.il/IEwsService/RemoveBankSystemMailboxes" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>
