@@ -81,10 +81,7 @@
       </tr>
       <tr>
         <td colspan="2">
-          <div style="direction: ltr; padding: 3px;">
-            <a class="btn btn-primary"
-               ng-disabled="ctrl.working"
-               ng-click="ctrl.updateRecipients()">הצג רשימה</a>&nbsp;
+          <span style="display: inline-block; float: left; padding: 3px;">
             <a upload-link
                class="btn btn-primary"
                accept=".txt"
@@ -92,17 +89,26 @@
                server-url="api/Mailer/UploadIdentities"
                on-success="ctrl.add(data, mailer.to)"
                on-error="ctrl.errorHandler(e)">להוסיף ת.ז. מקובץ</a>
-            <button class="btn btn-primary" ng-click="ctrl.clear()" ng-disabled="ctrl.working">מחק</button>
-          </div>
+          </span>
+          <span style="display: inline-block; float: right; padding: 3px;">
+            <button class="btn btn-primary" ng-disabled="ctrl.working" 
+              ng-click="ctrl.updateRecipients()">הצג רשימה</button>&nbsp;
+            <button class="btn btn-primary" ng-click="ctrl.clear()" 
+              ng-disabled="ctrl.working">מחק</button>
+          </span>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2">
           <div style="height: 15em; overflow-y: auto; border: 1px silver solid;">
             <table border="1" style="width: 100%; border: 1px solid silver; direction: rtl; text-align: right;">
               <tr style="background-color: silver">
                 <th style="width: 1em"><input type="checkbox" ng-model="ctrl.selectAll" ng-click="ctrl.toggleSelection(ctrl.to)" /></th>
-                <th style="width: 7em; text-align: right">שם</th>
-                <th style="width: 5em; text-align: right">תפקיד</th>
-                <th style="width: 10em; text-align: right">סניף</th>
-                <th style="width: 10em; text-align: right">אזור</th>
-                <th style="width: 10em; text-align: right">אגף</th>
+                <th style="width: 16%; text-align: right">שם</th>
+                <th style="width: 16%; text-align: right">תפקיד</th>
+                <th style="width: 16%; text-align: right">סניף</th>
+                <th style="width: 16%; text-align: right">אזור</th>
+                <th style="width: 16%; text-align: right">אגף</th>
                 <th style="text-align: right">חטיבה</th>
               </tr>
               <tr ng-repeat="employee in ctrl.to">

@@ -142,7 +142,7 @@
       {
         return await Task.FromResult(
           context.GetUsersEx(hierarchyIDs, itemNames).
-            Take(500). // maximum allowed recipients
+            Take(1000). // maximum allowed recipients
             ToList()); 
       }
     }
