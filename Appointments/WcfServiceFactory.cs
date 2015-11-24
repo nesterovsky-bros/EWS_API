@@ -129,7 +129,7 @@ namespace Bnhp.Office365
       globalSettings = settings;
 
       if (bool.TryParse(
-        ConfigurationManager.AppSettings["ValidateSSLCertificates"],
+        ConfigurationManager.AppSettings["SkipSSLCertificatesValidation"],
         out boolValue) && boolValue)
       {
         // Trust all certificates 
