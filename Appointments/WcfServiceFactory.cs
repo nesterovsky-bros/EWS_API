@@ -128,6 +128,15 @@ namespace Bnhp.Office365
 
       globalSettings = settings;
 
+      if (bool.TryParse(
+        ConfigurationManager.AppSettings["ValidateSSLCertificates"],
+        out boolValue) && boolValue)
+      {
+        // Trust all certificates 
+        ServicePointManager.ServerCertificateValidationCallback =
+          (sender, certificate, chain, sslPolicyErrors) => true;
+      }
+
       return settings;
     }
 
