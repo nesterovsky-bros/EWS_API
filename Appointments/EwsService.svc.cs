@@ -320,8 +320,13 @@
       var officeAppointment = await RetrieveAppointment(service, email, proxy.Id);
 
       // Note: only organizer may update the proxy.
-      if ((officeAppointment != null) &&
-        (officeAppointment.MyResponseType == Office365.MeetingResponseType.Organizer))
+      if (officeAppointment == null)
+      {
+        return false;
+      }
+
+      if ((officeAppointment.MyResponseType == Office365.MeetingResponseType.Organizer) ||
+        (string.Compare(officeAppointment.Organizer.Address, email, true) == 0))
       {
         if (!proxy.Start.Equals(DateTime.MinValue))
         {
@@ -357,8 +362,8 @@
             proxy.TextBody);
         }
 
-        SetExtendedProperties(officeAppointment, proxy.ExtendedProperties);
         SetCategories(officeAppointment, proxy.Categories);
+        SetExtendedProperties(officeAppointment, proxy.ExtendedProperties);
 
         UpdateAttendees(
           officeAppointment.RequiredAttendees, proxy.RequiredAttendees);
@@ -366,30 +371,36 @@
           officeAppointment.OptionalAttendees, proxy.OptionalAttendees);
 
         // TODO: update more properties
+      }
+      else if (proxy.ExtendedProperties != null)
+      {
+        SetExtendedProperties(officeAppointment, proxy.ExtendedProperties);
+      }
+      else
+      {
+        return false;
+      }
 
-        // Unless explicitly specified, the default is to use SendToAllAndSaveCopy.
-        // This can convert an proxy into a proxy. To avoid this,
-        // explicitly set SendToNone on non-meetings.
-        var mode = officeAppointment.IsMeeting ?
+      // Unless explicitly specified, the default is to use SendToAllAndSaveCopy.
+      // This can convert an proxy into a proxy. To avoid this,
+      // explicitly set SendToNone on non-meetings.
+      var mode = officeAppointment.IsMeeting ?
           Office365.SendInvitationsOrCancellationsMode.SendToAllAndSaveCopy :
           Office365.SendInvitationsOrCancellationsMode.SendToNone;
 
-        await EwsUtils.TryAction(
-          "UpdateAppointment",
-          email,
-          service,
-          i =>
-          {
-            officeAppointment.Update(Office365.ConflictResolutionMode.AlwaysOverwrite, mode);
+      await EwsUtils.TryAction(
+        "UpdateAppointment",
+        email,
+        service,
+        i =>
+        {
+          officeAppointment.Update(Office365.ConflictResolutionMode.AlwaysOverwrite, mode);
 
-            return Task.FromResult(true);
-          },
-          Settings);
+          return Task.FromResult(true);
+        },
+        Settings);
 
-        return true;
-      }
-
-      return false;
+      return true;
     }
     #endregion
 
@@ -878,6 +889,68 @@
     }
     #endregion
 
+    #region DeleteAttachmentByName method
+    /// <summary>
+    /// Deletes a file attachment from the specified message.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="ID">an e-mail message's unique ID.</param>
+    /// <param name="name">an attachment's name to delete.</param>
+    /// <returns>
+    /// true when the specified attachment was successfully deleted, 
+    /// and false otherwise.
+    /// </returns>
+    public Task<bool> DeleteAttachmentByName(string email, string ID, string name)
+    {
+      return DeleteAttachmentImpl(email, ID, name);
+    }
+
+    private async Task<bool> DeleteAttachmentImpl(
+      string email,
+      string ID,
+      string name)
+    {
+      if (string.IsNullOrEmpty(ID))
+      {
+        throw new ArgumentNullException("ID");
+      }
+
+      var service = await GetService(email);
+
+      return await EwsUtils.TryAction(
+        "DeleteFileAttachment",
+        email,
+        service,
+        i => {
+          var found = false;
+          var message = Office365.EmailMessage.Bind(service, ID);
+
+          if (message.HasAttachments)
+          {
+            foreach (Office365.Attachment attachment in message.Attachments)
+            {
+              if (attachment.Name == name)
+              {
+                found = true;
+
+                message.Attachments.Remove(attachment);
+
+                break;
+              }
+            }
+          }
+
+          if (found)
+          {
+            message.Update(Office365.ConflictResolutionMode.AlwaysOverwrite);
+          }
+
+          return Task.FromResult(found);
+        },
+        Settings);
+    }
+#endregion
+
     #region GetMessageContent method
     /// <summary>
     /// Gets an e-mail message content by its ID.
@@ -924,6 +997,26 @@
     public Task<bool> DeleteMessage(string email, string ID)
     {
       return ProcessEMailImpl(email, ID, "delete");
+    }
+    #endregion
+
+    #region UpdateMessage method
+    /// <summary>
+    /// Updates an e-mail message specified by unique ID.
+    /// </summary>
+    /// <param name="email">an user's e-mail box.</param>
+    /// <param name="ID">the e-mail message's unique ID.</param>
+    /// <returns>
+    /// true when the message was successfully deleted, and false otherwise.
+    /// </returns>
+    public Task<bool> UpdateMessage(string email, EMailMessage changedMessage)
+    {
+      if ((changedMessage == null) || string.IsNullOrEmpty(changedMessage.Id))
+      {
+        throw new ArgumentException("changedMessage");
+      }
+
+      return ProcessEMailImpl(email, changedMessage);
     }
     #endregion
 
@@ -1445,7 +1538,8 @@
         Office365.BasePropertySet.FirstClassProperties,
         Office365.ItemSchema.Categories,
         Office365.AppointmentSchema.RequiredAttendees,
-        Office365.AppointmentSchema.OptionalAttendees);
+        Office365.AppointmentSchema.OptionalAttendees,
+        Office365.AppointmentSchema.MyResponseType);
 
       properties.AddRange(Settings.ExtendedPropertyDefinitions.Values);
 
@@ -2043,12 +2137,26 @@
             else if (string.Compare(action, "copy", true) == 0)
             {
               return await EwsUtils.TryAction(
-                "DeleteMessage",
+                "CopyMessage",
                 email,
                 service,
                 i =>
                 {
                   message.Copy(folderID);
+
+                  return Task.FromResult(true);
+                },
+                Settings);
+            }
+            else if (string.Compare(action, "update", true) == 0)
+            {
+              return await EwsUtils.TryAction(
+                "UpdateMessage",
+                email,
+                service,
+                i =>
+                {
+                  message.Update(Office365.ConflictResolutionMode.AlwaysOverwrite);
 
                   return Task.FromResult(true);
                 },
@@ -2060,6 +2168,74 @@
       }
 
       return false;
+    }
+
+    private async Task<bool> ProcessEMailImpl(
+      string email,
+      EMailMessage changedMessage)
+    {
+      var service = await GetService(email);
+
+      return await EwsUtils.TryAction(
+        "UpdateMessage",
+        email,
+        service,
+        i => {
+          var message = Office365.EmailMessage.Bind(service, changedMessage.Id);
+
+          if (message == null)
+          {
+            return Task.FromResult(false);
+          }
+
+          if (changedMessage.Subject != null)
+          {
+            message.Subject = changedMessage.Subject;
+          }
+
+          if (changedMessage.From != null)
+          {
+            message.From = new Office365.EmailAddress
+            {
+              Address = changedMessage.From.Address,
+              Name = changedMessage.From.Name,
+              MailboxType = Office365.MailboxType.Mailbox
+            };
+          }
+          
+          if (changedMessage.TextBody != null)
+          {
+            var bodyType = IsHtml.IsMatch(changedMessage.TextBody) ?
+              Office365.BodyType.HTML : Office365.BodyType.Text;
+
+            message.Body =
+              new Office365.MessageBody(bodyType, changedMessage.TextBody);
+          }
+
+          if (changedMessage.ToRecipients != null)
+          {
+            message.ToRecipients.Clear();
+
+            foreach (var recipient in changedMessage.ToRecipients)
+            {
+              message.ToRecipients.Add(recipient.Name, recipient.Address);
+            }
+          }
+
+          var done = true;
+
+          try
+          {
+            message.Update(Office365.ConflictResolutionMode.AlwaysOverwrite);
+          }
+          catch
+          {
+            done = false;
+          }
+
+          return Task.FromResult(done);
+        },
+        Settings);
     }
 
     private static void UpdateAttendees(

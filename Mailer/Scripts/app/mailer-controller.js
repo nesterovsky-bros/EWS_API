@@ -5,6 +5,7 @@
     "./services/errorHandler",
     "./services/services",
     "./services/selectRecipients",
+    "./services/local",
   ],
   function (module, injectFn)
   {
@@ -18,6 +19,7 @@
       "services",
       "fileUploader",
       "selectRecipients",
+      "local",
       function init()
       {
         var self = this;
@@ -26,41 +28,188 @@
         self.$invalidate = scope.$applyAsync.bind(scope);
         self.insertImage = self.insertImage.bind(self);
         self.editorConfig = { sanitize: false };
-        self.from = null;
+        self.$from = null;
+        self.$dirtyFlag = 0;
+        self.$updateTimer = null;
 
         self.$reset = function ()
         {
-          self.to = [];
-          self.attachments = [];
+          self.$to = [];
           self.senders = [];
-          self.message = null;
-          self.subject = null;
+          self.$message = null;
+          self.$subject = null;
+          self.attachments = [];
         };
 
         self.$reset();
 
-        self.$timeout(
-          self.getRecipients.bind(self),
-          500);
+        var messageID = self.local.$init({ messageID: null }).messageID;
+
+        if (!messageID)
+        {
+          self.$timeout(
+            function()
+            {
+              self.getRecipients().then(
+                function (data)
+                {
+                  self.services.CreateDraftMessage(
+                    {
+                      from: self.from,
+                      toRecipients: self.to
+                    },
+                    function (messageID)
+                    {
+                      self.local["messageID"] = messageID.data;
+
+                      self.local.$save();
+                    },
+                    self.errorHandler);
+                });
+            },
+            500);
+        }
+        else
+        {
+          self.services.GetMessage(
+            {
+              messageId: messageID,
+            },
+            function (message)
+            {
+              self.$subject = message.subject || null;
+              self.$message = message.content || null;
+              self.$from = message.from || null;
+              self.$to = message.to || [];
+              self.attachments = message.attachments || [];
+            },
+            self.errorHandler);
+        }
       });
 
     MailerController.prototype = Object.create(null,
     {
       senders: { enumerable: true, value: null, writable: true },
-      from: { enumerable: true, value: null, writable: true },
-      to: { enumerable: true, value: null, writable: true },
-      attachments: { enumerable: true, value: null, writable: true },
-      subject: { enumerable: true, value: null, writable: true },
-      message: { enumerable: true, value: null, writable: true },
+      from: {
+        enumerable: true,
+        get: function ()
+        {
+          return this.$from;
+        },
+        set: function (value)
+        {
+          this.$from = value;
+
+          this.propertyChanged(8);
+        }
+      },
+      to: {
+        enumerable: true,
+        get: function ()
+        {
+          return this.$to;
+        },
+        set: function (value)
+        {
+          this.$to = value;
+
+          this.propertyChanged(1);
+        }
+      },
+      subject: {
+        enumerable: true,
+        get: function()
+        {
+          return this.$subject;
+        },
+        set: function (value)
+        {
+          this.$subject = value;
+
+          this.propertyChanged(2);
+        }
+      },
+      message: {
+        enumerable: true,
+        get: function ()
+        {
+          return this.$message;
+        },
+        set: function (value)
+        {
+          this.$message = value;
+
+          this.propertyChanged(4);
+        }
+      },
+      attachments: { enumerable: true, value: false, writable: true },
       working: { enumerable: true, value: false, writable: true },
       editorConfig: { enumerable: true, value: {}, writable: true },
 
       $size: {
         enumerable: false,
         value: ['n/a', 'bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
-        writable: true
+        writable: false
       },
 
+      propertyChanged: {
+        value: function (propertyID)
+        {
+          var self = this;
+
+          self.$dirtyFlag |= propertyID;
+
+          self.$timeout.cancel(self.$updateTimer);
+
+          self.$updateTimer =
+            self.$timeout(self.updateMessage.bind(self), 500);
+        }
+      },
+      updateMessage: {
+        value: function ()
+        {
+          var self = this;
+
+          self.$updateTimer = null;
+
+          if (!self.$dirtyFlag)
+          {
+            return;
+          }
+
+          var flag = self.$dirtyFlag;
+          var message = {
+            id: self.local.messageID
+          };
+
+          self.$dirtyFlag = 0;
+
+          if (flag & 1)
+          {
+            message.toRecipients = self.$to;
+          }
+
+          if (flag & 2)
+          {
+            message.subject = self.$subject;
+          }
+
+          if (flag & 4)
+          {
+            message.textBody = self.$message;
+          }
+
+          if (flag & 8)
+          {
+            message.from = self.$from;
+          }
+
+          self.services.UpdateMessage(
+            message,
+            function () {},
+            self.errorHandler)
+        }
+      },
       refreshData: {
         value: function (filter)
         {
@@ -147,12 +296,38 @@
       clean: {
         value: function ()
         {
-          this.$reset();
+          var self = this;
 
-          var form = this.scope.form;
+          self.$timeout.cancel(self.$updateTimer);
+          self.$reset();
+
+          self.$dirtyFlag = 0;
+          self.$updateTimer = null;
+
+          var form = self.scope.form;
 
           form.$setPristine();
           form.$setUntouched();
+
+          self.services.DeleteMessage(
+            {
+              messageId: self.local.messageID,
+            },
+            function ()
+            {
+              self.services.CreateDraftMessage(
+                {
+                  from: self.from
+                },
+                function (messageID)
+                {
+                  self.local.messageID = messageID.data;
+
+                  self.local.$save();
+                },
+                self.errorHandler);
+            },
+            self.errorHandler);
         }
       },
       send: {
@@ -238,15 +413,23 @@
 
           var marker = "base64,";
           var start = data.indexOf(marker);
+          var attachment = {
+            name: file.name,
+            size: file.size,
+            content: data.substr(start + marker.length),
+          };
 
-          self.attachments.push(
+          self.attachments.push(attachment);
+
+          self.services.AddAttachment(
             {
-              name: file.name,
-              size: file.size,
-              content: data.substr(start + marker.length),
-            });
-
-          self.$invalidate();
+              messageID: self.local.messageID,
+              attachment: attachment
+            },
+            angular.noop,
+            self.errorHandler);
+      
+          //self.$invalidate();
         }
       },
       remove: {
@@ -283,12 +466,18 @@
         value: function()
         {
           var self = this;
+          var defered = self.$q.defer();
 
           self.selectRecipients(self.to).then(
             function (data)
             {
               self.to = data;
-            });
+
+              defered.resolve(data);
+            },
+            defered.reject);
+
+          return defered.promise;
         }
       },
     });

@@ -20,7 +20,7 @@
       self.errorHandler = errorHandler;
       self.services = services;
       self.taxonomy = {};
-      self.to = $scope.to || [];
+      self.to = [];
       self.group = [];
       self.department = [];
       self.administration = [];
@@ -41,6 +41,8 @@
               }
 
               self.taxonomy.$resolved = true;
+
+              self.to = self.handleRecipients($scope.to || []);
             },
             errorHandler);
         }, 0);
@@ -223,7 +225,7 @@
             var item = data[i];
             
             item.selected = true;
-            item.name = item.firstName + " " + item.secondName;
+            item.name = item.name || (item.firstName + " " + item.secondName);
 
             var branch = self.taxonomy[item.hierarchyID];
             var bankUnits = item.hierarchyID.split('/');

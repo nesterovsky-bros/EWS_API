@@ -126,6 +126,7 @@
     <Content Include="Scripts\angular-ui\ui-bootstrap.js" />
     <Content Include="Scripts\angular.js" />
     <Content Include="Scripts\angular.min.js" />
+    <Content Include="Scripts\app\services\local.js" />
     <Content Include="Scripts\app\services\selectRecipients.js" />
     <Content Include="Scripts\app\templates\selectRecipientsDialog.html" />
     <Content Include="Scripts\ngWYSIWYG\wysiwyg.js" />

@@ -244,6 +244,19 @@ namespace Bnhp.Office365
     Task<byte[]> GetAttachmentByIndex(string email, string ID, int index);
 
     /// <summary>
+    /// Deletes a file attachment from the specified message.
+    /// </summary>
+    /// <param name="email">a target user's e-mail.</param>
+    /// <param name="ID">an e-mail message's unique ID.</param>
+    /// <param name="name">an attachment's name to delete.</param>
+    /// <returns>
+    /// true when the specified attachment was successfully deleted, 
+    /// and false otherwise.
+    /// </returns>
+    [OperationContract]
+    Task<bool> DeleteAttachmentByName(string email, string ID, string name);
+
+    /// <summary>
     /// Gets an e-mail message content by its ID.
     /// </summary>
     /// <param name="email">a target user's e-mail.</param>
@@ -265,6 +278,17 @@ namespace Bnhp.Office365
     /// </returns>
     [OperationContract]
     Task<bool> DeleteMessage(string email, string ID);
+    
+    /// <summary>
+    /// Updates an e-mail message specified by unique ID.
+    /// </summary>
+    /// <param name="email">an user's e-mail box.</param>
+    /// <param name="ID">the e-mail message's unique ID.</param>
+    /// <returns>
+    /// true when the message was successfully deleted, and false otherwise.
+    /// </returns>
+    [OperationContract]
+    Task<bool> UpdateMessage(string email, EMailMessage changedMessage);
 
     /// <summary>
     /// Moves the specified e-mail message to a folder.

@@ -893,6 +893,22 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
+  <xs:element name="DeleteAttachmentByName">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="email" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="ID" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="name" nillable="true" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DeleteAttachmentByNameResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="DeleteAttachmentByNameResult" type="xs:boolean" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
   <xs:element name="GetMessageContent">
     <xs:complexType>
       <xs:sequence>
@@ -933,6 +949,21 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element minOccurs="0" name="DeleteMessageResult" type="xs:boolean" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="UpdateMessage">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="email" nillable="true" type="xs:string" />
+        <xs:element xmlns:q44="https://www.bankhapoalim.co.il/" minOccurs="0" name="changedMessage" nillable="true" type="q44:EMailMessage" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="UpdateMessageResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="UpdateMessageResult" type="xs:boolean" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -1000,26 +1031,26 @@
   <xs:element name="GetChangesResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q44="https://www.bankhapoalim.co.il/" minOccurs="0" name="GetChangesResult" nillable="true" type="q44:ArrayOfChange" />
+        <xs:element xmlns:q45="https://www.bankhapoalim.co.il/" minOccurs="0" name="GetChangesResult" nillable="true" type="q45:ArrayOfChange" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:complexType name="ArrayOfChange">
     <xs:sequence>
-      <xs:element xmlns:q45="https://www.bankhapoalim.co.il/" minOccurs="0" maxOccurs="unbounded" name="Change" nillable="true" type="q45:Change" />
+      <xs:element xmlns:q46="https://www.bankhapoalim.co.il/" minOccurs="0" maxOccurs="unbounded" name="Change" nillable="true" type="q46:Change" />
     </xs:sequence>
   </xs:complexType>
-  <xs:element xmlns:q46="https://www.bankhapoalim.co.il/" name="ArrayOfChange" nillable="true" type="q46:ArrayOfChange" />
+  <xs:element xmlns:q47="https://www.bankhapoalim.co.il/" name="ArrayOfChange" nillable="true" type="q47:ArrayOfChange" />
   <xs:complexType name="Change">
     <xs:sequence>
-      <xs:element xmlns:q47="https://www.bankhapoalim.co.il/" minOccurs="0" name="ChangeType" type="q47:ChangeType" />
+      <xs:element xmlns:q48="https://www.bankhapoalim.co.il/" minOccurs="0" name="ChangeType" type="q48:ChangeType" />
       <xs:element minOccurs="0" name="Email" nillable="true" type="xs:string" />
       <xs:element minOccurs="0" name="FolderID" nillable="true" type="xs:string" />
       <xs:element minOccurs="0" name="ItemID" nillable="true" type="xs:string" />
       <xs:element minOccurs="0" name="Timestamp" type="xs:dateTime" />
     </xs:sequence>
   </xs:complexType>
-  <xs:element xmlns:q48="https://www.bankhapoalim.co.il/" name="Change" nillable="true" type="q48:Change" />
+  <xs:element xmlns:q49="https://www.bankhapoalim.co.il/" name="Change" nillable="true" type="q49:Change" />
   <xs:simpleType name="ChangeType">
     <xs:restriction base="xs:string">
       <xs:enumeration value="Created" />
@@ -1027,7 +1058,7 @@
       <xs:enumeration value="Deleted" />
     </xs:restriction>
   </xs:simpleType>
-  <xs:element xmlns:q49="https://www.bankhapoalim.co.il/" name="ChangeType" nillable="true" type="q49:ChangeType" />
+  <xs:element xmlns:q50="https://www.bankhapoalim.co.il/" name="ChangeType" nillable="true" type="q50:ChangeType" />
   <xs:element name="GetChangeStats">
     <xs:complexType>
       <xs:sequence>
@@ -1044,16 +1075,16 @@
   <xs:element name="GetChangeStatsResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q50="https://www.bankhapoalim.co.il/" minOccurs="0" name="GetChangeStatsResult" nillable="true" type="q50:ArrayOfChangeStats" />
+        <xs:element xmlns:q51="https://www.bankhapoalim.co.il/" minOccurs="0" name="GetChangeStatsResult" nillable="true" type="q51:ArrayOfChangeStats" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:complexType name="ArrayOfChangeStats">
     <xs:sequence>
-      <xs:element xmlns:q51="https://www.bankhapoalim.co.il/" minOccurs="0" maxOccurs="unbounded" name="ChangeStats" nillable="true" type="q51:ChangeStats" />
+      <xs:element xmlns:q52="https://www.bankhapoalim.co.il/" minOccurs="0" maxOccurs="unbounded" name="ChangeStats" nillable="true" type="q52:ChangeStats" />
     </xs:sequence>
   </xs:complexType>
-  <xs:element xmlns:q52="https://www.bankhapoalim.co.il/" name="ArrayOfChangeStats" nillable="true" type="q52:ArrayOfChangeStats" />
+  <xs:element xmlns:q53="https://www.bankhapoalim.co.il/" name="ArrayOfChangeStats" nillable="true" type="q53:ArrayOfChangeStats" />
   <xs:complexType name="ChangeStats">
     <xs:sequence>
       <xs:element minOccurs="0" name="Count" type="xs:int" />
@@ -1061,7 +1092,7 @@
       <xs:element minOccurs="0" name="FolderID" nillable="true" type="xs:string" />
     </xs:sequence>
   </xs:complexType>
-  <xs:element xmlns:q53="https://www.bankhapoalim.co.il/" name="ChangeStats" nillable="true" type="q53:ChangeStats" />
+  <xs:element xmlns:q54="https://www.bankhapoalim.co.il/" name="ChangeStats" nillable="true" type="q54:ChangeStats" />
   <xs:element name="GetBankSystemMailboxes">
     <xs:complexType>
       <xs:sequence>
@@ -1074,7 +1105,7 @@
   <xs:element name="GetBankSystemMailboxesResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q54="http://schemas.microsoft.com/2003/10/Serialization/Arrays" minOccurs="0" name="GetBankSystemMailboxesResult" nillable="true" type="q54:ArrayOfstring" />
+        <xs:element xmlns:q55="http://schemas.microsoft.com/2003/10/Serialization/Arrays" minOccurs="0" name="GetBankSystemMailboxesResult" nillable="true" type="q55:ArrayOfstring" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -1082,7 +1113,7 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element minOccurs="0" name="systemName" nillable="true" type="xs:string" />
-        <xs:element xmlns:q55="http://schemas.microsoft.com/2003/10/Serialization/Arrays" minOccurs="0" name="mailboxes" nillable="true" type="q55:ArrayOfstring" />
+        <xs:element xmlns:q56="http://schemas.microsoft.com/2003/10/Serialization/Arrays" minOccurs="0" name="mailboxes" nillable="true" type="q56:ArrayOfstring" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -1097,7 +1128,7 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element minOccurs="0" name="systemName" nillable="true" type="xs:string" />
-        <xs:element xmlns:q56="http://schemas.microsoft.com/2003/10/Serialization/Arrays" minOccurs="0" name="mailboxes" nillable="true" type="q56:ArrayOfstring" />
+        <xs:element xmlns:q57="http://schemas.microsoft.com/2003/10/Serialization/Arrays" minOccurs="0" name="mailboxes" nillable="true" type="q57:ArrayOfstring" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>

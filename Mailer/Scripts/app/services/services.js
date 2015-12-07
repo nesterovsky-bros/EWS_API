@@ -114,44 +114,89 @@
               interceptor: simpleTypeInterceptor,
               then: resolveAction
             },
-/*
-            UploadIdentities:
+            CreateDraftMessage:
             {
               params:
               {
-                action: "UploadIdentities"
+                action: "CreateDraftMessage"
               },
               method: "POST",
               responseType: "json",
               headers: { 'Content-Type': 'application/json' },
-              isArray: true,
+              interceptor: simpleTypeInterceptor,
               then: resolveAction
             },
-            CopyLessons:
+            GetMessage:
             {
               params:
               {
-                action: "CopyLessons"
-              },
-              method: "POST",
-              responseType: "json",
-              headers: { 'Content-Type': 'application/json' },
-              isArray: true,
-              then: resolveAction
-            },
-            SuggestImages:
-            {
-              params:
-              {
-                action: "SuggestImages"
+                action: "GetMessage"
               },
               method: "GET",
               responseType: "json",
               headers: { 'Content-Type': 'application/json' },
-              isArray: true,
               then: resolveAction
             },
- */
+            UpdateMessage:
+            {
+              params:
+              {
+                action: "UpdateMessage"
+              },
+              method: "POST",
+              responseType: "json",
+              headers: { 'Content-Type': 'application/json' },
+              interceptor: simpleTypeInterceptor,
+              then: resolveAction
+            },
+            SendDraftMessage:
+            {
+              params:
+              {
+                action: "SendDraftMessage"
+              },
+              method: "POST",
+              responseType: "json",
+              headers: { 'Content-Type': 'application/json' },
+              interceptor: simpleTypeInterceptor,
+              then: resolveAction
+            },
+            DeleteMessage:
+            {
+              params:
+              {
+                action: "DeleteMessage"
+              },
+              method: "POST",
+              responseType: "json",
+              headers: { 'Content-Type': 'application/json' },
+              interceptor: simpleTypeInterceptor,
+              then: resolveAction
+            },
+            AddAttachment:
+            {
+              params:
+              {
+                action: "AddAttachment",
+              },
+              method: "POST",
+              responseType: "json",
+              headers: { 'Content-Type': 'application/json' },
+              interceptor: simpleTypeInterceptor,
+              then: resolveAction
+            },
+            DeleteAttachment:
+            {
+              params:
+              {
+                action: "DeleteAttachment"
+              },
+              method: "POST",
+              responseType: "json",
+              headers: { 'Content-Type': 'application/json' },
+              interceptor: simpleTypeInterceptor,
+              then: resolveAction
+            },
           });
       }]);
   });

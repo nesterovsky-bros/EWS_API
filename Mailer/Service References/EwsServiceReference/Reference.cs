@@ -1894,6 +1894,12 @@ namespace Mailer.EwsServiceReference {
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetAttachmentByIndex", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetAttachmentByIndexResponse")]
         System.Threading.Tasks.Task<byte[]> GetAttachmentByIndexAsync(string email, string ID, int index);
         
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/DeleteAttachmentByName", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/DeleteAttachmentByNameResponse")]
+        bool DeleteAttachmentByName(string email, string ID, string name);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/DeleteAttachmentByName", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/DeleteAttachmentByNameResponse")]
+        System.Threading.Tasks.Task<bool> DeleteAttachmentByNameAsync(string email, string ID, string name);
+        
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetMessageContent", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetMessageContentResponse")]
         Mailer.EwsServiceReference.MimeContent GetMessageContent(string email, string ID);
         
@@ -1905,6 +1911,12 @@ namespace Mailer.EwsServiceReference {
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/DeleteMessage", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/DeleteMessageResponse")]
         System.Threading.Tasks.Task<bool> DeleteMessageAsync(string email, string ID);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/UpdateMessage", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/UpdateMessageResponse")]
+        bool UpdateMessage(string email, Mailer.EwsServiceReference.EMailMessage changedMessage);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/UpdateMessage", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/UpdateMessageResponse")]
+        System.Threading.Tasks.Task<bool> UpdateMessageAsync(string email, Mailer.EwsServiceReference.EMailMessage changedMessage);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/MoveTo", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/MoveToResponse")]
         bool MoveTo(string email, string ID, string folder);
@@ -2110,6 +2122,14 @@ namespace Mailer.EwsServiceReference {
             return base.Channel.GetAttachmentByIndexAsync(email, ID, index);
         }
         
+        public bool DeleteAttachmentByName(string email, string ID, string name) {
+            return base.Channel.DeleteAttachmentByName(email, ID, name);
+        }
+        
+        public System.Threading.Tasks.Task<bool> DeleteAttachmentByNameAsync(string email, string ID, string name) {
+            return base.Channel.DeleteAttachmentByNameAsync(email, ID, name);
+        }
+        
         public Mailer.EwsServiceReference.MimeContent GetMessageContent(string email, string ID) {
             return base.Channel.GetMessageContent(email, ID);
         }
@@ -2124,6 +2144,14 @@ namespace Mailer.EwsServiceReference {
         
         public System.Threading.Tasks.Task<bool> DeleteMessageAsync(string email, string ID) {
             return base.Channel.DeleteMessageAsync(email, ID);
+        }
+        
+        public bool UpdateMessage(string email, Mailer.EwsServiceReference.EMailMessage changedMessage) {
+            return base.Channel.UpdateMessage(email, changedMessage);
+        }
+        
+        public System.Threading.Tasks.Task<bool> UpdateMessageAsync(string email, Mailer.EwsServiceReference.EMailMessage changedMessage) {
+            return base.Channel.UpdateMessageAsync(email, changedMessage);
         }
         
         public bool MoveTo(string email, string ID, string folder) {
