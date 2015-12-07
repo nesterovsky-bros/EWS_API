@@ -28,6 +28,33 @@
           resolve(this);
         }
 
+        function resolveAction2(resolve)
+        {
+          var url = this.url;
+          var data = this.data;
+          var pos = url.indexOf('?');
+
+          if (pos != -1)
+          {
+            url = url.substr(0, pos - 1);
+          }
+
+          url += "?messageID=" + encodeURIComponent(data.messageID);
+
+          delete data.messageID;
+
+          if (data.name)
+          {
+            url += "&name=" + encodeURIComponent(data.name);
+
+            delete data.name;
+          }
+
+          this.url = url;
+
+          resolveAction.call(this, resolve);
+        }
+
         var simpleTypeInterceptor =
         {
           response: function(response)
@@ -183,7 +210,7 @@
               responseType: "json",
               headers: { 'Content-Type': 'application/json' },
               interceptor: simpleTypeInterceptor,
-              then: resolveAction
+              then: resolveAction2
             },
             DeleteAttachment:
             {
@@ -195,7 +222,7 @@
               responseType: "json",
               headers: { 'Content-Type': 'application/json' },
               interceptor: simpleTypeInterceptor,
-              then: resolveAction
+              then: resolveAction2
             },
           });
       }]);

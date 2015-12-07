@@ -52,6 +52,7 @@
     /// </param>
     /// <param name="filter">a search filter.</param>
     /// <returns>an enumeration of BankUnit instances.</returns>
+    [Authorize]
     public async Task<IEnumerable<BankUnit>> GetBankUnits(
       string units = "branches", 
       string filter = null, 
@@ -174,7 +175,9 @@
             throw new HttpResponseException(HttpStatusCode.BadRequest);
           }
 
-          var bankUsers = BankUsers.Get();
+          var bankUsers = BankUsers.Get().
+            Where(item => !string.IsNullOrEmpty(item.EmployeeCode)).
+            ToDictionary(item => item.EmployeeCode);
 
           using (var reader = File.OpenText(file.LocalFileName))
           {
@@ -195,6 +198,184 @@
     }
 
     /// <summary>
+    /// Creates a new draft message.
+    /// </summary>
+    /// <returns>a newly created message ID.</returns>
+    [HttpPost]
+    [ActionName("CreateDraftMessage")]
+    [Authorize]
+    public async Task<string> CreateDraftMessage(EMailMessage message)
+    {
+      var client = new EwsServiceClient();
+      var sender = ResolveEmail(RequestContext.Principal.Identity.Name);
+
+      message.Sender = sender;
+
+      return await client.CreateMessageAsync(sender.Address, message);
+    }
+
+    /// <summary>
+    /// Retrieves asynchronously a whole e-mail message by its ID.
+    /// </summary>
+    /// <param name="messageId">the message ID.</param>
+    /// <returns>a Message instance.</returns>
+    [Authorize]
+    public async Task<Message> GetMessage(string messageId)
+    {
+      var client = new EwsServiceClient();
+      var sender = ResolveEmail(RequestContext.Principal.Identity.Name);
+      var message = await client.GetMessageAsync(sender.Address, messageId);
+
+      if (message == null)
+      {
+        throw new ArgumentException("Wrong messageId.");
+      }
+
+      var result = new Message
+      {
+        Subject = message.Subject,
+        From = message.From == null ?
+          null :
+          new Addressee
+          {
+            Name = message.From.Name,
+            Email = message.From.Address
+          },
+        Content = message.TextBody == null ? null :
+          message.TextBody.Replace("<html><body>", "").
+          Replace("</body></html>", "")
+      };
+
+      var to = new List<Addressee>();
+
+      foreach (var recipient in message.ToRecipients)
+      {
+        var bankUser = FindBankUser(recipient.Address ?? recipient.Name);
+
+        if (bankUser != null)
+        {
+          to.Add(
+            new Addressee
+            {
+              Email = bankUser.Email,
+              Name = bankUser.FirstName + " " + bankUser.SecondName,
+              Id = bankUser.EmployeeCode,
+              HierarchyID = bankUser.HierarchyID,
+              ItemName = bankUser.ItemName
+            });
+        }
+      }
+
+      result.To = to.ToArray();
+      
+      result.Attachments = message.Attachments == null ?
+        null :
+        message.Attachments.Select(
+          attachment =>
+          {
+            var content = client.GetAttachmentByName(
+              sender.Address,
+              messageId,
+              attachment.Name);
+
+            return new Code.Attachment
+            {
+              Name = attachment.Name,
+              Size = attachment.Size.GetValueOrDefault(),
+              Content = Convert.ToBase64String(content)
+            };
+          }).
+        ToArray();
+
+      return result;
+    }
+
+    /// <summary>
+    /// Update message.
+    /// </summary>
+    /// <param name="message">a message's parts to update. 
+    /// At least an unique ID must be presented in the specified message.</param>
+    /// <returns>true when the message was successfully updated, false otherwise.</returns>
+    [HttpPost]
+    [ActionName("UpdateMessage")]
+    [Authorize]
+    public async Task<bool> UpdateMessage(EMailMessage message)
+    {
+      var client = new EwsServiceClient();
+      var sender = ResolveEmail(RequestContext.Principal.Identity.Name);
+
+      if (!string.IsNullOrEmpty(message.TextBody))
+      {
+        message.TextBody = "<html><body>" + message.TextBody + "</body></html>";
+      }
+
+      return await client.UpdateMessageAsync(sender.Address, message);
+    }
+
+    /// <summary>Delete the specified message.</summary>
+    /// <param name="messageId">the message ID to delete.</param>
+    /// <returns>true when the message was successfully deleted, false otherwise.</returns>
+    [HttpPost]
+    [ActionName("DeleteMessage")]
+    [Authorize]
+    public async Task<bool> DeleteMessage(string messageID)
+    {
+      var client = new EwsServiceClient();
+      var sender = ResolveEmail(RequestContext.Principal.Identity.Name);
+
+      return await client.DeleteMessageAsync(sender.Address, messageID);
+    }
+
+    [HttpPost]
+    [ActionName("AddAttachment")]
+    [Authorize]
+    public async Task<bool> AddAttachment(
+      [FromUri]string messageID, 
+      [FromBody]Code.Attachment attachment)
+    {
+      var client = new EwsServiceClient();
+      var sender = ResolveEmail(RequestContext.Principal.Identity.Name);
+
+      return await client.AddAttachmentAsync(
+        sender.Address, 
+        messageID, 
+        attachment.Name, 
+        Convert.FromBase64String(attachment.Content));
+    }
+
+    [HttpPost]
+    [ActionName("DeleteAttachment")]
+    [Authorize]
+    public async Task<bool> DeleteAttachment(
+      [FromUri]string messageID,
+      [FromUri]string name)
+    {
+      var client = new EwsServiceClient();
+      var sender = ResolveEmail(RequestContext.Principal.Identity.Name);
+
+      return await client.DeleteAttachmentByNameAsync(
+        sender.Address,
+        messageID,
+        name);
+    }
+
+    /// <summary>
+    /// Sends an e-mail message to recipients.
+    /// </summary>
+    /// <param name="messageId">an unique ID of message to be sent.</param>
+    /// <returns>true when the message was sent successfully, false otherwise.</returns>
+    [HttpPost]
+    [ActionName("SendDraftMessage")]
+    [Authorize]
+    public async Task<bool> SendDraftMessage(string messageId)
+    {
+      var client = new EwsServiceClient();
+      var sender = ResolveEmail(RequestContext.Principal.Identity.Name);
+
+      return await client.SendMessageAsync(sender.Address, messageId);
+    }
+
+    /// <summary>
     /// Sends an e-mail message to recipients.
     /// </summary>
     /// <param name="message">a message to send.</param>
@@ -209,8 +390,7 @@
 
       if ((message.From == null) || string.IsNullOrEmpty(message.From.Email))
       {
-        emailMessage.From =
-          await ResolveEmail(RequestContext.Principal.Identity.Name);
+        emailMessage.From = ResolveEmail(RequestContext.Principal.Identity.Name);
       }
       else
       {
@@ -225,7 +405,7 @@
 
       if (!string.IsNullOrWhiteSpace(text) && text.Trim().StartsWith("<"))
       {
-        text = "<html>" + text + "</html>";
+        text = "<html><body>" + text + "</body></html>";
       }
 
       emailMessage.TextBody = text;
@@ -462,17 +642,41 @@
           }).ToArray();
     }
 
-    private async Task<EMailAddress> ResolveEmail(string userName)
+    private EMailAddress ResolveEmail(string name)
     {
-      // TODO: replace with e-mail resolver
+      var bankUser = FindBankUser(name);
 
-      return await Task.FromResult(
+      return bankUser != null ?
         new EMailAddress
         {
-          Name = "EWS User #1",
+          Name = bankUser.FirstName + " " + bankUser.SecondName,
+          Address = bankUser.Email
+        } :
+        //null;
+        new EMailAddress
+        {
+          Name = "EWS User 1",
           Address = "ewsuser1@poalimdev.onmicrosoft.com"
-        });
-    } 
+        }; // for debug purposes only
+    }
+
+    private BankUser FindBankUser(string name)
+    {
+      if (!string.IsNullOrEmpty(name))
+      {
+        foreach (var user in BankUsers.Get())
+        {
+          if ((user.ItemName == name) ||
+            (user.Email == name) ||
+            (user.FirstName + " " + user.SecondName == name))
+          {
+            return user;
+          }
+        }
+      }
+
+      return null;
+    }
 
     private static T FromXmlString<T>(string xml)
     {
@@ -558,28 +762,16 @@
     /// <summary>
     /// Defines cache of bank users.
     /// </summary>
-    private static Cache<Dictionary<string, BankUser>> BankUsers =
-      new Cache<Dictionary<string, BankUser>>.Builder
+    private static Cache<List<BankUser>> BankUsers =
+      new Cache<List<BankUser>>.Builder
       {
         Key = "BankUsers",
         Expiration = Cache.LongDelay,
         Factory = () =>
         {
-          var users = new Dictionary<string, BankUser>();
-
           using (var context = new Taxonomy())
           {
-            foreach (var user in 
-              context.GetUsersOrGroups("", int.MaxValue, 1).
-                Where(user => !string.IsNullOrEmpty(user.EmployeeCode)))
-            {
-              if (!users.ContainsKey(user.EmployeeCode))
-              {
-                users.Add(user.EmployeeCode, user);
-              }
-            }
-
-            return users;
+            return context.GetUsersOrGroups("", int.MaxValue, 1).ToList();
           }
         }
       };

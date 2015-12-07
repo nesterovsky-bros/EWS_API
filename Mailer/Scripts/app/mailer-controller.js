@@ -40,6 +40,29 @@
           self.$subject = null;
           self.attachments = [];
         };
+        self.$createDraftMessage = function ()
+        {
+          var self = this;
+          
+          self.starting = false;
+
+          self.getRecipients().then(
+            function (data)
+            {
+              self.services.CreateDraftMessage(
+                {
+                  from: self.from,
+                  toRecipients: self.to
+                },
+                function (messageID)
+                {
+                  self.local.messageID = messageID.data;
+
+                  self.local.$save();
+                },
+                self.errorHandler);
+            });
+        };
 
         self.$reset();
 
@@ -47,27 +70,7 @@
 
         if (!messageID)
         {
-          self.$timeout(
-            function()
-            {
-              self.getRecipients().then(
-                function (data)
-                {
-                  self.services.CreateDraftMessage(
-                    {
-                      from: self.from,
-                      toRecipients: self.to
-                    },
-                    function (messageID)
-                    {
-                      self.local["messageID"] = messageID.data;
-
-                      self.local.$save();
-                    },
-                    self.errorHandler);
-                });
-            },
-            500);
+          self.$timeout(self.$createDraftMessage.bind(self), 100);
         }
         else
         {
@@ -82,8 +85,14 @@
               self.$from = message.from || null;
               self.$to = message.to || [];
               self.attachments = message.attachments || [];
+              self.starting = false;
             },
-            self.errorHandler);
+            function(e)
+            {
+              self.starting = false;
+
+              self.errorHandler(e);
+            });
         }
       });
 
@@ -144,6 +153,7 @@
       },
       attachments: { enumerable: true, value: false, writable: true },
       working: { enumerable: true, value: false, writable: true },
+      starting: { enumerable: true, value: true, writable: true },
       editorConfig: { enumerable: true, value: {}, writable: true },
 
       $size: {
@@ -206,7 +216,7 @@
 
           self.services.UpdateMessage(
             message,
-            function () {},
+            angular.noop,
             self.errorHandler)
         }
       },
@@ -313,21 +323,10 @@
             {
               messageId: self.local.messageID,
             },
-            function ()
-            {
-              self.services.CreateDraftMessage(
-                {
-                  from: self.from
-                },
-                function (messageID)
-                {
-                  self.local.messageID = messageID.data;
-
-                  self.local.$save();
-                },
-                self.errorHandler);
-            },
+            angular.noop,
             self.errorHandler);
+
+          self.$createDraftMessage();
         }
       },
       send: {
@@ -435,12 +434,23 @@
       remove: {
         value: function (attachment)
         {
-          var attachments = this.attachments;
+          var self = this;
+          var attachments = self.attachments;
           var index = attachments.indexOf(attachment);
 
           if (index != -1)
           {
+            var name = attachments[index].name;
+
             attachments.splice(index, 1);
+
+            self.services.DeleteAttachment(
+              {
+                messageID: self.local.messageID,
+                name: name
+              },
+              angular.noop,
+              self.errorHandler);
           }
         }
       },
