@@ -199,13 +199,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Code\AttachmentRequest.cs" />
     <Compile Include="Code\Cache.cs" />
-    <Compile Include="Code\RecipientsRequest.cs" />
     <Compile Include="Code\JsonContractResolver.cs" />
     <Compile Include="Code\Message.cs" />
     <Compile Include="Code\Attachment.cs" />
-    <Compile Include="Code\Addressee.cs" />
-    <Compile Include="Code\Recipient.cs" />
+    <Compile Include="Code\RecipientsRequest.cs" />
     <Compile Include="Code\TempDirectory.cs" />
     <Compile Include="Controllers\MailerController.cs" />
     <Compile Include="Global.asax.cs">

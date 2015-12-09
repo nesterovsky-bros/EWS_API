@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using Mailer.Models;
 
 namespace Mailer.Code
 {
@@ -29,13 +30,13 @@ namespace Mailer.Code
     /// Gets and sets the message From field.
     /// </summary>
     [DataMember]
-    public Addressee From { get; set; }
+    public BankUser From { get; set; }
 
     /// <summary>
     /// Gets and sets the message To recipients.
     /// </summary>
     [DataMember]
-    public Addressee[] To { get; set; }
+    public BankUser[] To { get; set; }
 
     /// <summary>
     /// Gets and sets the message file attachments.

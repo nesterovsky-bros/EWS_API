@@ -210,6 +210,7 @@
       var sender = ResolveEmail(RequestContext.Principal.Identity.Name);
 
       message.Sender = sender;
+      message.From = sender;
 
       return await client.CreateMessageAsync(sender.Address, message);
     }
@@ -235,18 +236,19 @@
       {
         Subject = message.Subject,
         From = message.From == null ?
-          null :
-          new Addressee
+          new BankUser
           {
-            Name = message.From.Name,
-            Email = message.From.Address
-          },
+            FirstName = sender.Name,
+            Email = sender.Address
+          } :
+          //FindBankUser(sender.Address) : 
+          FindBankUser(message.From.Address),
         Content = message.TextBody == null ? null :
           message.TextBody.Replace("<html><body>", "").
           Replace("</body></html>", "")
       };
 
-      var to = new List<Addressee>();
+      var to = new List<BankUser>();
 
       foreach (var recipient in message.ToRecipients)
       {
@@ -254,15 +256,7 @@
 
         if (bankUser != null)
         {
-          to.Add(
-            new Addressee
-            {
-              Email = bankUser.Email,
-              Name = bankUser.FirstName + " " + bankUser.SecondName,
-              Id = bankUser.EmployeeCode,
-              HierarchyID = bankUser.HierarchyID,
-              ItemName = bankUser.ItemName
-            });
+          to.Add(bankUser);
         }
       }
 
@@ -329,16 +323,14 @@
     [HttpPost]
     [ActionName("AddAttachment")]
     [Authorize]
-    public async Task<bool> AddAttachment(
-      [FromUri]string messageID, 
-      [FromBody]Code.Attachment attachment)
+    public async Task<bool> AddAttachment(AttachmentRequest attachment)
     {
       var client = new EwsServiceClient();
       var sender = ResolveEmail(RequestContext.Principal.Identity.Name);
 
       return await client.AddAttachmentAsync(
-        sender.Address, 
-        messageID, 
+        sender.Address,
+        attachment.MessageID, 
         attachment.Name, 
         Convert.FromBase64String(attachment.Content));
     }
@@ -346,33 +338,31 @@
     [HttpPost]
     [ActionName("DeleteAttachment")]
     [Authorize]
-    public async Task<bool> DeleteAttachment(
-      [FromUri]string messageID,
-      [FromUri]string name)
+    public async Task<bool> DeleteAttachment(AttachmentRequest attachment)
     {
       var client = new EwsServiceClient();
       var sender = ResolveEmail(RequestContext.Principal.Identity.Name);
 
       return await client.DeleteAttachmentByNameAsync(
         sender.Address,
-        messageID,
-        name);
+        attachment.MessageID,
+        attachment.Name);
     }
 
     /// <summary>
     /// Sends an e-mail message to recipients.
     /// </summary>
-    /// <param name="messageId">an unique ID of message to be sent.</param>
+    /// <param name="messageID">an unique ID of message to be sent.</param>
     /// <returns>true when the message was sent successfully, false otherwise.</returns>
     [HttpPost]
     [ActionName("SendDraftMessage")]
     [Authorize]
-    public async Task<bool> SendDraftMessage(string messageId)
+    public async Task<bool> SendDraftMessage(string messageID)
     {
       var client = new EwsServiceClient();
       var sender = ResolveEmail(RequestContext.Principal.Identity.Name);
 
-      return await client.SendMessageAsync(sender.Address, messageId);
+      return await client.SendMessageAsync(sender.Address, messageID);
     }
 
     /// <summary>
@@ -387,17 +377,23 @@
     {
       var client = new EwsServiceClient();
       var emailMessage = new EMailMessage();
+      var sender = ResolveEmail(RequestContext.Principal.Identity.Name);
+
+      if ((message.To == null) || (message.To.Length == 0))
+      {
+        throw new ArgumentException("There are no recipients, message.To is null or empty.");
+      }
 
       if ((message.From == null) || string.IsNullOrEmpty(message.From.Email))
       {
-        emailMessage.From = ResolveEmail(RequestContext.Principal.Identity.Name);
+        emailMessage.From = sender;
       }
       else
       {
         emailMessage.From = new EMailAddress
         {
           Address = message.From.Email,
-          Name = message.From.Name
+          Name = message.From.FirstName + " " + message.From.SecondName
         };
       }
 
@@ -410,10 +406,16 @@
 
       emailMessage.TextBody = text;
       emailMessage.Subject = message.Subject;
-      emailMessage.ToRecipients = await ResolveRecipients(message.To);
+      emailMessage.ToRecipients = message.To.Select(
+        item => new EMailAddress
+        {
+          Name = item.FirstName + " " + item.SecondName,
+          Address = item.Email
+        }).
+        ToArray();
 
       var messageId = 
-        await client.CreateMessageAsync(emailMessage.From.Address, emailMessage);
+        await client.CreateMessageAsync(sender.Address, emailMessage);
 
       if (message.Attachments != null)
       {
@@ -427,20 +429,20 @@
         }
       }
 
-      return await client.SendMessageAsync(emailMessage.From.Address, messageId);
+      return await client.SendMessageAsync(sender.Address, messageId);
     }
     
     /// <summary>
     /// Read fake data from the App_Data/test_data.xml
     /// </summary>
     /// <returns></returns>
-    private async Task<IEnumerable<Addressee>> ReadAddresses(
+    private async Task<IEnumerable<BankUser>> ReadAddresses(
       string filter = null,
       int take = 100)
     {
       if (filter == null)
       {
-        return await Task.FromResult<IEnumerable<Addressee>>(new Addressee[0]);
+        return await Task.FromResult(new BankUser[0]);
       }
 
       var text1 = filter;
@@ -459,7 +461,7 @@
         OrderByDescending(
           item =>
             tokens.
-              Where(token => item.Name.Contains(token)).
+              Where(token => BuildName(item).Contains(token)).
               Sum(token => token.Length)).
         Take(take);
     }
@@ -472,32 +474,31 @@
     /// <returns>
     /// a collection of Addressee instances that suit to the specified filter.
     /// </returns>
-    private async Task<IEnumerable<Addressee>> ReadRecipients(
+    private async Task<IEnumerable<BankUser>> ReadRecipients(
       string text1,
       string text2)
     {
       using (var context = new Taxonomy())
       {
-        return await Task.FromResult<IEnumerable<Addressee>>(
+        return await Task.FromResult(
           context.GetRecipients(text1, text2, int.MaxValue).
             ToArray().
             Select(
-              item => new Addressee
+              item => new BankUser
               {
-                Id = item.EmployeeCode,
-                Name = BuildName(item),
+                EmployeeCode = item.EmployeeCode,
+                //Name = BuildName(item),
+                FirstName = item.FirstName,
+                SecondName = item.SecondName,
                 Email = item.EMail,
                 ItemName = item.ItemName,
-                HierarchyID = item.HierarchyID
-              }).
-            Where(item => !string.IsNullOrWhiteSpace(item.Name)));
+                HierarchyID = item.HierarchyID,
+                Title = item.Title
+              }));
       }
     }
 
-    private static Regex SeparatorPattern = new Regex(@"[/\\,;:&|#^@~!]|של");
-    private static Regex SplitPattern = new Regex(@"\sשל(?:\s|$)|[^\d\w]+0*");
-
-    private static string BuildName(ExtendedRecipient item)
+    private static string BuildName(BankUser item)
     {
       var result = new StringBuilder();
 
@@ -521,12 +522,14 @@
         result.Append(item.Title);
       }
 
-      if (item.BranchName != null)
+      var bankUnit = BankUnits.Get()[item.HierarchyID];
+
+      if (bankUnit.BranchName != null)
       {
         result.Append("/").
-          Append(item.BranchID).
+          Append(bankUnit.BranchID).
           Append(" ").
-          Append(item.BranchName);
+          Append(bankUnit.BranchName);
       }
       else
       {
@@ -534,7 +537,7 @@
           item.HierarchyID.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries) :
           new string[0];
 
-        if (!string.IsNullOrWhiteSpace(item.GroupName))
+        if (!string.IsNullOrWhiteSpace(bankUnit.GroupName))
         {
           result.Append("/");
 
@@ -550,10 +553,10 @@
             result.Append(parts[1]).Append(" ");
           }
 
-          result.Append(item.GroupName);
+          result.Append(bankUnit.GroupName);
         }
 
-        if (!string.IsNullOrWhiteSpace(item.DepartmentName))
+        if (!string.IsNullOrWhiteSpace(bankUnit.DepartmentName))
         {
           result.Append("/");
 
@@ -569,10 +572,10 @@
             result.Append(parts[2]).Append(" ");
           }
 
-          result.Append(item.DepartmentName);
+          result.Append(bankUnit.DepartmentName);
         }
 
-        if (!string.IsNullOrWhiteSpace(item.AdministrationName))
+        if (!string.IsNullOrWhiteSpace(bankUnit.AdministrationName))
         {
           result.Append("/");
 
@@ -588,58 +591,11 @@
             result.Append(parts[3]).Append(" ");
           }
 
-          result.Append(item.AdministrationName);
+          result.Append(bankUnit.AdministrationName);
         }
       }
 
       return result.ToString();
-    }
-
-    private async Task<EMailAddress[]> ResolveRecipients(Addressee[] addresses)
-    {
-      // TODO: replace the following code with the real life e-mail resolver
-
-      if ((addresses == null) || (addresses.Length == 0))
-      {
-        return null;
-      }
-
-      var dictionary = (await ReadAddresses("")).
-        Where(item => !string.IsNullOrEmpty(item.Email)).
-        ToDictionary(item => item.Name);
-
-      return addresses.Select(
-        a =>
-          {
-            var address = null as Addressee;
-
-            if (a.Name == "אדמיניסטרטור")
-            {
-              var admin = dictionary["Lior Ammar"];
-
-              return new EMailAddress
-              {
-                Name = admin.Name,
-                Address = admin.Email
-              };
-            }
-            else if (dictionary.TryGetValue(a.Name, out address))
-            {
-              return new EMailAddress
-              {
-                Name = address.Name,
-                Address = address.Email
-              };
-            }
-            else
-            {
-              return new EMailAddress
-              {
-                Name = a.Name,
-                Address = "contact@nesterovsky-bros.com"
-              };
-            }
-          }).ToArray();
     }
 
     private EMailAddress ResolveEmail(string name)
@@ -668,6 +624,7 @@
         {
           if ((user.ItemName == name) ||
             (user.Email == name) ||
+            (user.Title == name) ||
             (user.FirstName + " " + user.SecondName == name))
           {
             return user;
@@ -678,18 +635,18 @@
       return null;
     }
 
-    private static T FromXmlString<T>(string xml)
-    {
-      if (string.IsNullOrEmpty(xml))
-      {
-        return default(T);
-      }
+    //private static T FromXmlString<T>(string xml)
+    //{
+    //  if (string.IsNullOrEmpty(xml))
+    //  {
+    //    return default(T);
+    //  }
 
-      var serializer = new NetDataContractSerializer();
-      var reader = new StringReader(xml);
+    //  var serializer = new NetDataContractSerializer();
+    //  var reader = new StringReader(xml);
 
-      return (T)serializer.ReadObject(XmlReader.Create(reader));
-    }
+    //  return (T)serializer.ReadObject(XmlReader.Create(reader));
+    //}
 
     /// <summary>
     /// Performs upload action.
@@ -775,5 +732,8 @@
           }
         }
       };
+
+    private static Regex SeparatorPattern = new Regex(@"[/\\,;:&|#^@~!]|של");
+    private static Regex SplitPattern = new Regex(@"\sשל(?:\s|$)|[^\d\w]+0*");
   }
 }

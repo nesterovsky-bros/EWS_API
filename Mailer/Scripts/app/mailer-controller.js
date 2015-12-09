@@ -11,6 +11,8 @@
   {
     "use strict";
 
+    var $size = ['n/a', 'bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
     var MailerController = injectFn(
       "$scope",
       "$timeout",
@@ -44,7 +46,8 @@
         {
           var self = this;
           
-          self.starting = false;
+          self.working = false;
+          self.local.messageID = null;
 
           self.getRecipients().then(
             function (data)
@@ -85,11 +88,11 @@
               self.$from = message.from || null;
               self.$to = message.to || [];
               self.attachments = message.attachments || [];
-              self.starting = false;
+              self.working = false;
             },
             function(e)
             {
-              self.starting = false;
+              self.working = false;
 
               self.errorHandler(e);
             });
@@ -152,15 +155,8 @@
         }
       },
       attachments: { enumerable: true, value: false, writable: true },
-      working: { enumerable: true, value: false, writable: true },
-      starting: { enumerable: true, value: true, writable: true },
+      working: { enumerable: true, value: true, writable: true },
       editorConfig: { enumerable: true, value: {}, writable: true },
-
-      $size: {
-        enumerable: false,
-        value: ['n/a', 'bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
-        writable: false
-      },
 
       propertyChanged: {
         value: function (propertyID)
@@ -179,20 +175,19 @@
         value: function ()
         {
           var self = this;
+          var flag = self.$dirtyFlag;
 
+          self.$dirtyFlag = 0;
           self.$updateTimer = null;
 
-          if (!self.$dirtyFlag)
+          if (!flag)
           {
             return;
           }
 
-          var flag = self.$dirtyFlag;
           var message = {
             id: self.local.messageID
           };
-
-          self.$dirtyFlag = 0;
 
           if (flag & 1)
           {
@@ -300,11 +295,11 @@
           var i = (bytes === 0) ? 0 : +Math.floor(Math.log(bytes) / Math.log(1024));
 
           return (bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0) + ' ' +
-            this.$size[isNaN(bytes) ? 0 : i + 1];
+            $size[isNaN(bytes) ? 0 : i + 1];
         }
       },
       clean: {
-        value: function ()
+        value: function (createNew)
         {
           var self = this;
 
@@ -321,12 +316,15 @@
 
           self.services.DeleteMessage(
             {
-              messageId: self.local.messageID,
+              messageID: self.local.messageID,
             },
             angular.noop,
             self.errorHandler);
 
-          self.$createDraftMessage();
+          if (createNew)
+          {
+            self.$createDraftMessage();
+          }
         }
       },
       send: {
@@ -342,50 +340,18 @@
             return;
           }
 
-          setTimeout(
-            function ()
-            {
-              alert(self.message);
-            },
-            200
-          );
-
-          return ;
-
           var timer =
             self.$timeout(function () { self.working = true; }, 100);
 
-          var recipients = [];
-
-          for (var i = 0, c = self.to.length; i < c; i++)
-          {
-            var item = self.to[i];
-
-            if (!item.selected)
+          self.services.SendDraftMessage(
             {
-              continue;
-            }
-
-            recipients.push(
-              {
-                email: item.email,
-                name: item.name
-              });
-          }
-
-          self.services.SendMessage(
-            {
-              subject: self.subject,
-              content: self.message,
-              from: self.from || null,
-              to: recipients,
-              attachments: self.attachments.length ? self.attachments : null
+              messageID: self.local.messageID
             },
             function()
             {
               self.$timeout.cancel(timer);
               self.working = false;
-              self.clean();
+              self.clean(false);
             },
             function(e)
             {
@@ -423,7 +389,8 @@
           self.services.AddAttachment(
             {
               messageID: self.local.messageID,
-              attachment: attachment
+              name: attachment.name,
+              content: attachment.content
             },
             angular.noop,
             self.errorHandler);

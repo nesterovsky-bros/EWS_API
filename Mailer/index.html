@@ -19,6 +19,8 @@
         <tr>
           <th>מאת:</th>
           <td colspan="2">
+            <span class="form-control" ng-bind="mailer.from.firstName + ' ' + mailer.from.secondName"></span>
+            <!--
             <ui-select ng-model="mailer.from" style="width: 100%">
               <ui-select-match placeholder="משתמש מחובר">{{$select.selected.name}}</ui-select-match>
               <ui-select-choices repeat="sender in mailer.senders"
@@ -30,6 +32,7 @@
                 </small>
               </ui-select-choices>
             </ui-select>
+            -->
           </td>
         </tr>
         <tr>
@@ -37,7 +40,7 @@
           <td>
             <div class="recipients">
               <div ng-repeat="address in mailer.to">
-                {{address.name}} &lt;{{address.email}}&gt;
+                {{address.firstName + ' ' + address.secondName}} &lt;{{address.email}}&gt;
               </div>
             </div>
           </td>
@@ -86,11 +89,11 @@
         <tr>
           <td colspan="3" style="text-align: left;">
             <button type="button" class="btn btn-primary" ng-click="mailer.send()">שלח</button>&nbsp;
-            <button type="button" class="btn btn-primary" ng-click="mailer.clean()">נקה</button>
+            <button type="button" class="btn btn-primary" ng-click="mailer.clean(true)">נקה</button>
           </td>
         </tr>
       </table>
-      <div ng-show="form.$submitted && mailer.working || mailer.starting" class="inProgress"></div>
+      <div ng-show="form.$submitted || mailer.working" class="inProgress"></div>
     </form>
   </div>
 </body>

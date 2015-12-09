@@ -644,24 +644,27 @@
       }
 
       var service = await GetService(email);
-
-      var message = await EwsUtils.TryAction(
-        "AddAttachment",
-        email,
-        service,
-        i => Task.FromResult(Office365.EmailMessage.Bind(service, ID)),
-        Settings);
-
-      if (message == null)
-      {
-        return false;
-      }
-
       var attachment = await EwsUtils.TryAction(
         "AddFileAttachment",
         email,
         service,
-        i => Task.FromResult(message.Attachments.AddFileAttachment(name, content)),
+        i =>
+        {
+          var properties = new Office365.PropertySet(
+            Office365.BasePropertySet.FirstClassProperties,
+            Office365.ItemSchema.Categories,
+            Office365.ItemSchema.Attachments);
+
+          properties.AddRange(Settings.ExtendedPropertyDefinitions.Values);
+
+          var message = Office365.EmailMessage.Bind(service, ID, properties);
+          var fileAttachment = 
+            message.Attachments.AddFileAttachment(name, content);
+
+          message.Update(Office365.ConflictResolutionMode.AlwaysOverwrite);
+
+          return Task.FromResult(fileAttachment);
+        },
         Settings);
 
       return attachment != null;
@@ -763,7 +766,8 @@
 
       var properties = new Office365.PropertySet(
         Office365.BasePropertySet.FirstClassProperties,
-        Office365.ItemSchema.Categories);
+        Office365.ItemSchema.Categories,
+        Office365.ItemSchema.Attachments);
 
       properties.AddRange(Settings.ExtendedPropertyDefinitions.Values);
 
@@ -2181,7 +2185,8 @@
         email,
         service,
         i => {
-          var message = Office365.EmailMessage.Bind(service, changedMessage.Id);
+          var message = 
+            Office365.EmailMessage.Bind(service, changedMessage.Id);
 
           if (message == null)
           {
@@ -2226,7 +2231,7 @@
 
           try
           {
-            message.Update(Office365.ConflictResolutionMode.AlwaysOverwrite);
+            message.Update(Office365.ConflictResolutionMode.AutoResolve);
           }
           catch
           {
