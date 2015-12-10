@@ -114,6 +114,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActionRight.cs">
+      <DependentUpon>Model.tt</DependentUpon>
+    </Compile>
+    <Compile Include="ActionType.cs" />
     <Compile Include="ApplicationUser.cs">
       <DependentUpon>Model.tt</DependentUpon>
     </Compile>

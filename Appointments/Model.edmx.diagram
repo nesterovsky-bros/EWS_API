@@ -21,6 +21,7 @@
         <AssociationConnector Association="EWSQueueModel.FK_BankSystemMailbox_BankSystem" />
         <AssociationConnector Association="EWSQueueModel.FK_BankSystemNotification_BankSystem" />
         <AssociationConnector Association="EWSQueueModel.FK_BankSystemRight_BankSystem" />
+        <EntityTypeShape EntityType="EWSQueueModel.ActionRight" Width="1.5" PointX="10.375" PointY="0.75" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

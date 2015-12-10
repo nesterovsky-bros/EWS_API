@@ -36,7 +36,8 @@
     {
       if (!await IsBankSystemAuthorized(principal, systemName, cancellationToken))
       {
-        throw new UnauthorizedAccessException();
+        throw new UnauthorizedAccessException(
+          string.Format("Principal is not authorized to access a system \"{0}\".", systemName));
       }
     }
 
@@ -57,11 +58,34 @@
     {
       if (!await IsMailboxAuthorized(principal, email, cancellationToken))
       {
-        throw new UnauthorizedAccessException();
+        throw new UnauthorizedAccessException(
+          string.Format("Principal is not authorized to access a mailbox \"{0}\".", email));
       }
     }
 
     /// <summary>
+    /// Verifies that a member is authorized to perform an action
+    /// </summary>
+    /// <param name="principal">A principal instance.</param>
+    /// <param name="action">An action.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A <see cref="Task"/> instance.</returns>
+    /// <exception cref="UnauthorizedAccessException">
+    /// In case a principal is not authorized.
+    /// </exception>
+    public static async Task VerifyActionAuthorized(
+      IPrincipal principal,
+      string action,
+      CancellationToken cancellationToken = default(CancellationToken))
+    {
+      if (!await IsActionAuthorized(principal, action, cancellationToken))
+      {
+        throw new UnauthorizedAccessException(
+          string.Format("Principal is not authorized to perform an action \"{0}\".", action));
+      }
+    }
+
+    /// <summary
     /// Tests whether the principal is authorized to access a bank system.
     /// </summary>
     /// <param name="principal">A principal instance.</param>
@@ -138,6 +162,42 @@
         string.Compare(principal.Identity.Name, member.Name, true) == 0);
     }
 
+    /// <summary>
+    /// Tests whether the principal is authorized to perform a specified action.
+    /// </summary>
+    /// <param name="principal">A principal instance.</param>
+    /// <param name="action">An action to check.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>true is action is authorized, and false othewise.</returns>
+    public static async Task<bool> IsActionAuthorized(
+      IPrincipal principal,
+      string action,
+      CancellationToken cancellationToken = default(CancellationToken))
+    {
+      if (action == null)
+      {
+        return false;
+      }
+
+      var members = await GetActionMembers(action, cancellationToken);
+
+      if (members.Length == 0)
+      {
+        return true;
+      }
+
+      if (principal == null)
+      {
+        return false;
+      }
+
+      return members.Any(
+        member => 
+          member.IsGroup ? principal.IsInRole(member.Name) :
+          principal.Identity == null ? false :
+          string.Compare(principal.Identity.Name, member.Name, true) == 0);
+    }
+
     public class MemberImpl : Member { }
 
     /// <summary>
@@ -203,6 +263,25 @@
                 IsGroup = item == null ? true : item.IsGroup
               }).
           Distinct().
+          ToArrayAsync(cancellationToken);
+      }
+    }
+
+    /// <summary>
+    /// Gets members authorized to perform a specific action
+    /// </summary>
+    /// <param name="action">An action.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A enumeration of users or groups authorized to perform an action.</returns>
+    public static async Task<Member[]> GetActionMembers(
+      string action,
+      CancellationToken cancellationToken = default(CancellationToken))
+    {
+      using(var model = new EWSQueueEntities())
+      {
+        return await model.ActionRights.
+          Where(item => item.ActionName == action).
+          Select(item =>new MemberImpl { Name = item.MemberName, IsGroup = item.IsGroup }).
           ToArrayAsync(cancellationToken);
       }
     }

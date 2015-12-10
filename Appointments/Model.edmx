@@ -25,6 +25,15 @@
           <Property Name="Action" Type="nvarchar" MaxLength="128" Nullable="false" />
           <Property Name="Params" Type="nvarchar" MaxLength="2048" />
         </EntityType>
+        <EntityType Name="ActionRight">
+          <Key>
+            <PropertyRef Name="ActionName" />
+            <PropertyRef Name="MemberName" />
+          </Key>
+          <Property Name="ActionName" Type="nvarchar" MaxLength="128" Nullable="false" />
+          <Property Name="MemberName" Type="nvarchar" MaxLength="128" Nullable="false" />
+          <Property Name="IsGroup" Type="bit" Nullable="false" />
+        </EntityType>
         <EntityType Name="ApplicationUser">
           <Key>
             <PropertyRef Name="Email" />
@@ -161,6 +170,7 @@
         <EntityContainer Name="EWSQueueModelStoreContainer">
           <EntitySet Name="ChangeStateRequests" EntityType="Self.ChangeStateRequests" Schema="App" store:Type="Tables" />
           <EntitySet Name="Rules" EntityType="Self.Rules" Schema="App" store:Type="Tables" />
+          <EntitySet Name="ActionRight" EntityType="Self.ActionRight" Schema="Data" store:Type="Tables" />
           <EntitySet Name="ApplicationUser" EntityType="Self.ApplicationUser" Schema="Data" store:Type="Tables" />
           <EntitySet Name="BankSystem" EntityType="Self.BankSystem" Schema="Data" store:Type="Tables" />
           <EntitySet Name="BankSystemMailbox" EntityType="Self.BankSystemMailbox" Schema="Data" store:Type="Tables" />
@@ -215,6 +225,7 @@
             <End Role="BankSystem" EntitySet="BankSystems" />
             <End Role="BankSystemRight" EntitySet="BankSystemRights" />
           </AssociationSet>
+          <EntitySet Name="ActionRights" EntityType="EWSQueueModel.ActionRight" />
         </EntityContainer>
         <ComplexType Name="Member" >
           <Property Type="String" Name="Name" Nullable="false" />
@@ -379,6 +390,15 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <EntityType Name="ActionRight">
+          <Key>
+            <PropertyRef Name="ActionName" />
+            <PropertyRef Name="MemberName" />
+          </Key>
+          <Property Name="ActionName" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
+          <Property Name="MemberName" Type="String" Nullable="false" MaxLength="128" FixedLength="false" Unicode="true" />
+          <Property Name="IsGroup" Type="Boolean" Nullable="false" />
+        </EntityType>
         </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -505,6 +525,15 @@
                 <ScalarProperty Name="Type" ColumnName="Type" />
                 <ScalarProperty Name="Timestamp" ColumnName="Timestamp" />
                 <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ActionRights">
+            <EntityTypeMapping TypeName="EWSQueueModel.ActionRight">
+              <MappingFragment StoreEntitySet="ActionRight">
+                <ScalarProperty Name="IsGroup" ColumnName="IsGroup" />
+                <ScalarProperty Name="MemberName" ColumnName="MemberName" />
+                <ScalarProperty Name="ActionName" ColumnName="ActionName" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
