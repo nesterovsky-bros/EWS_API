@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Threading;
 
 using Bnhp.Office365.EwsServiceReference;
+using System.Configuration;
 
 namespace Bnhp.Office365
 {
@@ -50,6 +51,10 @@ namespace Bnhp.Office365
         throw new ArgumentNullException("client");
       }
 
+      long WaitPeriod = (long.TryParse(
+        ConfigurationManager.AppSettings["PrinterHandlerWaitPeriod"], out WaitPeriod) ?
+        WaitPeriod * 1000 : 30000) * TimeSpan.TicksPerMillisecond;
+
       // save e-mail content to a temporary file
       var eml = await client.GetMessageContentAsync(recipient, message.Id);
 
@@ -84,10 +89,20 @@ namespace Bnhp.Office365
           WindowStyle = ProcessWindowStyle.Hidden
         };
 
+        var startTime = DateTime.Now.Ticks;
+
         printer.Start();
         printer.WaitForInputIdle();
 
-        Thread.Sleep(3000);
+        while(true)
+        {
+          Thread.Sleep(500);
+
+          if (printer.HasExited || (DateTime.Now.Ticks - startTime >= WaitPeriod))
+          {
+            break;
+          }
+        }
 
         if (!printer.CloseMainWindow())
         {
