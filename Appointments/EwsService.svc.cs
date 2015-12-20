@@ -45,7 +45,7 @@
     /// <exception cref="Exception">in case of error.</exception>
     public async Task<string> CreateAppointment(string email, Appointment appointment)
     {
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ModifyAppointment);
       var officeAppointment = new Office365.Appointment(service);
       var proxy = appointment;
 
@@ -184,7 +184,7 @@
       DateTime? end,
       int? maxResults)
     {
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ReadAppointment);
       var appointments = await FindAppointmentsImpl(
         service,
         email,
@@ -219,7 +219,7 @@
       DateTime? end,
       int? maxResults)
     {
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ReadAppointment);
       var appointments = await FindAppointmentsImpl(
         service,
         email,
@@ -280,7 +280,7 @@
     /// </returns>
     public async Task<Appointment> GetAppointment(string email, string ID)
     {
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ReadAppointment);
       var appointment = await RetrieveAppointment(service, email, ID);
 
       return ConvertAppointment(appointment);
@@ -316,7 +316,7 @@
         throw new ArgumentNullException("appointment");
       }
 
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ModifyAppointment);
       var officeAppointment = await RetrieveAppointment(service, email, proxy.Id);
 
       // Note: only organizer may update the proxy.
@@ -418,7 +418,7 @@
     /// <remarks>Only the appointment organizer may cancel it.</remarks>
     public async Task<bool> CancelAppointment(string email, string ID, string reason)
     {
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ModifyAppointment);
       var appointment = await RetrieveAppointment(service, email, ID);
 
       if (appointment != null)
@@ -450,7 +450,7 @@
     /// <remarks>Only the appointment organizer may delete it.</remarks>
     public async Task<bool> DeleteAppointment(string email, string ID)
     {
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ModifyAppointment);
       var appointment = await RetrieveAppointment(service, email, ID);
 
       if (appointment != null)
@@ -483,7 +483,7 @@
     /// </returns>
     public async Task<bool> AcceptAppointment(string email, string ID)
     {
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ModifyAppointment);
       var appointment = await RetrieveAppointment(service, email, ID);
 
       if (appointment != null)
@@ -513,7 +513,7 @@
     /// </returns>
     public async Task<bool> DeclineAppointment(string email, string ID)
     {
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ModifyAppointment);
       var appointment = await RetrieveAppointment(service, email, ID);
 
       if (appointment != null)
@@ -551,7 +551,7 @@
         throw new ArgumentNullException("message");
       }
 
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ModifyEMail);
       var emailMessage = new Office365.EmailMessage(service);
 
       if (message.BccRecipients != null)
@@ -643,7 +643,7 @@
         throw new ArgumentNullException("ID");
       }
 
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ModifyEMail);
       var attachment = await EwsUtils.TryAction(
         "AddFileAttachment",
         email,
@@ -715,7 +715,7 @@
 
       view.Traversal = Office365.ItemTraversal.Shallow;
 
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ReadEMail);
 
       var items = await EwsUtils.TryAction(
         "FindMessages",
@@ -762,7 +762,7 @@
     /// </returns>
     public async Task<EMailMessage> GetMessage(string email, string ID)
     {
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ReadEMail);
 
       var properties = new Office365.PropertySet(
         Office365.BasePropertySet.FirstClassProperties,
@@ -822,7 +822,7 @@
         throw new ArgumentNullException("ID");
       }
 
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ReadEMail);
 
       var message = await EwsUtils.TryAction(
         "GetFileAttachment",
@@ -919,7 +919,7 @@
         throw new ArgumentNullException("ID");
       }
 
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ModifyEMail);
 
       return await EwsUtils.TryAction(
         "DeleteFileAttachment",
@@ -967,7 +967,7 @@
     /// </returns>
     public async Task<MimeContent> GetMessageContent(string email, string ID)
     {
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ReadEMail);
 
       var message = await EwsUtils.TryAction(
         "GetMessageContent",
@@ -1109,7 +1109,9 @@
         await EwsUtils.VerifyMailboxAuthorized(Thread.CurrentPrincipal, email);
       }
 
-      using(var model = new EWSQueueEntities())
+      await EwsUtils.VerifyActionAuthorized(Thread.CurrentPrincipal, "GetChanges");
+
+      using (var model = new EWSQueueEntities())
       {
         var query = GetChangesQuery(
           model,
@@ -1188,7 +1190,9 @@
         await EwsUtils.VerifyMailboxAuthorized(Thread.CurrentPrincipal, email);
       }
 
-      using (var model = new EWSQueueEntities())
+      await EwsUtils.VerifyActionAuthorized(Thread.CurrentPrincipal, "GetChangeStats");
+
+      using(var model = new EWSQueueEntities())
       {
         var query = GetChangesQuery(
           model,
@@ -1466,8 +1470,9 @@
     /// Gets a service instance.
     /// </summary>
     /// <param name="email">A mailbox email.</param>
+    /// <param name="action">An action to perform.</param>
     /// <returns>a ExchangeService instance.</returns>
-    private async Task<Office365.ExchangeService> GetService(string email)
+    private async Task<Office365.ExchangeService> GetService(string email, ActionType action)
     {
       if (email == null)
       {
@@ -1475,6 +1480,11 @@
       }
 
       await EwsUtils.VerifyMailboxAuthorized(Thread.CurrentPrincipal, email);
+
+      if (action != ActionType.Unknown)
+      {
+        await EwsUtils.VerifyActionAuthorized(Thread.CurrentPrincipal, action.ToString());
+      }
 
       var users = Settings.ApplicationUsers;
       var index = Interlocked.Increment(ref accessCount) % users.Length;
@@ -2079,7 +2089,7 @@
       string action,
       string folder = null)
     {
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ModifyEMail);
 
       var message = await EwsUtils.TryAction(
         "Bind",
@@ -2178,7 +2188,7 @@
       string email,
       EMailMessage changedMessage)
     {
-      var service = await GetService(email);
+      var service = await GetService(email, ActionType.ModifyEMail);
 
       return await EwsUtils.TryAction(
         "UpdateMessage",
