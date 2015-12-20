@@ -1109,7 +1109,7 @@
         await EwsUtils.VerifyMailboxAuthorized(Thread.CurrentPrincipal, email);
       }
 
-      await EwsUtils.VerifyActionAuthorized(Thread.CurrentPrincipal, "GetChanges");
+      await EwsUtils.VerifyActionAuthorized(Thread.CurrentPrincipal, ActionType.NotifyChanges.ToString());
 
       using (var model = new EWSQueueEntities())
       {
@@ -1190,7 +1190,7 @@
         await EwsUtils.VerifyMailboxAuthorized(Thread.CurrentPrincipal, email);
       }
 
-      await EwsUtils.VerifyActionAuthorized(Thread.CurrentPrincipal, "GetChangeStats");
+      await EwsUtils.VerifyActionAuthorized(Thread.CurrentPrincipal, ActionType.NotifyChanges.ToString());
 
       using(var model = new EWSQueueEntities())
       {
