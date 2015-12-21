@@ -7,9 +7,11 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Threading;
+using System.Configuration;
+
+using CsQuery;
 
 using Bnhp.Office365.EwsServiceReference;
-using System.Configuration;
 
 namespace Bnhp.Office365
 {
@@ -87,17 +89,41 @@ namespace Bnhp.Office365
             AppendFormat(AttachmentsTemplate, attachments.ToString());
         }
 
-        await file.WriteLineAsync(string.Format(MessageTemplate,
+        var messageTemplate = string.Format(MessageHeaderTemplate,
           message.Subject,
-          message.From.Name,
-          message.From.Address,
+          message.From != null ? message.From.Name : "",
+          message.From != null ? message.From.Address : "",
           message.DateTimeSent.ToString(),
-          to.ToString(),
-          message.TextBody,
-          attachments.ToString()));
+          to.ToString());
+
+        if (IsHtml.IsMatch(message.TextBody))
+        {
+          var content = new CQ(message.TextBody);
+          var body = content.Find("body");
+          var children = body.Children();
+          var template = new CQ(messageTemplate);
+
+          template.InsertBefore(children[0]);
+
+          template = attachments.ToString();
+
+          template.InsertAfter(children[children.Length - 1]);
+
+          messageTemplate = content.Render();
+        }
+        else
+        {
+          messageTemplate = string.Format(MessageTemplate,
+            message.Subject,
+            messageTemplate,
+            string.IsNullOrEmpty(message.TextBody) ? "" : message.TextBody,
+            attachments.ToString());
+        }
+
+
+        file.Write(messageTemplate);
       }
-
-
+      
       // print content
       try
       {
@@ -146,17 +172,27 @@ namespace Bnhp.Office365
       return true;
     }
 
+    /// <summary>
+    /// HTML pattern.
+    /// </summary>
+    private static Regex IsHtml = new Regex(@"\<html.*/html\>",
+      RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
+
     private const string MessageTemplate =
       "<html><head><title>{0}</title></head><body>" +
+      "<div>{1}</div>" +
+      "<p>&nbsp;</p>" +
+      "<div>{2}</div>" +
+      "<p>&nbsp;</p>" +
+      "<div>{3}</div>" +
+      "</body></html>";
+
+    private const string MessageHeaderTemplate =
       "<p><span><b>From:</b>&nbsp;<span>{1} &lt;{2}&gt;</span></p>" +
       "<p><span><b>Sent:</b>&nbsp;<span>{3}</span></p>" +
       "<p><span><b>To:</b>&nbsp;<span>{4}</span></p>" +
       "<p><span><b>Subject:</b>&nbsp;<span>{0}</span></p>" +
-      "<p>&nbsp;</p>" +
-      "<div>{5}</div>" +
-      "<p>&nbsp;</p>" +
-      "<div>{6}</div>" +
-      "</body></html>";
+      "<p>&nbsp;</p>";
 
     private const string ToTemplate =
       "{0} &lt;{1}&gt;";
