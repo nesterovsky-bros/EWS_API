@@ -1810,6 +1810,12 @@ namespace Bnhp.Office365.EwsServiceReference {
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/FindAppointments", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsResponse")]
         System.Threading.Tasks.Task<Bnhp.Office365.EwsServiceReference.Appointment[]> FindAppointmentsAsync(string email, System.DateTime start, System.Nullable<System.DateTime> end, System.Nullable<int> maxResults);
         
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsEx", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsExResponse")]
+        string[] FindAppointmentsEx(string email, System.DateTime start, System.Nullable<System.DateTime> end, System.Nullable<int> maxResults);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsEx", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/FindAppointmentsExResponse")]
+        System.Threading.Tasks.Task<string[]> FindAppointmentsExAsync(string email, System.DateTime start, System.Nullable<System.DateTime> end, System.Nullable<int> maxResults);
+        
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetAppointment", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetAppointmentResponse")]
         Bnhp.Office365.EwsServiceReference.Appointment GetAppointment(string email, string ID);
         
@@ -1888,6 +1894,12 @@ namespace Bnhp.Office365.EwsServiceReference {
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetAttachmentByIndex", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetAttachmentByIndexResponse")]
         System.Threading.Tasks.Task<byte[]> GetAttachmentByIndexAsync(string email, string ID, int index);
         
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/DeleteAttachmentByName", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/DeleteAttachmentByNameResponse")]
+        bool DeleteAttachmentByName(string email, string ID, string name);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/DeleteAttachmentByName", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/DeleteAttachmentByNameResponse")]
+        System.Threading.Tasks.Task<bool> DeleteAttachmentByNameAsync(string email, string ID, string name);
+        
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetMessageContent", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetMessageContentResponse")]
         Bnhp.Office365.EwsServiceReference.MimeContent GetMessageContent(string email, string ID);
         
@@ -1899,6 +1911,12 @@ namespace Bnhp.Office365.EwsServiceReference {
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/DeleteMessage", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/DeleteMessageResponse")]
         System.Threading.Tasks.Task<bool> DeleteMessageAsync(string email, string ID);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/UpdateMessage", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/UpdateMessageResponse")]
+        bool UpdateMessage(string email, Bnhp.Office365.EwsServiceReference.EMailMessage changedMessage);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/UpdateMessage", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/UpdateMessageResponse")]
+        System.Threading.Tasks.Task<bool> UpdateMessageAsync(string email, Bnhp.Office365.EwsServiceReference.EMailMessage changedMessage);
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/MoveTo", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/MoveToResponse")]
         bool MoveTo(string email, string ID, string folder);
@@ -1929,6 +1947,24 @@ namespace Bnhp.Office365.EwsServiceReference {
         
         [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetChangeStats", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetChangeStatsResponse")]
         System.Threading.Tasks.Task<Bnhp.Office365.EwsServiceReference.ChangeStats[]> GetChangeStatsAsync(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetBankSystemMailboxes", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetBankSystemMailboxesResponse")]
+        string[] GetBankSystemMailboxes(string systemName, System.Nullable<int> skip, System.Nullable<int> take);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/GetBankSystemMailboxes", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/GetBankSystemMailboxesResponse")]
+        System.Threading.Tasks.Task<string[]> GetBankSystemMailboxesAsync(string systemName, System.Nullable<int> skip, System.Nullable<int> take);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/AddBankSystemMailboxes", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/AddBankSystemMailboxesResponse")]
+        bool AddBankSystemMailboxes(string systemName, string[] mailboxes);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/AddBankSystemMailboxes", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/AddBankSystemMailboxesResponse")]
+        System.Threading.Tasks.Task<bool> AddBankSystemMailboxesAsync(string systemName, string[] mailboxes);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/RemoveBankSystemMailboxes", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/RemoveBankSystemMailboxesResponse")]
+        bool RemoveBankSystemMailboxes(string systemName, string[] mailboxes);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="https://www.bankhapoalim.co.il/IEwsService/RemoveBankSystemMailboxes", ReplyAction="https://www.bankhapoalim.co.il/IEwsService/RemoveBankSystemMailboxesResponse")]
+        System.Threading.Tasks.Task<bool> RemoveBankSystemMailboxesAsync(string systemName, string[] mailboxes);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -1972,6 +2008,14 @@ namespace Bnhp.Office365.EwsServiceReference {
         
         public System.Threading.Tasks.Task<Bnhp.Office365.EwsServiceReference.Appointment[]> FindAppointmentsAsync(string email, System.DateTime start, System.Nullable<System.DateTime> end, System.Nullable<int> maxResults) {
             return base.Channel.FindAppointmentsAsync(email, start, end, maxResults);
+        }
+        
+        public string[] FindAppointmentsEx(string email, System.DateTime start, System.Nullable<System.DateTime> end, System.Nullable<int> maxResults) {
+            return base.Channel.FindAppointmentsEx(email, start, end, maxResults);
+        }
+        
+        public System.Threading.Tasks.Task<string[]> FindAppointmentsExAsync(string email, System.DateTime start, System.Nullable<System.DateTime> end, System.Nullable<int> maxResults) {
+            return base.Channel.FindAppointmentsExAsync(email, start, end, maxResults);
         }
         
         public Bnhp.Office365.EwsServiceReference.Appointment GetAppointment(string email, string ID) {
@@ -2078,6 +2122,14 @@ namespace Bnhp.Office365.EwsServiceReference {
             return base.Channel.GetAttachmentByIndexAsync(email, ID, index);
         }
         
+        public bool DeleteAttachmentByName(string email, string ID, string name) {
+            return base.Channel.DeleteAttachmentByName(email, ID, name);
+        }
+        
+        public System.Threading.Tasks.Task<bool> DeleteAttachmentByNameAsync(string email, string ID, string name) {
+            return base.Channel.DeleteAttachmentByNameAsync(email, ID, name);
+        }
+        
         public Bnhp.Office365.EwsServiceReference.MimeContent GetMessageContent(string email, string ID) {
             return base.Channel.GetMessageContent(email, ID);
         }
@@ -2092,6 +2144,14 @@ namespace Bnhp.Office365.EwsServiceReference {
         
         public System.Threading.Tasks.Task<bool> DeleteMessageAsync(string email, string ID) {
             return base.Channel.DeleteMessageAsync(email, ID);
+        }
+        
+        public bool UpdateMessage(string email, Bnhp.Office365.EwsServiceReference.EMailMessage changedMessage) {
+            return base.Channel.UpdateMessage(email, changedMessage);
+        }
+        
+        public System.Threading.Tasks.Task<bool> UpdateMessageAsync(string email, Bnhp.Office365.EwsServiceReference.EMailMessage changedMessage) {
+            return base.Channel.UpdateMessageAsync(email, changedMessage);
         }
         
         public bool MoveTo(string email, string ID, string folder) {
@@ -2132,6 +2192,30 @@ namespace Bnhp.Office365.EwsServiceReference {
         
         public System.Threading.Tasks.Task<Bnhp.Office365.EwsServiceReference.ChangeStats[]> GetChangeStatsAsync(string systemName, string email, string folderID, System.Nullable<System.DateTime> startDate, System.Nullable<System.DateTime> endDate, System.Nullable<int> skip, System.Nullable<int> take) {
             return base.Channel.GetChangeStatsAsync(systemName, email, folderID, startDate, endDate, skip, take);
+        }
+        
+        public string[] GetBankSystemMailboxes(string systemName, System.Nullable<int> skip, System.Nullable<int> take) {
+            return base.Channel.GetBankSystemMailboxes(systemName, skip, take);
+        }
+        
+        public System.Threading.Tasks.Task<string[]> GetBankSystemMailboxesAsync(string systemName, System.Nullable<int> skip, System.Nullable<int> take) {
+            return base.Channel.GetBankSystemMailboxesAsync(systemName, skip, take);
+        }
+        
+        public bool AddBankSystemMailboxes(string systemName, string[] mailboxes) {
+            return base.Channel.AddBankSystemMailboxes(systemName, mailboxes);
+        }
+        
+        public System.Threading.Tasks.Task<bool> AddBankSystemMailboxesAsync(string systemName, string[] mailboxes) {
+            return base.Channel.AddBankSystemMailboxesAsync(systemName, mailboxes);
+        }
+        
+        public bool RemoveBankSystemMailboxes(string systemName, string[] mailboxes) {
+            return base.Channel.RemoveBankSystemMailboxes(systemName, mailboxes);
+        }
+        
+        public System.Threading.Tasks.Task<bool> RemoveBankSystemMailboxesAsync(string systemName, string[] mailboxes) {
+            return base.Channel.RemoveBankSystemMailboxesAsync(systemName, mailboxes);
         }
     }
 }

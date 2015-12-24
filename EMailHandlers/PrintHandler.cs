@@ -7,6 +7,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Threading;
+using System.Configuration;
+
+using CsQuery;
 
 using Bnhp.Office365.EwsServiceReference;
 
@@ -50,27 +53,78 @@ namespace Bnhp.Office365
         throw new ArgumentNullException("client");
       }
 
-      // save e-mail content to a temporary file
-      var eml = await client.GetMessageContentAsync(recipient, message.Id);
-
-      if (eml == null)
-      {
-        // cannot print this e-mail
-        return false;
-      }
+      long WaitPeriod = (long.TryParse(
+        ConfigurationManager.AppSettings["PrinterHandlerWaitPeriod"], out WaitPeriod) ?
+        WaitPeriod * 1000 : 30000) * TimeSpan.TicksPerMillisecond;
 
       var tempFile = Path.GetTempFileName();
 
       File.Delete(tempFile);
 
-      tempFile = tempFile + ".eml";
+      tempFile = tempFile + ".html";
 
-      using (var file = File.Create(tempFile))
+      using (var file = File.CreateText(tempFile))
       {
-        file.Write(eml.Content, 0, eml.Content.Length);
-      }
+        var to = new StringBuilder();
+        var attachments = new StringBuilder();
 
-      // print this .eml file
+        foreach (var toRecipient in message.ToRecipients)
+        {
+          if (to.Length != 0)
+          {
+            to.Append(';');
+          }
+
+          to.AppendFormat(ToTemplate, toRecipient.Name, toRecipient.Address);
+        }
+
+        if (message.Attachments != null)
+        {
+          foreach (var attachment in message.Attachments)
+          {
+            attachments.AppendFormat(AttachmentTemplate, attachment.Name);
+          }
+
+          attachments = new StringBuilder().
+            AppendFormat(AttachmentsTemplate, attachments.ToString());
+        }
+
+        var messageTemplate = string.Format(MessageHeaderTemplate,
+          message.Subject,
+          message.From != null ? message.From.Name : "",
+          message.From != null ? message.From.Address : "",
+          message.DateTimeSent.ToString(),
+          to.ToString());
+
+        if (IsHtml.IsMatch(message.TextBody))
+        {
+          var content = new CQ(message.TextBody);
+          var body = content.Find("body");
+          var children = body.Children();
+          var template = new CQ(messageTemplate);
+
+          template.InsertBefore(children[0]);
+
+          template = attachments.ToString();
+
+          template.InsertAfter(children[children.Length - 1]);
+
+          messageTemplate = content.Render();
+        }
+        else
+        {
+          messageTemplate = string.Format(MessageTemplate,
+            message.Subject,
+            messageTemplate,
+            string.IsNullOrEmpty(message.TextBody) ? "" : message.TextBody,
+            attachments.ToString());
+        }
+
+
+        file.Write(messageTemplate);
+      }
+      
+      // print content
       try
       {
         var printer = new Process();
@@ -84,10 +138,20 @@ namespace Bnhp.Office365
           WindowStyle = ProcessWindowStyle.Hidden
         };
 
+        var startTime = DateTime.Now.Ticks;
+
         printer.Start();
         printer.WaitForInputIdle();
 
-        Thread.Sleep(3000);
+        while(true)
+        {
+          Thread.Sleep(500);
+
+          if (printer.HasExited || (DateTime.Now.Ticks - startTime >= WaitPeriod))
+          {
+            break;
+          }
+        }
 
         if (!printer.CloseMainWindow())
         {
@@ -107,6 +171,37 @@ namespace Bnhp.Office365
 
       return true;
     }
+
+    /// <summary>
+    /// HTML pattern.
+    /// </summary>
+    private static Regex IsHtml = new Regex(@"\<html.*/html\>",
+      RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.Singleline);
+
+    private const string MessageTemplate =
+      "<html><head><title>{0}</title></head><body>" +
+      "<div>{1}</div>" +
+      "<p>&nbsp;</p>" +
+      "<div>{2}</div>" +
+      "<p>&nbsp;</p>" +
+      "<div>{3}</div>" +
+      "</body></html>";
+
+    private const string MessageHeaderTemplate =
+      "<p><span><b>From:</b>&nbsp;<span>{1} &lt;{2}&gt;</span></p>" +
+      "<p><span><b>Sent:</b>&nbsp;<span>{3}</span></p>" +
+      "<p><span><b>To:</b>&nbsp;<span>{4}</span></p>" +
+      "<p><span><b>Subject:</b>&nbsp;<span>{0}</span></p>" +
+      "<p>&nbsp;</p>";
+
+    private const string ToTemplate =
+      "{0} &lt;{1}&gt;";
+
+    private const string AttachmentTemplate =
+      "<li>{0}</li>";
+
+    private const string AttachmentsTemplate =
+      "<div style='font-weight: bold'>Attachments:</div><ul>{0}</ul>";
     #endregion
   }
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
-
+using Mailer.Security;
 using NesterovskyBros.Code;
 
 using Newtonsoft.Json;
@@ -30,6 +30,8 @@ namespace Mailer
             jsonSettings.ContractResolver = new JsonContractResolver();
             jsonSettings.Converters.Add(
               new StringEnumConverter { CamelCaseText = true });
-    }
+
+           //config.Filters.Add(new CsrfFilterAttribute());
+      }
   }
 }

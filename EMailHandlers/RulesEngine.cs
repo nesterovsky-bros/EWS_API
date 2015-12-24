@@ -63,6 +63,11 @@ namespace Bnhp.Office365
 
         foreach (var change in changes)
         {
+          if (change.ChangeType != ChangeType.Created)
+          {
+            continue;
+          }
+
           mailbox = change.Email;
           action = "";
           
