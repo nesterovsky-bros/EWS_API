@@ -1,118 +1,142 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http.Filters;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Web.Http.Controllers;
+using System.Net;
+using System.Security.Cryptography;
+using System.Configuration;
+using System.Collections.Generic;
 
 namespace Mailer.Security
 {
   /// <summary>
   /// Implements an IAuthenticationFilter that checks XSRF-TOKEN.
-  /// See http://www.asp.net/web-api/overview/security/authentication-filters
+  /// See http://stackoverflow.com/questions/23339002/custom-authorization-attribute-not-working-in-webapi
   /// </summary>
-  public class CsrfFilterAttribute : FilterAttribute, IAuthenticationFilter
+  public class CsrfFilterAttribute : ActionFilterAttribute
   {
-    public Task AuthenticateAsync(
-      HttpAuthenticationContext context, 
-      CancellationToken cancellationToken)
+    public override void OnActionExecuting(HttpActionContext context)
     {
-      // get auth token from cookie
       var request = context.Request;
-      var headers = request.Headers;
-      var authCookie = 
-        headers.GetCookies(AuthenticationTokenName).FirstOrDefault();
-      var error = false;
+      var headers = null as IEnumerable<string>;
 
-      // there is no authentication cookies, do nothing.
-      if (authCookie != null)
+      if (request.Headers.TryGetValues(CSRFHeaderName, out headers))
       {
-        var authToken = authCookie[AuthenticationTokenName].Value;
+        var token = headers.FirstOrDefault();
+        var cookie =
+          request.Headers.GetCookies(AuthCookieName).FirstOrDefault();
+        var authToken = cookie == null ? null : cookie[AuthCookieName].Value;
 
-        // get CSRF header
-        var csrfToken = headers.GetValues(CSRFHeaderName).FirstOrDefault();
-
-        if (string.IsNullOrEmpty(csrfToken))
+        if (IsMatch(token, authToken))
         {
-          // is there a CSRF cookies?
-          var csrfCookie = headers.GetCookies(CSRFTokenName).FirstOrDefault();
-
-          // when there is no CSRF header then it is very probably
-          // an attempt to hack the service
-          error = ((csrfCookie != null) ||
-            (string.Compare(request.Method.Method, "PUT") == 0) ||
-            (string.Compare(request.Method.Method, "POST") == 0) ||
-            (string.Compare(request.Method.Method, "DELETE") == 0));
-        }
-        else
-        {
-          // Verify that CSRF token was generated from auth token
-          // Since the CSRF token should have gone out as a cookie, only 
-          // our site should have been able to get it (via javascript) and return it in a header. 
-          // This proves that our site made the request.
-          error = !CsrfTokenHelper.DoesCsrfTokenMatchAuthToken(csrfToken, authToken);
+          return;
         }
       }
-
-      if (error)
+      else if (string.Compare(request.Method.Method, "get", true) == 0)
       {
-        context.ErrorResult =
-          new AuthenticationFailureResult(CSRFAttack, request);
+        return;
       }
+      // else access forbiden.
 
-      return Task.FromResult(0);
+      context.Response =
+        new HttpResponseMessage(HttpStatusCode.Forbidden)
+        {
+          ReasonPhrase = "An attempt of CSRF attack was detected."
+        };
     }
 
-    public async Task ChallengeAsync(
-      HttpAuthenticationChallengeContext context,
-      CancellationToken cancellationToken)
+    public override void OnActionExecuted(HttpActionExecutedContext context)
     {
-      var headers = context.Request.Headers;
-      var cookie =
-        headers.GetCookies(AuthenticationTokenName).FirstOrDefault();
-      var authToken = 
-        cookie == null ? null : cookie[AuthenticationTokenName].Value;
+      var principal = context.ActionContext.RequestContext.Principal;
+      var userName = principal == null ? null : principal.Identity.Name;
+      var token = GenerateToken(userName);
 
-      if (!string.IsNullOrEmpty(authToken))
-      {
-        // is there a CSRF cookies?
-        cookie = headers.GetCookies(CSRFTokenName).FirstOrDefault();
-
-        if (cookie == null)
+      context.Response.Headers.AddCookies(
+        new CookieHeaderValue[] 
         {
-          var token = 
-            CsrfTokenHelper.GenerateCsrfTokenFromAuthToken(authToken);
-
-          cookie = new CookieHeaderValue(CSRFTokenName, token)
+          new CookieHeaderValue(AuthCookieName, token)
+          {
+            HttpOnly = true
+          },
+          new CookieHeaderValue(CSRFCookieName, token)
           {
             HttpOnly = false
-          };
-        
-          var response = await context.Result.ExecuteAsync(cancellationToken);
+          }
+        });
+    }
 
-          response.Headers.AddCookies(new CookieHeaderValue[] { cookie });
-        }
-      }
-      else
+    public override bool AllowMultiple
+    {
+      get { return false; }
+    }
+
+    protected static string GenerateToken(string authToken)
+    {
+      authToken += ":" + Guid.NewGuid().ToString();
+
+      return GenerateHash(authToken);
+    }
+
+    protected static bool IsMatch(string csrfToken, string authToken)
+    {
+      return csrfToken == GenerateHash(authToken);
+    }
+
+    protected static string GenerateHash(string authToken)
+    {
+      using (var sha = SHA256.Create())
       {
-        cookie = new CookieHeaderValue(AuthenticationTokenName, Guid.NewGuid().ToString())
-        {
-          HttpOnly = true
-        };
+        var computedHash =
+          sha.ComputeHash(Encoding.Unicode.GetBytes(authToken + ConstantSalt));
+        var cookieFriendlyHash = HttpServerUtility.UrlTokenEncode(computedHash);
 
-        var response = await context.Result.ExecuteAsync(cancellationToken);
-
-        response.Headers.AddCookies(new CookieHeaderValue[] { cookie });
+        return cookieFriendlyHash;
       }
     }
 
-    private const string CSRFTokenName = "XSRF-TOKEN";
-    private const string CSRFHeaderName = "X-XSRF-TOKEN";
-    private const string AuthenticationTokenName = "BNHP-AUTH-TOKEN";
-    private const string CSRFAttack = "An attempt of CSRF attack detected.";
+    /// <summary>
+    /// Gets a CSRF header name.
+    /// </summary>
+    protected static string CSRFHeaderName
+    {
+      get
+      {
+        if (string.IsNullOrEmpty(_CSRFHeaderName))
+        {
+          _CSRFHeaderName =
+            ConfigurationManager.AppSettings["CSRFHeaderName"] ??
+            "X-XSRF-TOKEN";
+        }
+
+        return _CSRFHeaderName;
+      }
+    }
+
+    /// <summary>
+    /// Gets a CSRF cookie name.
+    /// </summary>
+    protected static string CSRFCookieName
+    {
+      get
+      {
+        if (string.IsNullOrEmpty(_CSRFTokenName))
+        {
+          _CSRFTokenName =
+            ConfigurationManager.AppSettings["CSRFTokenName"] ??
+            "XSRF-TOKEN";
+        }
+
+        return _CSRFTokenName;
+      }
+    }
+
+    private static string _CSRFHeaderName;
+    private static string _CSRFTokenName;
+    private static string ConstantSalt = "{D60F377A-F587-4323-AD4F-7F4539A60FCC}";
+    private const string AuthCookieName = "BNHP_AUTH_TOKEN";
   }
 }

@@ -235,10 +235,7 @@
       <DependentUpon>Taxonomy.edmx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Security\AuthenticationFailureResult.cs" />
-    <Compile Include="Security\CsrfHeaderAttribute.cs" />
     <Compile Include="Security\CsrfFilterAttribute.cs" />
-    <Compile Include="Security\CsrfTokenHelper.cs" />
     <Compile Include="Service References\EwsServiceReference\Reference.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

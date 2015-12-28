@@ -18,6 +18,7 @@ define(
         "ui.select",
         "ngWYSIWYG",
         "ui-upload",
+        "ngCookies",
       ]).
       config([
         "$httpProvider",

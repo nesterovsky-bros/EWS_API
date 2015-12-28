@@ -9,8 +9,8 @@
 
     // Application services.
     module.factory("services",
-      ["$resource", 
-      function ($resource)
+      ["$resource", "$cookies",
+      function ($resource, $cookies)
       {
         function resolveAction(resolve)
         {
@@ -28,8 +28,7 @@
           resolve(this);
         }
 
-        var simpleTypeInterceptor =
-        {
+        var simpleTypeInterceptor = {
           response: function(response)
           {
             response.resource.data = response.data;

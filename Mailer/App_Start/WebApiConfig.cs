@@ -31,7 +31,7 @@ namespace Mailer
             jsonSettings.Converters.Add(
               new StringEnumConverter { CamelCaseText = true });
 
-           //config.Filters.Add(new CsrfFilterAttribute());
+           config.Filters.Add(new CsrfFilterAttribute());
       }
   }
 }
