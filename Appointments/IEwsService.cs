@@ -188,6 +188,24 @@ namespace Bnhp.Office365
     [OperationContract]
     Task<bool> SendMessage(string email, string ID);
 
+    /*
+    /// <summary>
+    /// Forwards the specified e-mail message to the specified recipients.
+    /// </summary>
+    /// <param name="email">An e-mail address of the sender.</param>
+    /// <param name="ID">An e-mail message's unique ID to send.</param>
+    /// <param name="recipients">An array of recipients.</param>
+    /// <returns>
+    /// true when the message was successfully sent, and false otherwise.
+    /// </returns>
+    /// <exception cref="IOException">in case of error.</exception>
+    [OperationContract]
+    Task<bool> ForwardMessage(
+      string email, 
+      string ID, 
+      EMailAddress[] recipients);
+    */
+
     /// <summary>
     /// Retrieves e-mail messages' IDs from Inbox.
     /// </summary>

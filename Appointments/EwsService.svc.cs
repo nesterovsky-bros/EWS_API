@@ -18,6 +18,7 @@
   using Microsoft.Practices.Unity;
 
   using Office365 = Microsoft.Exchange.WebServices.Data;
+  using System.Configuration;
 
   /// <summary>
   /// An implementation of IAppointments interface for CRUD operations with
@@ -685,6 +686,97 @@
     {
       return ProcessEMailImpl(email, ID, "send");
     }
+    #endregion
+
+    #region Forward method
+    /*
+    /// <summary>
+    /// Forwards the specified e-mail message to the specified recipients.
+    /// </summary>
+    /// <param name="email">An e-mail address of the sender.</param>
+    /// <param name="ID">An e-mail message's unique ID to send.</param>
+    /// <param name="recipients">An array of recipients.</param>
+    /// <returns>
+    /// true when the message was successfully sent, and false otherwise.
+    /// </returns>
+    /// <exception cref="IOException">in case of error.</exception>
+    public Task<bool> ForwardMessage(
+      string email,
+      string ID,
+      EMailAddress[] recipients)
+    {
+      return ForwardMessageImpl(email, ID, recipients);
+    }
+
+    private async Task<bool> ForwardMessageImpl(
+      string email,
+      string ID,
+      EMailAddress[] recipients)
+    {
+      var service = await GetService(email, ActionType.ModifyEMail);
+
+      var message = await EwsUtils.TryAction(
+        "Bind",
+        email,
+        service,
+        i => Task.FromResult(Office365.EmailMessage.Bind(service, ID)),
+        Settings);
+
+      if (message != null)
+      {
+        var to = new StringBuilder();
+
+        foreach (var recipient in recipients)
+        {
+          if (to.Length > 0)
+          {
+            to.Append(", ");
+          }
+
+          to.Append(recipient.Name);
+        }
+
+        var bodyPrefix = message.TextBody.BodyType == Office365.BodyType.HTML ?
+          new Office365.MessageBody(
+            Office365.BodyType.HTML,
+            string.Format(HtmlBodyPrefixTemplate, 
+              (message.From ?? message.Sender).Name, 
+              message.DateTimeSent, 
+              to, 
+              message.Subject)) :
+          new Office365.MessageBody(
+            Office365.BodyType.Text,
+            string.Format(TextBodyPrefixTemplate, 
+              (message.From ?? message.Sender).Name, 
+              message.DateTimeSent, 
+              to, 
+              message.Subject));
+
+        return await EwsUtils.TryAction(
+          "ForwardMessage",
+          email,
+          service,
+          i =>
+          {
+            message.Forward(
+              bodyPrefix,
+              recipients.Select(
+                recipient => 
+                  new Office365.EmailAddress
+                  {
+                    MailboxType = Office365.MailboxType.Mailbox,
+                    Address = recipient.Address,
+                    Name = recipient.Name
+                  }));
+
+            return Task.FromResult(true);
+          },
+          Settings);
+      }
+
+      return false;
+    }
+    */
     #endregion
 
     #region FindMessages method
@@ -2275,6 +2367,34 @@
           });
       }
     }
+
+    private static string HtmlBodyPrefixTemplate
+    {
+      get
+      {
+        if (htmlBodyPrefixTemplate == null)
+        {
+          htmlBodyPrefixTemplate =
+            ConfigurationManager.AppSettings["HtmlBodyPrefixTemplate"] ?? "";
+        }
+
+        return htmlBodyPrefixTemplate;
+      }
+    }
+
+    private static string TextBodyPrefixTemplate
+    {
+      get
+      {
+        if (textBodyPrefixTemplate == null)
+        {
+          textBodyPrefixTemplate =
+            ConfigurationManager.AppSettings["TextBodyPrefixTemplate"] ?? "";
+        }
+
+        return textBodyPrefixTemplate;
+      }
+    }
     #endregion
 
     #region private fields
@@ -2293,6 +2413,9 @@
     /// A map of property name to a property definition.
     /// </summary>
     private static Dictionary<string, Office365.PropertyDefinition> Properties;
+
+    private static string htmlBodyPrefixTemplate;
+    private static string textBodyPrefixTemplate;
     #endregion
   }
 }
