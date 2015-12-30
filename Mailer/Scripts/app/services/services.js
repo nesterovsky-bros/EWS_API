@@ -9,8 +9,8 @@
 
     // Application services.
     module.factory("services",
-      ["$resource", "$cookies",
-      function ($resource, $cookies)
+      ["$resource",
+      function ($resource)
       {
         function resolveAction(resolve)
         {
@@ -24,7 +24,7 @@
           }
 
           this.then = null;
-
+          
           resolve(this);
         }
 
@@ -41,6 +41,17 @@
           "../api/Mailer/:action",
           {},
           {
+            Init:
+            {
+              params:
+              {
+                action: "Init"
+              },
+              method: "GET",
+              responseType: "json",
+              headers: { 'Content-Type': 'application/json' },
+              then: resolveAction
+            },
             GetSenders:
             {
               params:

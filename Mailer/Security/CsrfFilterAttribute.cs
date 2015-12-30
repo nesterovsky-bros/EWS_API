@@ -23,29 +23,35 @@ namespace Mailer.Security
     {
       var request = context.Request;
       var headers = null as IEnumerable<string>;
+      var principal = context.RequestContext.Principal;
+      var userName = principal == null ? null : principal.Identity.Name;
 
-      if (request.Headers.TryGetValues(CSRFHeaderName, out headers))
+      // checks whether the user is authenticated
+      if (!string.IsNullOrEmpty(userName))
       {
-        var token = headers.FirstOrDefault();
-        var cookie =
-          request.Headers.GetCookies(AuthCookieName).FirstOrDefault();
-        var authToken = cookie == null ? null : cookie[AuthCookieName].Value;
+        // gets CSRF HTTP header
+        if (request.Headers.TryGetValues(CSRFHeaderName, out headers))
+        {
+          var token = headers.FirstOrDefault();
 
-        if (IsMatch(token, authToken))
+          // checks CSRF header against a private security key
+          if (IsMatch(token, userName))
+          {
+            return;
+          }
+        }
+        // a CSRF header may be omitted for first HTTP GET methods only
+        else if (string.Compare(request.Method.Method, "get", true) == 0)
         {
           return;
         }
+        // else access forbiden.
       }
-      else if (string.Compare(request.Method.Method, "get", true) == 0)
-      {
-        return;
-      }
-      // else access forbiden.
 
       context.Response =
         new HttpResponseMessage(HttpStatusCode.Forbidden)
         {
-          ReasonPhrase = "An attempt of CSRF attack was detected."
+          ReasonPhrase = "Invalid CSRF token."
         };
     }
 
@@ -53,20 +59,36 @@ namespace Mailer.Security
     {
       var principal = context.ActionContext.RequestContext.Principal;
       var userName = principal == null ? null : principal.Identity.Name;
-      var token = GenerateToken(userName);
 
-      context.Response.Headers.AddCookies(
-        new CookieHeaderValue[] 
+      // checks whether the user is authenticated
+      if (string.IsNullOrEmpty(userName))
+      {
+        return;
+      }
+
+      var request = context.Request;
+      var headers = null as IEnumerable<string>;
+
+      if (!request.Headers.TryGetValues(CSRFHeaderName, out headers))
+      {
+        // only GET method may be without CSRF method.
+        // Note: the business logic must avoid to do CRUD actions on HTTP GET!!!
+        if (string.Compare(request.Method.Method, "get", true) == 0)
         {
-          new CookieHeaderValue(AuthCookieName, token)
-          {
-            HttpOnly = true
-          },
-          new CookieHeaderValue(CSRFCookieName, token)
-          {
-            HttpOnly = false
-          }
-        });
+          var token = GenerateToken(userName);
+
+          // sets CSRF cookie for subsequent calls
+          context.Response.Headers.AddCookies(
+            new CookieHeaderValue[]
+            {
+              new CookieHeaderValue(CSRFCookieName, token)
+              {
+                HttpOnly = false,
+                Path = "/"
+              }
+            });
+        }
+      }
     }
 
     public override bool AllowMultiple
@@ -74,24 +96,29 @@ namespace Mailer.Security
       get { return false; }
     }
 
-    protected static string GenerateToken(string authToken)
-    {
-      authToken += ":" + Guid.NewGuid().ToString();
-
-      return GenerateHash(authToken);
-    }
-
+    /// <summary>
+    /// Checks whether the specified CSRF token is match to the security
+    /// key based on the providen token.
+    /// </summary>
+    /// <param name="csrfToken">a CSRF token to check.</param>
+    /// <param name="authToken">a base private token.</param>
+    /// <returns></returns>
     protected static bool IsMatch(string csrfToken, string authToken)
     {
-      return csrfToken == GenerateHash(authToken);
+      return csrfToken == GenerateToken(authToken);
     }
 
-    protected static string GenerateHash(string authToken)
+    /// <summary>
+    /// Generates a security token based on the specified value.
+    /// </summary>
+    /// <param name="value">a base string value.</param>
+    /// <returns>a security token.</returns>
+    protected static string GenerateToken(string value)
     {
       using (var sha = SHA256.Create())
       {
         var computedHash =
-          sha.ComputeHash(Encoding.Unicode.GetBytes(authToken + ConstantSalt));
+          sha.ComputeHash(Encoding.Unicode.GetBytes(value + ConstantSalt));
         var cookieFriendlyHash = HttpServerUtility.UrlTokenEncode(computedHash);
 
         return cookieFriendlyHash;
@@ -136,7 +163,6 @@ namespace Mailer.Security
 
     private static string _CSRFHeaderName;
     private static string _CSRFTokenName;
-    private static string ConstantSalt = "{D60F377A-F587-4323-AD4F-7F4539A60FCC}";
-    private const string AuthCookieName = "BNHP_AUTH_TOKEN";
+    private static string ConstantSalt = Guid.NewGuid().ToString();
   }
 }

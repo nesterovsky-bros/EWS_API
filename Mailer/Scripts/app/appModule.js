@@ -10,21 +10,20 @@ define(
   {
     "use strict";
 
-    return angular.
-      module("app",
+    var module = angular.module("app",
       [
         "ngResource",
         "ui.bootstrap",
         "ui.select",
         "ngWYSIWYG",
         "ui-upload",
-        "ngCookies",
-      ]).
-      config([
-        "$httpProvider",
-        function ($httpProvider)
-        {
-          $httpProvider.useApplyAsync(true);
-        }
       ]);
+
+    return module.config([
+      "$httpProvider",
+      function ($httpProvider)
+      {
+        $httpProvider.useApplyAsync(true);
+      }
+    ]);
   });

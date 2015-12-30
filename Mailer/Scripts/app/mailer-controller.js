@@ -73,7 +73,7 @@
 
         if (!messageID)
         {
-          self.$timeout(self.$createDraftMessage.bind(self), 100);
+          self.$createDraftMessage();
         }
         else
         {
@@ -90,7 +90,7 @@
               self.attachments = message.attachments || [];
               self.working = false;
             },
-            function(e)
+            function (e)
             {
               self.working = false;
 

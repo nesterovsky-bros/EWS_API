@@ -134,7 +134,6 @@
     <Content Include="Scripts\require.js" />
     <Content Include="Scripts\ui-select\select.js" />
     <Content Include="Scripts\ui-select\select.min.js" />
-    <Content Include="Scripts\angular.min.js.map" />
     <Content Include="Scripts\angular-resource.min.js.map" />
     <Content Include="Scripts\angular-sanitize.min.js.map" />
     <EntityDeploy Include="Models\Taxonomy.edmx">
@@ -144,6 +143,7 @@
     <Content Include="Models\Taxonomy.edmx.diagram">
       <DependentUpon>Taxonomy.edmx</DependentUpon>
     </Content>
+    <Content Include="Scripts\angular.min.js.map" />
     <None Include="Service References\EwsServiceReference\EwsService.disco" />
     <None Include="Service References\EwsServiceReference\configuration91.svcinfo" />
     <None Include="Service References\EwsServiceReference\configuration.svcinfo" />
