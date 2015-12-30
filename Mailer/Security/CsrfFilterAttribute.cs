@@ -71,7 +71,7 @@ namespace Mailer.Security
 
       if (!request.Headers.TryGetValues(CSRFHeaderName, out headers))
       {
-        // only GET method may be without CSRF method.
+        // only GET method may be without CSRF header.
         // Note: the business logic must avoid to do CRUD actions on HTTP GET!!!
         if (string.Compare(request.Method.Method, "get", true) == 0)
         {
