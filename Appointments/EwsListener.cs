@@ -68,7 +68,6 @@
             Trace.TraceInformation(
               "End discover mailboxes; elasped: {0}.",
               watch.Elapsed);
-
             Trace.TraceInformation("Listen mailboxes.");
             watch.Restart();
             await ListenMailboxes(cancellation);
@@ -603,7 +602,8 @@
                 (item.EventType == Office365.EventType.NewMail) ||
                 (item.EventType == Office365.EventType.Created) ?
                   ChangeType.Created.ToString() :
-                  item.EventType == Office365.EventType.Deleted ?
+                  (item.EventType == Office365.EventType.Deleted) ||
+                    (item.EventType == Office365.EventType.Moved) ?
                   ChangeType.Deleted.ToString() :
                   ChangeType.Updated.ToString()
             };
@@ -880,7 +880,8 @@
                   Office365.EventType.NewMail,
                   Office365.EventType.Created,
                   Office365.EventType.Deleted,
-                  Office365.EventType.Modified);
+                  Office365.EventType.Modified,
+                  Office365.EventType.Moved);
 
                 return source.Task;
               },

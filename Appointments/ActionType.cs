@@ -7,5 +7,6 @@ namespace Bnhp.Office365
     ModifyAppointment = 2,
     ReadEMail = 3,
     ModifyEMail = 4,
+    NotifyChanges = 5
   }
 }
