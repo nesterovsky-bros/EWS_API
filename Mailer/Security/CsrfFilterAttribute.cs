@@ -14,33 +14,36 @@ using System.Collections.Generic;
 namespace Mailer.Security
 {
   /// <summary>
-  /// Implements an IAuthenticationFilter that checks XSRF-TOKEN.
-  /// See http://stackoverflow.com/questions/23339002/custom-authorization-attribute-not-working-in-webapi
+  /// Implements ActionFilterAttribute against CSRF attacks.
   /// </summary>
   public class CsrfFilterAttribute : ActionFilterAttribute
   {
     public override void OnActionExecuting(HttpActionContext context)
     {
-      var request = context.Request;
-      var headers = null as IEnumerable<string>;
       var principal = context.RequestContext.Principal;
       var userName = principal == null ? null : principal.Identity.Name;
 
       // checks whether the user is authenticated
       if (!string.IsNullOrEmpty(userName))
       {
+        var request = context.Request;
+        var headers = null as IEnumerable<string>;
+
         // gets CSRF HTTP header
         if (request.Headers.TryGetValues(CSRFHeaderName, out headers))
         {
-          var token = headers.FirstOrDefault();
-
-          // checks CSRF header against a private security key
-          if (IsMatch(token, userName))
+          var header = headers.FirstOrDefault();
+          var cookie = 
+            request.Headers.GetCookies(AuthCookieName).FirstOrDefault();
+          var authToken = cookie == null ? null : cookie[AuthCookieName].Value;
+          
+          // checks CSRF header against an authentication token
+          if (IsMatch(header, authToken))
           {
             return;
           }
         }
-        // a CSRF header may be omitted for first HTTP GET methods only
+        // a CSRF header may be omitted for first HTTP GET calls only
         else if (string.Compare(request.Method.Method, "get", true) == 0)
         {
           return;
@@ -66,6 +69,30 @@ namespace Mailer.Security
         return;
       }
 
+      // generates an unique CSRF cookie for the next request
+      var authToken = GenerateToken(Guid.NewGuid().ToString());
+      var response = context.Response;
+      var headers = response == null ? null : response.Headers;
+
+      if (headers != null)
+      {
+        headers.AddCookies(
+          new[]
+          {
+            new CookieHeaderValue(AuthCookieName, authToken)
+            {
+              HttpOnly = true,
+              Path = "/"
+            },
+            new CookieHeaderValue(CSRFCookieName, GenerateToken(authToken))
+            {
+              HttpOnly = false,
+              Path = "/"
+            }
+          });
+      }
+
+      /*
       var request = context.Request;
       var headers = null as IEnumerable<string>;
 
@@ -75,12 +102,18 @@ namespace Mailer.Security
         // Note: the business logic must avoid to do CRUD actions on HTTP GET!!!
         if (string.Compare(request.Method.Method, "get", true) == 0)
         {
-          var token = GenerateToken(userName);
+          var authToken = GenerateToken(Guid.NewGuid().ToString());
+          var token = GenerateToken(authToken);
 
           // sets CSRF cookie for subsequent calls
           context.Response.Headers.AddCookies(
             new CookieHeaderValue[]
             {
+              new CookieHeaderValue(AuthCookieName, authToken)
+              {
+                HttpOnly = true,
+                Path = "/"
+              },
               new CookieHeaderValue(CSRFCookieName, token)
               {
                 HttpOnly = false,
@@ -89,6 +122,7 @@ namespace Mailer.Security
             });
         }
       }
+      */
     }
 
     public override bool AllowMultiple
@@ -117,11 +151,10 @@ namespace Mailer.Security
     {
       using (var sha = SHA256.Create())
       {
-        var computedHash =
-          sha.ComputeHash(Encoding.Unicode.GetBytes(value + ConstantSalt));
-        var cookieFriendlyHash = HttpServerUtility.UrlTokenEncode(computedHash);
+        var hash = sha.ComputeHash(
+          Encoding.Unicode.GetBytes(value + ApplicationSecret));
 
-        return cookieFriendlyHash;
+        return HttpServerUtility.UrlTokenEncode(hash);
       }
     }
 
@@ -150,19 +183,41 @@ namespace Mailer.Security
     {
       get
       {
-        if (string.IsNullOrEmpty(_CSRFTokenName))
+        if (string.IsNullOrEmpty(_CSRFCookieName))
         {
-          _CSRFTokenName =
-            ConfigurationManager.AppSettings["CSRFTokenName"] ??
+          _CSRFCookieName =
+            ConfigurationManager.AppSettings["CSRFCookieName"] ??
             "XSRF-TOKEN";
         }
 
-        return _CSRFTokenName;
+        return _CSRFCookieName;
+      }
+    }
+
+    /// <summary>
+    /// Gets an authentication cookie name.
+    /// </summary>
+    protected static string AuthCookieName
+    {
+      get
+      {
+        if (string.IsNullOrEmpty(_AuthCookieName))
+        {
+          _AuthCookieName =
+            ConfigurationManager.AppSettings["AuthCookieName"] ??
+            "BNHP-AUTH-TOKEN";
+        }
+
+        return _AuthCookieName;
       }
     }
 
     private static string _CSRFHeaderName;
-    private static string _CSRFTokenName;
-    private static string ConstantSalt = Guid.NewGuid().ToString();
+    private static string _CSRFCookieName;
+    private static string _AuthCookieName;
+
+    // application secret
+    private const string ApplicationSecret = 
+      "{33BE6648-7500-4976-A0CF-C9B834847282}";
   }
 }
