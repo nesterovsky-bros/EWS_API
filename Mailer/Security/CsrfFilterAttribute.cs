@@ -38,7 +38,7 @@ namespace Mailer.Security
           var authToken = cookie == null ? null : cookie[AuthCookieName].Value;
           
           // checks CSRF header against an authentication token
-          if (IsMatch(header, authToken))
+          if (IsMatch(header, userName + authToken))
           {
             return;
           }
@@ -70,12 +70,14 @@ namespace Mailer.Security
       }
 
       // generates an unique CSRF cookie for the next request
-      var authToken = GenerateToken(Guid.NewGuid().ToString());
+      var authToken = Guid.NewGuid().ToString();
       var response = context.Response;
       var headers = response == null ? null : response.Headers;
 
       if (headers != null)
       {
+        var csrfToken = GenerateToken(userName + authToken);
+
         headers.AddCookies(
           new[]
           {
@@ -84,45 +86,13 @@ namespace Mailer.Security
               HttpOnly = true,
               Path = "/"
             },
-            new CookieHeaderValue(CSRFCookieName, GenerateToken(authToken))
+            new CookieHeaderValue(CSRFCookieName, csrfToken)
             {
               HttpOnly = false,
               Path = "/"
             }
           });
       }
-
-      /*
-      var request = context.Request;
-      var headers = null as IEnumerable<string>;
-
-      if (!request.Headers.TryGetValues(CSRFHeaderName, out headers))
-      {
-        // only GET method may be without CSRF header.
-        // Note: the business logic must avoid to do CRUD actions on HTTP GET!!!
-        if (string.Compare(request.Method.Method, "get", true) == 0)
-        {
-          var authToken = GenerateToken(Guid.NewGuid().ToString());
-          var token = GenerateToken(authToken);
-
-          // sets CSRF cookie for subsequent calls
-          context.Response.Headers.AddCookies(
-            new CookieHeaderValue[]
-            {
-              new CookieHeaderValue(AuthCookieName, authToken)
-              {
-                HttpOnly = true,
-                Path = "/"
-              },
-              new CookieHeaderValue(CSRFCookieName, token)
-              {
-                HttpOnly = false,
-                Path = "/"
-              }
-            });
-        }
-      }
-      */
     }
 
     public override bool AllowMultiple
@@ -135,11 +105,13 @@ namespace Mailer.Security
     /// key based on the providen token.
     /// </summary>
     /// <param name="csrfToken">a CSRF token to check.</param>
-    /// <param name="authToken">a base private token.</param>
-    /// <returns></returns>
-    protected static bool IsMatch(string csrfToken, string authToken)
+    /// <param name="token">a base private token.</param>
+    /// <returns>
+    /// true when CSRF token matches the base token and false otherwise.
+    /// </returns>
+    protected static bool IsMatch(string csrfToken, string token)
     {
-      return csrfToken == GenerateToken(authToken);
+      return csrfToken == GenerateToken(token);
     }
 
     /// <summary>
@@ -165,14 +137,8 @@ namespace Mailer.Security
     {
       get
       {
-        if (string.IsNullOrEmpty(_CSRFHeaderName))
-        {
-          _CSRFHeaderName =
-            ConfigurationManager.AppSettings["CSRFHeaderName"] ??
-            "X-XSRF-TOKEN";
-        }
-
-        return _CSRFHeaderName;
+        return ConfigurationManager.AppSettings["CSRFHeaderName"] ??
+          "X-XSRF-TOKEN";
       }
     }
 
@@ -183,14 +149,8 @@ namespace Mailer.Security
     {
       get
       {
-        if (string.IsNullOrEmpty(_CSRFCookieName))
-        {
-          _CSRFCookieName =
-            ConfigurationManager.AppSettings["CSRFCookieName"] ??
-            "XSRF-TOKEN";
-        }
-
-        return _CSRFCookieName;
+        return ConfigurationManager.AppSettings["CSRFCookieName"] ??
+          "XSRF-TOKEN";
       }
     }
 
@@ -201,23 +161,13 @@ namespace Mailer.Security
     {
       get
       {
-        if (string.IsNullOrEmpty(_AuthCookieName))
-        {
-          _AuthCookieName =
-            ConfigurationManager.AppSettings["AuthCookieName"] ??
-            "BNHP-AUTH-TOKEN";
-        }
-
-        return _AuthCookieName;
+        return ConfigurationManager.AppSettings["AuthCookieName"] ??
+          "BNHP-AUTH-TOKEN";
       }
     }
 
-    private static string _CSRFHeaderName;
-    private static string _CSRFCookieName;
-    private static string _AuthCookieName;
-
     // application secret
-    private const string ApplicationSecret = 
+    private static string ApplicationSecret = 
       "{33BE6648-7500-4976-A0CF-C9B834847282}";
   }
 }
